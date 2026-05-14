@@ -1,4 +1,4 @@
-import { supabase, supabaseAdmin, readingTime } from '@/lib/supabase';
+import { supabaseAdmin, readingTime } from '@/lib/supabase';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -10,25 +10,28 @@ import { ProgressBar, TableOfContents, CopyLinkBtn } from './ArticleClient';
 export const revalidate = 60;
 
 async function getPost(slug: string): Promise<Post | null> {
-  const { data } = await supabase
+  const sb = supabaseAdmin();
+  const { data, error } = await sb
     .from('posts')
     .select('*')
     .eq('slug', slug)
     .eq('status', 'published')
     .single();
-  if (!data) return null;
+  if (error || !data) return null;
   const post = data as unknown as Post;
-  await supabaseAdmin().from('posts').update({ views: (post.views ?? 0) + 1 }).eq('id', post.id);
+  // views 업데이트 실패해도 페이지 렌더링은 계속
+  sb.from('posts').update({ views: (post.views ?? 0) + 1 }).eq('id', post.id).then(() => {});
   return post;
 }
 
 export async function generateStaticParams() {
-  const { data } = await supabase.from('posts').select('slug').eq('status', 'published');
+  const { data } = await supabaseAdmin().from('posts').select('slug').eq('status', 'published');
   return ((data ?? []) as { slug: string }[]).map(p => ({ slug: p.slug }));
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const post = await getPost(params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getPost(slug);
   if (!post) return { title: '포스트를 찾을 수 없습니다' };
   return {
     title: post.title,
@@ -55,9 +58,9 @@ function slugMark(slug: string): string {
   return clean.slice(0, 2).toUpperCase() || '·';
 }
 
-let paragraphCount = 0;
-
-const mdComponents = {
+function makeMdComponents() {
+  let paragraphCount = 0;
+  return {
   p: ({ children }: { children?: React.ReactNode }) => {
     const isFirst = paragraphCount === 0;
     paragraphCount++;
@@ -73,10 +76,12 @@ const mdComponents = {
     const id = text.toLowerCase().replace(/[^a-z0-9가-힣]+/g, '-').replace(/^-|-$/g, '');
     return <h3 id={id}>{children}</h3>;
   },
-};
+  };
+}
 
-export default async function PostPage({ params }: { params: { slug: string } }) {
-  const post = await getPost(params.slug);
+export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const post = await getPost(slug);
 
   if (!post) {
     return (
@@ -96,7 +101,7 @@ export default async function PostPage({ params }: { params: { slug: string } })
     ? new Date(post.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
     : '';
 
-  paragraphCount = 0;
+  const mdComponents = makeMdComponents();
 
   return (
     <div>
