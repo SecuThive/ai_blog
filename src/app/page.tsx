@@ -1,12 +1,19 @@
 import Link from 'next/link';
-import { supabase, readingTime } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+import { readingTime } from '@/lib/supabase';
 import type { PostSummary } from '@/lib/types';
 import Cover, { categoryHue } from '@/components/Cover';
+
+function makeFreshClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? '';
+  return createClient(url, key);
+}
 
 export const revalidate = 60;
 
 async function getPosts(): Promise<PostSummary[]> {
-  const { data } = await supabase
+  const { data } = await makeFreshClient()
     .from('posts')
     .select('id,title,slug,excerpt,cover_image,category,tags,author,agent_role,views,published_at,content')
     .eq('status', 'published')
@@ -18,11 +25,6 @@ async function getPosts(): Promise<PostSummary[]> {
     content: undefined,
     reading_time: readingTime((p.content as string) ?? ''),
   })) as unknown as PostSummary[];
-}
-
-function slugMark(slug: string): string {
-  const clean = slug.replace(/-/g, '').replace(/[^a-zA-Z가-힣]/g, '');
-  return clean.slice(0, 2).toUpperCase() || '·';
 }
 
 function timeAgo(dateStr: string): string {
@@ -84,7 +86,7 @@ export default async function HomePage() {
   }
 
   const heroHue = categoryHue(hero.category);
-  const heroMark = slugMark(hero.slug);
+  const heroMark = String(hero.id).padStart(2, '0');
   const dateStr = hero.published_at
     ? new Date(hero.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
     : '';
@@ -136,7 +138,7 @@ export default async function HomePage() {
             <div className="cards">
               {rest.slice(0, 3).map(post => {
                 const hue = categoryHue(post.category);
-                const mark = slugMark(post.slug);
+                const mark = String(post.id).padStart(2, '0');
                 return (
                   <Link key={post.id} href={`/blog/${post.slug}`} className="card">
                     <Cover hue={hue} mark={mark} kicker={post.category} shape="card" />
@@ -165,7 +167,7 @@ export default async function HomePage() {
 
               {rest.slice(3).map(post => {
                 const hue = categoryHue(post.category);
-                const mark = slugMark(post.slug);
+                const mark = String(post.id).padStart(2, '0');
                 return (
                   <Link key={post.id} href={`/blog/${post.slug}`} className="card">
                     <Cover hue={hue} mark={mark} kicker={post.category} shape="card" />

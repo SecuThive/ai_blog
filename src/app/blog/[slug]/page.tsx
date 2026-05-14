@@ -62,11 +62,6 @@ function extractHeadings(markdown: string) {
   return headings;
 }
 
-function slugMark(slug: string): string {
-  const clean = slug.replace(/-/g, '').replace(/[^a-zA-Z가-힣]/g, '');
-  return clean.slice(0, 2).toUpperCase() || '·';
-}
-
 function makeMdComponents() {
   let paragraphCount = 0;
   return {
@@ -124,7 +119,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const mins = readingTime(post.content);
   const wordCount = post.content.trim().split(/\s+/).length;
   const hue = categoryHue(post.category);
-  const mark = slugMark(post.slug);
+  const mark = String(post.id).padStart(2, '0');
   const headings = extractHeadings(post.content);
   const authorInitials = post.author.replace(/[^a-zA-Z가-힣]/g, '').slice(0, 2).toUpperCase() || 'AI';
   const dateStr = post.published_at
