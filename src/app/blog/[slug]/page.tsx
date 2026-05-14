@@ -1,4 +1,5 @@
 import { supabase, readingTime } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -9,22 +10,30 @@ import { ProgressBar, TableOfContents, CopyLinkBtn } from './ArticleClient';
 
 export const revalidate = 60;
 
+function makeFreshClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? '';
+  return createClient(url, key);
+}
+
 async function getPost(slug: string): Promise<Post | null> {
-  const { data, error } = await supabase
+  const decoded = decodeURIComponent(slug);
+  const client = makeFreshClient();
+  const { data, error } = await client
     .from('posts')
     .select('*')
-    .eq('slug', slug)
+    .eq('slug', decoded)
     .eq('status', 'published')
     .single();
   if (error || !data) return null;
   const post = data as unknown as Post;
   // views 업데이트 실패해도 페이지 렌더링은 계속
-  supabase.from('posts').update({ views: (post.views ?? 0) + 1 }).eq('id', post.id).then(() => {});
+  client.from('posts').update({ views: (post.views ?? 0) + 1 }).eq('id', post.id).then(() => {});
   return post;
 }
 
 export async function generateStaticParams() {
-  const { data } = await supabase.from('posts').select('slug').eq('status', 'published');
+  const { data } = await makeFreshClient().from('posts').select('slug').eq('status', 'published');
   return ((data ?? []) as { slug: string }[]).map(p => ({ slug: p.slug }));
 }
 
