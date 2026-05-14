@@ -3,7 +3,7 @@ interface CoverProps {
   mark?: string;
   kicker?: string;
   label?: string;
-  shape?: 'hero' | 'card' | 'article';
+  shape?: 'hero' | 'card' | 'article' | 'banner';
 }
 
 const CATEGORY_HUES: Record<string, number> = {
@@ -18,7 +18,7 @@ export function categoryHue(category: string): number {
 }
 
 export default function Cover({ hue = 32, mark = '·', kicker = 'FEATURE', label = 'SYNAPSE', shape = 'card' }: CoverProps) {
-  const cls = `cover ${shape === 'hero' ? 'hero-cover' : shape === 'article' ? 'article-cover' : 'card-cover'}`;
+  const cls = `cover ${shape === 'hero' ? 'hero-cover' : shape === 'article' ? 'article-cover' : shape === 'banner' ? 'banner-cover' : 'card-cover'}`;
   return (
     <div className={cls} style={{ '--hue': hue } as React.CSSProperties}>
       <div className="cover-rule-top" />

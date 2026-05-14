@@ -49,14 +49,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 function extractHeadings(markdown: string) {
-  const regex = /^#{1,3} (.+)$/gm;
-  const headings: { id: string; text: string; index: number }[] = [];
+  const regex = /^(#{2,3}) (.+)$/gm;
+  const headings: { id: string; text: string; index: number; level: number }[] = [];
   let match;
   let i = 0;
   while ((match = regex.exec(markdown)) !== null) {
-    const text = match[1].trim();
+    const level = match[1].length;
+    const text = match[2].trim();
     const id = text.toLowerCase().replace(/[^a-z0-9가-힣]+/g, '-').replace(/^-|-$/g, '');
-    headings.push({ id, text, index: i++ });
+    headings.push({ id, text, index: i++, level });
   }
   return headings;
 }
@@ -69,21 +70,40 @@ function slugMark(slug: string): string {
 function makeMdComponents() {
   let paragraphCount = 0;
   return {
-  p: ({ children }: { children?: React.ReactNode }) => {
-    const isFirst = paragraphCount === 0;
-    paragraphCount++;
-    return <p className={isFirst ? 'lede' : ''}>{children}</p>;
-  },
-  h2: ({ children }: { children?: React.ReactNode }) => {
-    const text = String(children);
-    const id = text.toLowerCase().replace(/[^a-z0-9가-힣]+/g, '-').replace(/^-|-$/g, '');
-    return <h2 id={id}>{children}</h2>;
-  },
-  h3: ({ children }: { children?: React.ReactNode }) => {
-    const text = String(children);
-    const id = text.toLowerCase().replace(/[^a-z0-9가-힣]+/g, '-').replace(/^-|-$/g, '');
-    return <h3 id={id}>{children}</h3>;
-  },
+    p: ({ children }: { children?: React.ReactNode }) => {
+      const isFirst = paragraphCount === 0;
+      paragraphCount++;
+      return <p className={isFirst ? 'lede' : ''}>{children}</p>;
+    },
+    h2: ({ children }: { children?: React.ReactNode }) => {
+      const text = String(children);
+      const id = text.toLowerCase().replace(/[^a-z0-9가-힣]+/g, '-').replace(/^-|-$/g, '');
+      return <h2 id={id}>{children}</h2>;
+    },
+    h3: ({ children }: { children?: React.ReactNode }) => {
+      const text = String(children);
+      const id = text.toLowerCase().replace(/[^a-z0-9가-힣]+/g, '-').replace(/^-|-$/g, '');
+      return <h3 id={id}>{children}</h3>;
+    },
+    blockquote: ({ children }: { children?: React.ReactNode }) => (
+      <blockquote className="prose-callout">{children}</blockquote>
+    ),
+    table: ({ children }: { children?: React.ReactNode }) => (
+      <div className="prose-table-wrap"><table>{children}</table></div>
+    ),
+    thead: ({ children }: { children?: React.ReactNode }) => <thead>{children}</thead>,
+    tbody: ({ children }: { children?: React.ReactNode }) => <tbody>{children}</tbody>,
+    tr: ({ children }: { children?: React.ReactNode }) => <tr>{children}</tr>,
+    th: ({ children }: { children?: React.ReactNode }) => <th>{children}</th>,
+    td: ({ children }: { children?: React.ReactNode }) => <td>{children}</td>,
+    hr: () => <hr />,
+    img: ({ src, alt }: { src?: string; alt?: string }) => (
+      <figure className="prose-figure">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src ?? ''} alt={alt ?? ''} loading="lazy" />
+        {alt && <figcaption className="prose-caption">{alt}</figcaption>}
+      </figure>
+    ),
   };
 }
 
@@ -102,9 +122,11 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   }
 
   const mins = readingTime(post.content);
+  const wordCount = post.content.trim().split(/\s+/).length;
   const hue = categoryHue(post.category);
   const mark = slugMark(post.slug);
   const headings = extractHeadings(post.content);
+  const authorInitials = post.author.replace(/[^a-zA-Z가-힣]/g, '').slice(0, 2).toUpperCase() || 'AI';
   const dateStr = post.published_at
     ? new Date(post.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
     : '';
@@ -119,6 +141,11 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
         {/* Article header */}
         <header className="article-head">
+          {/* Full-width banner cover */}
+          <div className="article-banner">
+            <Cover hue={hue} mark={mark} kicker={post.category} shape="banner" />
+          </div>
+
           <div className="article-kicker">
             <span className="cat">{post.category}</span>
             <span className="rule" />
@@ -135,8 +162,6 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             <span className="dot">·</span>
             <span>{post.views.toLocaleString()} views</span>
           </div>
-
-          <Cover hue={hue} mark={mark} kicker={post.category} shape="article" />
         </header>
 
         {/* 3-col layout */}
@@ -175,9 +200,30 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           {/* Sidebar */}
           <aside className="article-side">
             <div className="author-card">
+              <div className="author-avatar">{authorInitials}</div>
               <div className="author-h">작성자</div>
               <div className="author-name">{post.author}</div>
               <p className="author-bio">AI 에이전트가 최신 기술 트렌드를 분석하고 작성한 글입니다. 사람 편집자가 검수합니다.</p>
+            </div>
+
+            <div className="article-info">
+              <div className="article-info-h">이 글에 대해</div>
+              <div className="article-info-row">
+                <span>읽기 시간</span>
+                <span>{mins}분</span>
+              </div>
+              <div className="article-info-row">
+                <span>단어 수</span>
+                <span>{wordCount.toLocaleString()}</span>
+              </div>
+              <div className="article-info-row">
+                <span>섹션</span>
+                <span>{headings.filter(h => h.level === 2).length}</span>
+              </div>
+              <div className="article-info-row">
+                <span>발행일</span>
+                <span>{dateStr}</span>
+              </div>
             </div>
 
             <div className="actions-rail">

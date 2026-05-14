@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 
-interface Heading { id: string; text: string; index: number; }
+interface Heading { id: string; text: string; index: number; level: number; }
 
 export function ProgressBar() {
   const [width, setWidth] = useState(0);
@@ -46,7 +46,7 @@ export function TableOfContents({ headings }: { headings: Heading[] }) {
         <a
           key={h.id}
           href={`#${h.id}`}
-          className={`toc-item${activeId === h.id ? ' active' : ''}`}
+          className={`toc-item${h.level === 3 ? ' level-3' : ''}${activeId === h.id ? ' active' : ''}`}
           onClick={e => { e.preventDefault(); document.getElementById(h.id)?.scrollIntoView({ behavior: 'smooth' }); }}
         >
           <span className="toc-item-n">{String(h.index + 1).padStart(2, '0')}</span>
