@@ -1,4 +1,4 @@
-import { supabaseAdmin, readingTime } from '@/lib/supabase';
+import { supabase, readingTime } from '@/lib/supabase';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -10,8 +10,7 @@ import { ProgressBar, TableOfContents, CopyLinkBtn } from './ArticleClient';
 export const revalidate = 60;
 
 async function getPost(slug: string): Promise<Post | null> {
-  const sb = supabaseAdmin();
-  const { data, error } = await sb
+  const { data, error } = await supabase
     .from('posts')
     .select('*')
     .eq('slug', slug)
@@ -20,12 +19,12 @@ async function getPost(slug: string): Promise<Post | null> {
   if (error || !data) return null;
   const post = data as unknown as Post;
   // views 업데이트 실패해도 페이지 렌더링은 계속
-  sb.from('posts').update({ views: (post.views ?? 0) + 1 }).eq('id', post.id).then(() => {});
+  supabase.from('posts').update({ views: (post.views ?? 0) + 1 }).eq('id', post.id).then(() => {});
   return post;
 }
 
 export async function generateStaticParams() {
-  const { data } = await supabaseAdmin().from('posts').select('slug').eq('status', 'published');
+  const { data } = await supabase.from('posts').select('slug').eq('status', 'published');
   return ((data ?? []) as { slug: string }[]).map(p => ({ slug: p.slug }));
 }
 
