@@ -9,7 +9,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .select('slug,published_at')
     .eq('status', 'published');
 
-  const posts = (data ?? []).map(p => ({
+  const posts = ((data ?? []) as { slug: string; published_at: string }[]).map(p => ({
     url: `${base}/blog/${p.slug}`,
     lastModified: new Date(p.published_at),
     changeFrequency: 'weekly' as const,

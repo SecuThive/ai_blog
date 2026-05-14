@@ -1,17 +1,37 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
+function makeClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? '';
+  return createClient(url, key);
+}
 
-// Public client (read-only for blog pages)
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+function makeAdminClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+  return createClient(url, key);
+}
 
-// Admin client (for API routes that write data)
-export const supabaseAdmin = () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-key';
-  return createClient(url, serviceKey);
-};
+// Lazy singletons — created on first call, not at module load time
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _sb: any = null;
+export function getSupabase() {
+  return (_sb ??= makeClient());
+}
+
+export function supabaseAdmin() {
+  return makeAdminClient();
+}
+
+// Named export alias for drop-in compatibility
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const supabase: ReturnType<typeof createClient> = new Proxy({} as any, {
+  get(_t, prop) {
+    const client = getSupabase();
+    const val = (client as Record<string | symbol, unknown>)[prop];
+    return typeof val === 'function' ? (val as Function).bind(client) : val;
+  },
+});
 
 export function readingTime(content: string): number {
   const words = content.trim().split(/\s+/).length;

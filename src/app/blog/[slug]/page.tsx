@@ -17,13 +17,14 @@ async function getPost(slug: string): Promise<Post | null> {
     .eq('status', 'published')
     .single();
   if (!data) return null;
-  await supabaseAdmin().from('posts').update({ views: (data.views ?? 0) + 1 }).eq('id', data.id);
-  return data as Post;
+  const post = data as unknown as Post;
+  await supabaseAdmin().from('posts').update({ views: (post.views ?? 0) + 1 }).eq('id', post.id);
+  return post;
 }
 
 export async function generateStaticParams() {
   const { data } = await supabase.from('posts').select('slug').eq('status', 'published');
-  return (data ?? []).map(p => ({ slug: p.slug }));
+  return ((data ?? []) as { slug: string }[]).map(p => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
