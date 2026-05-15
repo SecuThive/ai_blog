@@ -57,6 +57,28 @@ export function TableOfContents({ headings }: { headings: Heading[] }) {
   );
 }
 
+export function ScrollToTopBtn() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 600);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <button
+      className="scroll-top-btn"
+      aria-label="맨 위로"
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+    >
+      ↑
+    </button>
+  );
+}
+
 export function CopyLinkBtn() {
   const [copied, setCopied] = useState(false);
 

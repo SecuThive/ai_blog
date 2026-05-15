@@ -6,7 +6,7 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Cover, { categoryHue } from '@/components/Cover';
-import { ProgressBar, TableOfContents, CopyLinkBtn } from './ArticleClient';
+import { ProgressBar, TableOfContents, CopyLinkBtn, ScrollToTopBtn } from './ArticleClient';
 
 export const revalidate = 60;
 
@@ -14,6 +14,23 @@ function makeFreshClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? '';
   return createClient(url, key);
+}
+
+async function getRelatedPosts(category: string, excludeId: number): Promise<import('@/lib/types').PostSummary[]> {
+  const client = makeFreshClient();
+  const { data } = await client
+    .from('posts')
+    .select('id,title,slug,excerpt,category,tags,author,agent_role,views,published_at,content,cover_image')
+    .eq('status', 'published')
+    .eq('category', category)
+    .neq('id', excludeId)
+    .order('published_at', { ascending: false })
+    .limit(3);
+  return (data ?? []).map((p: Record<string, unknown>) => ({
+    ...p,
+    content: undefined,
+    reading_time: readingTime((p.content as string) ?? ''),
+  })) as unknown as import('@/lib/types').PostSummary[];
 }
 
 async function getPost(slug: string): Promise<Post | null> {
@@ -126,11 +143,13 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     ? new Date(post.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
     : '';
 
+  const relatedPosts = await getRelatedPosts(post.category, post.id);
   const mdComponents = makeMdComponents();
 
   return (
     <div>
       <ProgressBar />
+      <ScrollToTopBtn />
       <div className="shell">
         <Link href="/" className="article-back">← 홈으로</Link>
 
@@ -159,7 +178,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           </div>
         </header>
 
-        {/* 3-col layout */}
+        {/* 3-column layout */}
         <div className="article-shell">
           {/* TOC */}
           <TableOfContents headings={headings} />
@@ -247,6 +266,33 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             </div>
           </aside>
         </div>
+
+        {/* Related articles */}
+        {relatedPosts.length > 0 && (
+          <div className="related">
+            <div className="related-h">
+              <span className="num">¶</span> 같은 주제의 글
+            </div>
+            <div className="related-grid">
+              {relatedPosts.map((p) => {
+                const rHue = categoryHue(p.category);
+                const rMark = String(p.id).padStart(2, '0');
+                return (
+                  <Link key={p.id} href={`/blog/${p.slug}`} className="card">
+                    <Cover hue={rHue} mark={rMark} kicker={p.category} shape="card" />
+                    <div className="card-cat">{p.category}</div>
+                    <h3 className="card-title">{p.title}</h3>
+                    <p className="card-sub">{p.excerpt}</p>
+                    <div className="card-foot">
+                      <span className="ai-mini">AI · 작성</span>
+                      <span>{p.reading_time}분</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
