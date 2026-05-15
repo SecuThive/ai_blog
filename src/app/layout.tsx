@@ -12,7 +12,12 @@ export const metadata: Metadata = {
   title: { default: SITE_NAME, template: `%s | Synapse.` },
   description: SITE_DESC,
   metadataBase: new URL(SITE_URL),
-  openGraph: { siteName: SITE_NAME, locale: 'ko_KR', type: 'website' },
+  openGraph: {
+    siteName: SITE_NAME,
+    locale: 'ko_KR',
+    type: 'website',
+    images: [{ url: '/og-default.png', width: 1200, height: 630, alt: SITE_NAME }],
+  },
   twitter: { card: 'summary_large_image' },
   robots: { index: true, follow: true },
 };
@@ -53,12 +58,14 @@ function TopStrip() {
           2026.05 · SEOUL 22°
         </div>
         <div className="topstrip-marquee">
-          {MARKET.map((t, i) => (
-            <span key={i}>
-              {t.l}{' '}
-              <em className={t.c} style={{ fontStyle: 'normal' }}>{t.v}</em>
-            </span>
-          ))}
+          <div className="topstrip-marquee-track">
+            {[...MARKET, ...MARKET].map((t, i) => (
+              <span key={i}>
+                {t.l}{' '}
+                <em className={t.c} style={{ fontStyle: 'normal' }}>{t.v}</em>
+              </span>
+            ))}
+          </div>
         </div>
         <div style={{ fontFamily: 'var(--mono)', fontSize: 11, letterSpacing: '.1em', whiteSpace: 'nowrap' }}>
           EDITION 042 / VOL IV
@@ -73,6 +80,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko">
       <head>
+        {/* Prevent dark mode flash before React hydrates */}
+        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t)}catch(e){}` }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

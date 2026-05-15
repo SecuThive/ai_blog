@@ -6,7 +6,7 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Cover, { categoryHue } from '@/components/Cover';
-import { ProgressBar, TableOfContents, CopyLinkBtn, ScrollToTopBtn } from './ArticleClient';
+import { ProgressBar, TableOfContents, CopyLinkBtn, ScrollToTopBtn, ShareBtn } from './ArticleClient';
 
 export const revalidate = 60;
 
@@ -61,7 +61,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: post.title,
     description: post.excerpt,
-    openGraph: { title: post.title, description: post.excerpt, type: 'article', publishedTime: post.published_at ?? undefined },
+    openGraph: {
+      title: post.title,
+      description: post.excerpt,
+      type: 'article',
+      publishedTime: post.published_at ?? undefined,
+      images: post.cover_image ? [{ url: post.cover_image, width: 1200, height: 630 }] : [{ url: '/og-default.png', width: 1200, height: 630 }],
+    },
   };
 }
 
@@ -174,7 +180,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             <span className="dot">·</span>
             <span>{mins}분 읽기</span>
             <span className="dot">·</span>
-            <span>{post.views.toLocaleString()} views</span>
+            <span>{post.views.toLocaleString()} 조회</span>
           </div>
         </header>
 
@@ -242,15 +248,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
             <div className="actions-rail">
               <CopyLinkBtn />
-              <button className="action-btn">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                  <polyline points="16 6 12 2 8 6" />
-                  <line x1="12" y1="2" x2="12" y2="15" />
-                </svg>
-                공유하기
-              </button>
-              <button className="action-btn">
+              <ShareBtn />
+              <button type="button" className="action-btn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                 </svg>

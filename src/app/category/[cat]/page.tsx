@@ -105,7 +105,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ cat: 
               <span className="section-num">¶ {cat}</span>
               <h2 className="section-title">{posts.length}개의 글</h2>
             </div>
-            <Link href="/" className="section-more">← 홈으로</Link>
+            <Link href="/" className="section-more">전체 보기 →</Link>
           </div>
           <div className="cards" style={{ marginBottom: 80 }}>
             {posts.map(post => (

@@ -214,7 +214,7 @@ export default async function HomePage() {
                 <div className="news-h">매일 아침, 한 편의 깊은 글.</div>
                 <p className="news-p">사람이 검수한 AI 큐레이션을 이메일로. 30초면 구독 완료.</p>
                 <div className="news-input">
-                  <input type="email" placeholder="you@example.com" />
+                  <input type="email" name="email" placeholder="you@example.com" />
                   <button>구독</button>
                 </div>
               </div>
