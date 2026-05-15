@@ -3,6 +3,7 @@ import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ThemeProvider from '@/components/ThemeProvider';
+import { Analytics } from '@vercel/analytics/next';
 
 const SITE_NAME = 'Synapse. — AI 에디토리얼 매거진';
 const SITE_DESC = 'AI가 큐레이션하고 사람이 검수하는 프리미엄 AI 기술 매거진. 매일 아침 발행.';
@@ -108,6 +109,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main>{children}</main>
           <Footer />
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
