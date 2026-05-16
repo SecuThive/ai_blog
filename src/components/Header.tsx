@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 const NAV = [
   { href: '/', label: '홈' },
@@ -10,6 +10,7 @@ const NAV = [
   { href: '/category/IT 트렌드', label: 'IT 트렌드' },
   { href: '/category/개발', label: '개발' },
   { href: '/category/툴 리뷰', label: '리뷰' },
+  { href: '/series', label: '시리즈' },
 ];
 
 function decode(path: string) {
@@ -18,7 +19,7 @@ function decode(path: string) {
 
 function BrandMark() {
   return (
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
       <circle cx="11" cy="11" r="9.5" stroke="url(#bm-g)" strokeWidth="1" strokeDasharray="2.5 3" />
       <circle cx="11" cy="11" r="5.5" fill="url(#bm-f)" />
       <defs>
@@ -35,10 +36,162 @@ function BrandMark() {
   );
 }
 
+interface SearchResult {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string;
+  category: string;
+  published_at: string;
+}
+
+function catTone(cat: string) {
+  if (cat.includes('AI') || cat.includes('자동화')) return 'blue';
+  if (cat.includes('트렌드') || cat.includes('IT')) return 'purple';
+  if (cat.includes('개발') || cat.includes('인프라')) return 'mint';
+  if (cat.includes('툴') || cat.includes('리뷰')) return 'amber';
+  if (cat.includes('보안')) return 'rose';
+  return 'blue';
+}
+
+function SearchModal({ onClose }: { onClose: () => void }) {
+  const [q, setQ] = useState('');
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!q.trim()) { setResults([]); return; }
+    const t = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        setResults(await res.json());
+      } finally { setLoading(false); }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const goSearch = () => {
+    onClose();
+    router.push(`/search?q=${encodeURIComponent(q)}`);
+  };
+
+  const RECENT = ['MCP', 'React 19', 'AI 자동화', 'Cursor'];
+  const CATS = [
+    { href: '/category/AI & 자동화', label: 'AI 자동화', tone: 'blue' },
+    { href: '/category/개발', label: '개발', tone: 'mint' },
+    { href: '/category/IT 트렌드', label: 'IT 트렌드', tone: 'purple' },
+    { href: '/category/툴 리뷰', label: '툴 리뷰', tone: 'amber' },
+  ];
+
+  return (
+    <div className="search-overlay" onClick={onClose}>
+      <div className="search-modal" onClick={e => e.stopPropagation()}>
+        <div className="search-input-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ color: 'var(--text-3)', flexShrink: 0 }}>
+            <circle cx="11" cy="11" r="7" /><line x1="16.5" y1="16.5" x2="22" y2="22" />
+          </svg>
+          <input
+            ref={inputRef}
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            placeholder="궁금한 IT 주제나 AI 도구를 검색해보세요"
+            onKeyDown={e => { if (e.key === 'Enter' && q) goSearch(); }}
+            style={{ flex: 1, background: 'transparent', border: 0, outline: 'none', color: 'var(--text-1)', fontSize: 16 }}
+          />
+          <span className="kbd">ESC</span>
+        </div>
+
+        {!q && (
+          <>
+            <div className="search-section-title">최근 검색</div>
+            {RECENT.map(t => (
+              <div key={t} className="search-result" onClick={() => setQ(t)}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ color: 'var(--text-4)', flexShrink: 0, marginTop: 2 }}>
+                  <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                </svg>
+                <span style={{ fontSize: 14, color: 'var(--text-2)' }}>{t}</span>
+              </div>
+            ))}
+            <div className="search-section-title">인기 카테고리</div>
+            {CATS.map(c => (
+              <Link key={c.href} href={c.href} className="search-result" onClick={onClose}>
+                <span className={`badge badge-${c.tone}`} style={{ flexShrink: 0 }}>{c.label}</span>
+                <span style={{ fontSize: 14, color: 'var(--text-1)', flex: 1 }}>{c.label}</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ color: 'var(--text-4)' }}>
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </Link>
+            ))}
+          </>
+        )}
+
+        {q && (
+          <>
+            <div className="search-section-title">
+              {loading ? '검색 중…' : `글 · ${results.length}건`}
+            </div>
+            {results.map(p => (
+              <Link key={p.id} href={`/blog/${p.slug}`} className="search-result" onClick={onClose}>
+                <span className={`badge badge-${catTone(p.category)}`} style={{ flexShrink: 0 }}>{p.category}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, color: 'var(--text-1)', lineHeight: 1.4 }}>{p.title}</div>
+                  <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', marginTop: 3 }}>{p.category}</div>
+                </div>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ color: 'var(--text-4)', flexShrink: 0 }}>
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </Link>
+            ))}
+            {results.length === 0 && !loading && (
+              <div style={{ padding: '20px 18px', color: 'var(--text-3)', fontSize: 14 }}>
+                &quot;{q}&quot;에 대한 결과를 찾을 수 없습니다.
+              </div>
+            )}
+            <div className="search-result" onClick={goSearch} style={{ borderTop: '1px solid var(--line-1)', cursor: 'pointer' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ color: 'var(--acc-blue)', flexShrink: 0 }}>
+                <path d="M7 17L17 7M7 7h10v10" />
+              </svg>
+              <span style={{ flex: 1, color: 'var(--acc-blue)', fontSize: 14 }}>
+                &quot;{q}&quot; 전체 검색 결과 보기 →
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Header() {
   const pathname = usePathname();
   const decoded = decode(pathname);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const openSearch = useCallback(() => setSearchOpen(true), []);
+  const closeSearch = useCallback(() => setSearchOpen(false), []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        openSearch();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [openSearch]);
 
   const isActive = (href: string) => {
     if (href === '/') return decoded === '/';
@@ -65,25 +218,24 @@ export default function Header() {
           </nav>
 
           <div className="header-right">
-            <button className="search-trigger" aria-label="검색 (⌘K)">
+            <button className="search-trigger" aria-label="검색 (⌘K)" onClick={openSearch}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <circle cx="11" cy="11" r="7" />
-                <line x1="16.5" y1="16.5" x2="22" y2="22" />
+                <circle cx="11" cy="11" r="7" /><line x1="16.5" y1="16.5" x2="22" y2="22" />
               </svg>
               검색
               <span className="kbd">⌘K</span>
             </button>
-            <button className="btn btn-primary btn-sm">구독하기</button>
+            <Link href="/subscribe" className="btn btn-primary btn-sm">구독하기</Link>
             <button className="menu-btn" aria-label="메뉴 열기" onClick={() => setMobileOpen(true)}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <line x1="3" y1="7" x2="21" y2="7" />
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="17" x2="21" y2="17" />
+                <line x1="3" y1="7" x2="21" y2="7" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="17" x2="21" y2="17" />
               </svg>
             </button>
           </div>
         </div>
       </header>
+
+      {searchOpen && <SearchModal onClose={closeSearch} />}
 
       {mobileOpen && (
         <div className="mobile-nav-panel">
@@ -94,26 +246,30 @@ export default function Header() {
             </Link>
             <button className="icon-btn" onClick={() => setMobileOpen(false)} aria-label="닫기">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
           </div>
+          <button className="search-trigger" style={{ width: '100%', minWidth: 'unset', marginBottom: 8 }} onClick={() => { setMobileOpen(false); openSearch(); }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <circle cx="11" cy="11" r="7" /><line x1="16.5" y1="16.5" x2="22" y2="22" />
+            </svg>
+            검색
+          </button>
           <div className="mobile-nav-divider" />
           {NAV.map(n => (
-            <Link
-              key={n.href}
-              href={n.href}
-              className={`mobile-nav-item${isActive(n.href) ? ' active' : ''}`}
-              onClick={() => setMobileOpen(false)}
-            >
+            <Link key={n.href} href={n.href} className={`mobile-nav-item${isActive(n.href) ? ' active' : ''}`} onClick={() => setMobileOpen(false)}>
               {n.label}
             </Link>
           ))}
+          <Link href="/tags" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>태그</Link>
+          <Link href="/archive" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>아카이브</Link>
+          <Link href="/trending" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>트렌딩</Link>
+          <Link href="/about" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>소개</Link>
           <div className="mobile-nav-divider" />
-          <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', height: 46 }}>
+          <Link href="/subscribe" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', height: 46 }} onClick={() => setMobileOpen(false)}>
             구독하기
-          </button>
+          </Link>
         </div>
       )}
     </>

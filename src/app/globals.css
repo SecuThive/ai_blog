@@ -568,6 +568,75 @@ img { max-width: 100%; display: block; }
 .err { min-height: calc(100vh - var(--header-h) - 200px); display: flex; align-items: center; justify-content: center; text-align: center; }
 .err-code { font-family: var(--ff-mono); font-size: 120px; letter-spacing: -0.04em; background: linear-gradient(180deg, var(--text-1), var(--text-5)); -webkit-background-clip: text; background-clip: text; color: transparent; line-height: 1; }
 
+/* ===== FAQ accordion ===== */
+.faq-item { border: 1px solid var(--line-1); border-radius: var(--r-md); background: var(--bg-2); overflow: hidden; }
+.faq-q { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 22px; font-size: 15.5px; color: var(--text-1); text-align: left; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; }
+.faq-q .ic { color: var(--text-3); transition: 180ms; flex-shrink: 0; }
+.faq-item.open .faq-q .ic { transform: rotate(45deg); color: var(--acc-blue); }
+.faq-a { padding: 0 22px 22px; color: var(--text-2); font-size: 14.5px; line-height: 1.65; display: none; }
+.faq-item.open .faq-a { display: block; }
+.faq-item.open { border-color: var(--line-2); }
+
+/* ===== Sort select ===== */
+.sort-select { background: var(--bg-2); border: 1px solid var(--line-2); color: var(--text-2); padding: 6px 10px; border-radius: var(--r-sm); font-size: 12.5px; outline: none; cursor: pointer; }
+.filter-row .spacer { flex: 1; }
+
+/* ===== Search highlight ===== */
+mark { background: color-mix(in oklch, var(--acc-blue) 18%, transparent); color: var(--text-1); padding: 0 2px; border-radius: 3px; font-style: normal; }
+
+/* ===== Article feedback ===== */
+.article-feedback { display: flex; align-items: center; gap: 12px; padding: 20px 24px; background: var(--bg-2); border: 1px solid var(--line-1); border-radius: var(--r-md); margin-top: 40px; }
+.feedback-label { font-size: 14px; color: var(--text-2); flex: 1; }
+.feedback-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--r-sm); border: 1px solid var(--line-2); background: var(--bg-3); color: var(--text-2); font-size: 13px; cursor: pointer; transition: 140ms; }
+.feedback-btn:hover { border-color: var(--line-3); color: var(--text-1); }
+.feedback-btn.liked { border-color: color-mix(in oklch, var(--acc-mint) 40%, transparent); background: color-mix(in oklch, var(--acc-mint) 10%, transparent); color: var(--acc-mint); }
+.feedback-btn.disliked { border-color: color-mix(in oklch, var(--acc-rose) 40%, transparent); background: color-mix(in oklch, var(--acc-rose) 10%, transparent); color: var(--acc-rose); }
+
+/* ===== Article prev/next nav ===== */
+.article-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 56px; padding-top: 40px; border-top: 1px solid var(--line-1); }
+.article-nav-link { padding: 20px; background: var(--bg-2); border: 1px solid var(--line-1); border-radius: var(--r-md); transition: 200ms; display: block; }
+.article-nav-link:hover { border-color: var(--line-2); background: var(--bg-3); transform: translateY(-1px); }
+.article-nav-link.next { text-align: right; }
+.article-nav-dir { font-family: var(--ff-mono); font-size: 11px; color: var(--text-4); letter-spacing: 0.10em; text-transform: uppercase; margin-bottom: 8px; }
+.article-nav-title { font-size: 14.5px; font-weight: 500; color: var(--text-1); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ===== About page ===== */
+.about-row { display: grid; grid-template-columns: 200px 1fr; gap: 56px; margin-bottom: 64px; }
+
+/* ===== Trending rank list ===== */
+.rank-list { display: flex; flex-direction: column; }
+.rank-item { display: grid; grid-template-columns: 40px 1fr auto auto; gap: 18px; padding: 18px 0; border-top: 1px solid var(--line-1); align-items: center; }
+.rank-item:hover .rank-title { color: var(--text-1); }
+.rank-num { font-family: var(--ff-mono); font-size: 14px; font-weight: 600; }
+.rank-title { font-size: 14.5px; color: var(--text-2); letter-spacing: -0.01em; }
+
+/* ===== Curated / AI recommend ===== */
+.ai-match-badge { display: inline-flex; align-items: center; gap: 5px; font-family: var(--ff-mono); font-size: 10px; letter-spacing: 0.08em; color: var(--acc-purple); padding: 2px 7px; background: color-mix(in oklch, var(--acc-purple) 12%, transparent); border: 1px solid color-mix(in oklch, var(--acc-purple) 30%, transparent); border-radius: 999px; }
+
+/* ===== Archive ===== */
+.archive-year { display: flex; align-items: baseline; gap: 16px; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 1px solid var(--line-1); }
+.archive-year h2 { margin: 0; font-size: 40px; letter-spacing: -0.03em; font-weight: 600; }
+.archive-month { display: grid; grid-template-columns: 80px 1fr; gap: 32px; align-items: start; margin-bottom: 36px; }
+.archive-month-label { position: sticky; top: calc(var(--header-h) + 32px); }
+.archive-row { display: grid; grid-template-columns: 60px 100px 1fr auto; gap: 20px; padding: 16px 0; border-top: 1px solid var(--line-1); align-items: center; }
+.archive-row:first-child { border-top: 0; }
+.archive-row:hover .archive-title { color: var(--text-1); }
+.archive-title { font-size: 14.5px; color: var(--text-2); letter-spacing: -0.01em; }
+
+/* ===== Series episode list ===== */
+.episode-item { display: grid; grid-template-columns: auto 1fr auto auto; gap: 18px; padding: 18px 22px; align-items: center; }
+.episode-num { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line-2); font-family: var(--ff-mono); font-size: 12px; font-weight: 600; background: var(--bg-3); color: var(--text-4); flex-shrink: 0; }
+.episode-num.done { background: color-mix(in oklch, var(--acc-blue) 15%, var(--bg-3)); color: var(--acc-blue); }
+
+/* ===== Responsive additions ===== */
+@media (max-width: 768px) {
+  .about-row { grid-template-columns: 1fr; gap: 24px; }
+  .article-nav { grid-template-columns: 1fr; }
+  .archive-month { grid-template-columns: 1fr; gap: 12px; }
+  .archive-row { grid-template-columns: 60px 1fr auto; gap: 12px; }
+  .archive-row > :nth-child(2) { display: none; }
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 960px) {
   .nav-primary { display: none; }

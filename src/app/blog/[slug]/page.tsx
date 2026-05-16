@@ -6,7 +6,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ProgressBar, TableOfContents, CopyLinkBtn, ScrollToTopBtn, ShareBtn, MobileActionBar } from './ArticleClient';
+import { ProgressBar, TableOfContents, CopyLinkBtn, ScrollToTopBtn, ShareBtn, MobileActionBar, ArticleFeedback } from './ArticleClient';
 
 export const revalidate = 60;
 
@@ -23,6 +23,19 @@ function catTone(cat: string): string {
   if (cat.includes('툴') || cat.includes('리뷰')) return 'amber';
   if (cat.includes('보안')) return 'rose';
   return 'blue';
+}
+
+async function getAdjacentPosts(publishedAt: string, id: number): Promise<{ prev: { title: string; slug: string } | null; next: { title: string; slug: string } | null }> {
+  noStore();
+  const client = makeFreshClient();
+  const [prevResult, nextResult] = await Promise.all([
+    client.from('posts').select('title,slug').eq('status', 'published').lt('published_at', publishedAt).neq('id', id).order('published_at', { ascending: false }).limit(1),
+    client.from('posts').select('title,slug').eq('status', 'published').gt('published_at', publishedAt).neq('id', id).order('published_at', { ascending: true }).limit(1),
+  ]);
+  return {
+    prev: prevResult.data?.[0] ?? null,
+    next: nextResult.data?.[0] ?? null,
+  };
 }
 
 async function getRelatedPosts(category: string, excludeId: number): Promise<import('@/lib/types').PostSummary[]> {
@@ -166,7 +179,10 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     ? new Date(post.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
     : '';
 
-  const relatedPosts = await getRelatedPosts(post.category, post.id);
+  const [relatedPosts, adjacent] = await Promise.all([
+    getRelatedPosts(post.category, post.id),
+    getAdjacentPosts(post.published_at ?? '', post.id),
+  ]);
   const mdComponents = makeMdComponents();
 
   return (
@@ -257,6 +273,25 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             )}
 
             <div className="endmark">✦ ✦ ✦</div>
+
+            <ArticleFeedback />
+
+            {(adjacent.prev || adjacent.next) && (
+              <nav className="article-nav">
+                {adjacent.prev ? (
+                  <Link href={`/blog/${adjacent.prev.slug}`} className="article-nav-link prev">
+                    <div className="article-nav-dir">← 이전 글</div>
+                    <div className="article-nav-title">{adjacent.prev.title}</div>
+                  </Link>
+                ) : <div />}
+                {adjacent.next ? (
+                  <Link href={`/blog/${adjacent.next.slug}`} className="article-nav-link next">
+                    <div className="article-nav-dir">다음 글 →</div>
+                    <div className="article-nav-title">{adjacent.next.title}</div>
+                  </Link>
+                ) : <div />}
+              </nav>
+            )}
           </article>
 
           {/* Aside rail */}

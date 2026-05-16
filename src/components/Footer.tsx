@@ -55,10 +55,10 @@ export default function Footer() {
         <div className="footer-col">
           <h5>탐색</h5>
           <ul>
-            <li><a href="/">최신 글</a></li>
-            <li><a href="/">인기 글</a></li>
-            <li><a href="/">시리즈</a></li>
-            <li><a href="/">태그 목록</a></li>
+            <li><a href="/trending">트렌딩</a></li>
+            <li><a href="/series">시리즈</a></li>
+            <li><a href="/tags">태그 목록</a></li>
+            <li><a href="/archive">아카이브</a></li>
           </ul>
         </div>
 
@@ -66,10 +66,10 @@ export default function Footer() {
         <div className="footer-col">
           <h5>About</h5>
           <ul>
-            <li><a href="/">소개</a></li>
-            <li><a href="/">편집 원칙</a></li>
-            <li><a href="/">AI 운영 가이드라인</a></li>
-            <li><a href={`mailto:thivenshc@gmail.com`}>광고 문의</a></li>
+            <li><a href="/about">소개</a></li>
+            <li><a href="/author">편집 원칙</a></li>
+            <li><a href="/faq">FAQ</a></li>
+            <li><a href="/contact">광고 문의</a></li>
           </ul>
         </div>
 
@@ -77,9 +77,9 @@ export default function Footer() {
         <div className="footer-col">
           <h5>법적 고지</h5>
           <ul>
-            <li><a href="/">이용약관</a></li>
-            <li><a href="https://policies.google.com/privacy" target="_blank" rel="noopener">개인정보 처리방침</a></li>
-            <li><a href="/">쿠키 정책</a></li>
+            <li><a href="/terms">이용안내</a></li>
+            <li><a href="/privacy">개인정보 처리방침</a></li>
+            <li><a href="/policy">편집 정책</a></li>
             <li><a href="/rss.xml">RSS</a></li>
           </ul>
         </div>

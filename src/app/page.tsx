@@ -224,6 +224,38 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ===== Series section ===== */}
+      <section className="section" style={{ paddingTop: 0 }}>
+        <div className="container">
+          <div className="section-head">
+            <div>
+              <div className="section-eyebrow">SERIES</div>
+              <h2 className="section-title">시리즈로 깊게 파보기</h2>
+            </div>
+            <Link href="/series" className="section-link">
+              전체 시리즈
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {CATEGORIES.map(c => (
+              <Link
+                key={c.href}
+                href={`/series/${encodeURIComponent(c.label === 'AI 자동화' ? 'AI & 자동화' : c.label === 'IT 트렌드' ? 'IT 트렌드' : c.label)}`}
+                className="card"
+                style={{ flex: 1, minWidth: 200, padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 10, cursor: 'pointer', textDecoration: 'none' }}
+              >
+                <div style={{ fontSize: 22 }}>{c.icon}</div>
+                <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-1)' }}>{c.label} 시리즈</div>
+                <div className={`badge badge-${c.tone}`} style={{ alignSelf: 'flex-start', fontSize: 11 }}>SERIES</div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ===== Subscribe band ===== */}
       <section className="section" style={{ paddingTop: 0 }}>
         <div className="container">

@@ -123,6 +123,36 @@ export function ShareBtn() {
   );
 }
 
+export function ArticleFeedback() {
+  const [voted, setVoted] = useState<'up' | 'down' | null>(null);
+
+  return (
+    <div className="article-feedback">
+      <span className="feedback-label">이 글이 도움이 되었나요?</span>
+      <button
+        className={`feedback-btn${voted === 'up' ? ' liked' : ''}`}
+        onClick={() => setVoted(voted === 'up' ? null : 'up')}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
+          <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+        </svg>
+        도움됨
+      </button>
+      <button
+        className={`feedback-btn${voted === 'down' ? ' disliked' : ''}`}
+        onClick={() => setVoted(voted === 'down' ? null : 'down')}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z" />
+          <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
+        </svg>
+        아쉬움
+      </button>
+    </div>
+  );
+}
+
 export function MobileActionBar() {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
