@@ -7,7 +7,7 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Cover, { categoryHue } from '@/components/Cover';
-import { ProgressBar, TableOfContents, CopyLinkBtn, ScrollToTopBtn, ShareBtn } from './ArticleClient';
+import { ProgressBar, TableOfContents, CopyLinkBtn, ScrollToTopBtn, ShareBtn, MobileActionBar } from './ArticleClient';
 
 export const revalidate = 60;
 
@@ -163,6 +163,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     <div>
       <ProgressBar />
       <ScrollToTopBtn />
+      <MobileActionBar />
       <div className="shell">
         <Link href="/" className="article-back">← 홈으로</Link>
 

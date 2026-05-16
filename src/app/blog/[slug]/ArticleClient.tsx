@@ -129,3 +129,54 @@ export function ShareBtn() {
     </button>
   );
 }
+
+export function MobileActionBar() {
+  const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
+
+  const copy = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const share = async () => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title: document.title, url: window.location.href });
+      } catch { /* cancelled */ }
+    } else {
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      });
+    }
+  };
+
+  return (
+    <div className="mobile-action-bar">
+      <button className="action-btn" onClick={copy}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+        </svg>
+        {copied ? '복사됨!' : '링크 복사'}
+      </button>
+      <button className="action-btn" onClick={share}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+          <polyline points="16 6 12 2 8 6" />
+          <line x1="12" y1="2" x2="12" y2="15" />
+        </svg>
+        {shared ? '공유됨!' : '공유하기'}
+      </button>
+      <button className="action-btn" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <polyline points="18 15 12 9 6 15" />
+        </svg>
+        맨 위로
+      </button>
+    </div>
+  );
+}

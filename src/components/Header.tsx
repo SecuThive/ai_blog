@@ -42,7 +42,7 @@ export default function Header() {
           </Link>
 
           <div className="header-right">
-            <button className="icon-btn" aria-label="search" onClick={() => {}}>
+            <button className="icon-btn search-btn" aria-label="search" onClick={() => {}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <circle cx="11" cy="11" r="7" />
                 <line x1="16.5" y1="16.5" x2="22" y2="22" />
@@ -85,23 +85,40 @@ export default function Header() {
             <Link href="/" className="brand" onClick={() => setMobileOpen(false)}>
               Synapse<span className="brand-dot">.</span>
             </Link>
-            <button className="icon-btn" aria-label="메뉴 닫기" onClick={() => setMobileOpen(false)}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="icon-btn" aria-label="toggle theme" onClick={toggle}>
+                {theme === 'dark' ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                )}
+              </button>
+              <button className="icon-btn" aria-label="메뉴 닫기" onClick={() => setMobileOpen(false)}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
           </div>
           <nav className="mobile-nav-links">
-            <Link href="/" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>홈</Link>
+            <Link href="/" className={`mobile-nav-link${decoded === '/' ? ' active' : ''}`} onClick={() => setMobileOpen(false)}>홈</Link>
             {NAV.map(n => (
-              <Link key={n.href} href={n.href} className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
+              <Link key={n.href} href={n.href} className={`mobile-nav-link${decoded === n.href ? ' active' : ''}`} onClick={() => setMobileOpen(false)}>
                 {n.label}
               </Link>
             ))}
           </nav>
           <div className="mobile-nav-footer">
-            <button className="subscribe-btn" style={{ width: '100%', padding: '14px 20px', fontSize: 14, textAlign: 'center' }}>
+            <button className="subscribe-btn" style={{ width: '100%', padding: '14px 20px', fontSize: 14 }}>
               구독하기
             </button>
           </div>

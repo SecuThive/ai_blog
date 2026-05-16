@@ -276,8 +276,8 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Billboard ad */}
-        <div style={{ padding: '60px 0 40px' }}>
+        {/* Billboard ad — hidden on mobile */}
+        <div className="ad-billboard-wrap" style={{ padding: '60px 0 40px' }}>
           <div className="ad-rectangle" style={{ aspectRatio: '970/250', maxWidth: 970, margin: '0 auto' }}>
             <AdSlot type="billboard" note="AdSense · Billboard 970 × 250" />
           </div>
