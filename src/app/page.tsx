@@ -48,6 +48,8 @@ const TOPICS = [
   { glyph: '08', name: '인터뷰', href: '/', count: '컬렉션' },
 ];
 
+const AD_EMAIL = 'thivenshc@gmail.com';
+
 function AdSlot({ type = 'leaderboard', note }: { type?: string; note?: string }) {
   const sizes: Record<string, string> = {
     leaderboard: '728 × 90',
@@ -58,7 +60,11 @@ function AdSlot({ type = 'leaderboard', note }: { type?: string; note?: string }
   return (
     <div className={`ad-slot ad-${type}`}>
       <div className="ad-slot-label">
-        <div>{sizes[type] ?? 'FLUID'}</div>
+        <div className="ad-soon-badge">AdSense 준비 중</div>
+        <div style={{ fontSize: 10, letterSpacing: '0.14em', color: 'var(--muted)' }}>{sizes[type] ?? 'FLUID'}</div>
+        <a href={`mailto:${AD_EMAIL}`} className="ad-contact-link">
+          광고 문의 · {AD_EMAIL}
+        </a>
         <small>{note ?? type.toUpperCase()}</small>
       </div>
     </div>
@@ -154,15 +160,20 @@ export default async function HomePage() {
                 );
               })}
 
-              {/* In-feed ad */}
+              {/* In-feed 광고 문의 카드 */}
               <div className="card adcard">
                 <div className="card-cover">
-                  <div className="adcard-tag">SPONSORED</div>
-                  <div className="adcard-size">광고 · 인피드</div>
+                  <div className="adcard-tag">ADVERTISE</div>
+                  <div className="adcard-size">광고 문의</div>
                 </div>
-                <h3 className="adcard-h">당신의 다음 큰 아이디어</h3>
-                <p className="adcard-p">이곳에 자동 매칭된 네이티브 광고가 표시됩니다. AdSense In-feed 슬롯.</p>
-                <div className="adcard-cta">자세히 보기 →</div>
+                <h3 className="adcard-h">이 자리에 광고를 올려보세요</h3>
+                <p className="adcard-p">
+                  AI·개발·IT에 관심 있는 독자층을 대상으로 한 네이티브 광고 슬롯입니다.
+                  AdSense 연동 전 직접 문의를 통해 먼저 시작하실 수 있습니다.
+                </p>
+                <a href={`mailto:${AD_EMAIL}`} className="adcard-cta">
+                  {AD_EMAIL} 로 문의하기 →
+                </a>
               </div>
 
               {rest.slice(3).map(post => {
@@ -201,11 +212,23 @@ export default async function HomePage() {
             </div>
 
             <div className="side-block">
-              <div className="side-h"><span>스폰서</span><span>광고</span></div>
-              <div className="ad-rectangle">
-                <AdSlot type="rectangle" />
+              <div className="side-h"><span>광고 문의</span><span>ADVERTISE</span></div>
+              <div className="ad-inquiry-card">
+                <div className="ad-inquiry-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <path d="M2 7l10 7 10-7" />
+                  </svg>
+                </div>
+                <div className="ad-inquiry-title">광고 지면을 찾고 계신가요?</div>
+                <p className="ad-inquiry-desc">
+                  AI·개발·IT 관심 독자를 대상으로 광고를 집행하세요. AdSense 연동 전 직접 문의도 가능합니다.
+                </p>
+                <a href={`mailto:${AD_EMAIL}`} className="ad-inquiry-btn">
+                  이메일로 문의하기
+                </a>
+                <div className="ad-inquiry-email">{AD_EMAIL}</div>
               </div>
-              <div className="ad-caption">Google AdSense · 300 × 250</div>
             </div>
 
             <div className="side-block">
