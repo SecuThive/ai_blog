@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 interface SearchResult {
@@ -30,7 +30,7 @@ function highlight(text: string, q: string) {
   );
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const initialQ = searchParams.get('q') ?? '';
   const [q, setQ] = useState(initialQ);
@@ -165,5 +165,17 @@ export default function SearchPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ padding: '80px 0', textAlign: 'center', color: 'var(--text-3)', fontFamily: 'var(--ff-mono)', fontSize: 12, letterSpacing: '0.10em' }}>
+        LOADING…
+      </div>
+    }>
+      <SearchContent />
+    </Suspense>
   );
 }
