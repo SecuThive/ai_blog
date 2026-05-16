@@ -6,25 +6,31 @@ import { useTheme } from './ThemeProvider';
 import { useState } from 'react';
 
 const NAV = [
-  { href: '/category/AI%20%26%20%EC%9E%90%EB%8F%99%ED%99%94', label: 'AI 도구' },
-  { href: '/category/%EA%B0%9C%EB%B0%9C', label: '개발' },
-  { href: '/category/%ED%88%B4%20%EB%A6%AC%EB%B7%B0', label: '툴 리뷰' },
-  { href: '/category/IT%20%ED%8A%B8%EB%A0%8C%EB%93%9C', label: 'IT 트렌드' },
+  { href: '/category/AI & 자동화', label: 'AI & 자동화' },
+  { href: '/category/개발', label: '개발' },
+  { href: '/category/툴 리뷰', label: '툴 리뷰' },
+  { href: '/category/IT 트렌드', label: 'IT 트렌드' },
 ];
+
+function decodePath(path: string) {
+  try { return decodeURIComponent(path); } catch { return path; }
+}
 
 export default function Header() {
   const pathname = usePathname();
   const { theme, toggle } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const decoded = decodePath(pathname);
+
   return (
     <>
       <header className="header">
         <div className="header-inner">
           <div className="header-left">
-            <Link href="/" className={`nav-link${pathname === '/' ? ' active' : ''}`}>홈</Link>
+            <Link href="/" className={`nav-link${decoded === '/' ? ' active' : ''}`}>홈</Link>
             {NAV.map(n => (
-              <Link key={n.href} href={n.href} className={`nav-link${pathname === n.href ? ' active' : ''}`}>
+              <Link key={n.href} href={n.href} className={`nav-link${decoded === n.href ? ' active' : ''}`}>
                 {n.label}
               </Link>
             ))}

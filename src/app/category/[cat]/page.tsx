@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ cat: stri
 
 export async function generateStaticParams() {
   const cats = ['AI & 자동화', '개발', '툴 리뷰', 'IT 트렌드'];
-  return cats.map(cat => ({ cat: encodeURIComponent(cat) }));
+  return cats.map(cat => ({ cat }));
 }
 
 function timeAgo(dateStr: string): string {
@@ -54,10 +54,10 @@ export default async function CategoryPage({ params }: { params: Promise<{ cat: 
   })) as unknown as PostSummary[];
 
   const NAV = [
-    { href: '/category/AI%20%26%20%EC%9E%90%EB%8F%99%ED%99%94', label: 'AI & 자동화' },
-    { href: '/category/%EA%B0%9C%EB%B0%9C', label: '개발' },
-    { href: '/category/%ED%88%B4%20%EB%A6%AC%EB%B7%B0', label: '툴 리뷰' },
-    { href: '/category/IT%20%ED%8A%B8%EB%A0%8C%EB%93%9C', label: 'IT 트렌드' },
+    { href: '/category/AI & 자동화', label: 'AI & 자동화' },
+    { href: '/category/개발', label: '개발' },
+    { href: '/category/툴 리뷰', label: '툴 리뷰' },
+    { href: '/category/IT 트렌드', label: 'IT 트렌드' },
   ];
 
   return (

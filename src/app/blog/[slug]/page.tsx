@@ -34,19 +34,23 @@ async function getRelatedPosts(category: string, excludeId: number): Promise<imp
 }
 
 async function getPost(slug: string): Promise<Post | null> {
-  const decoded = decodeURIComponent(slug);
-  const client = makeFreshClient();
-  const { data, error } = await client
-    .from('posts')
-    .select('*')
-    .eq('slug', decoded)
-    .eq('status', 'published')
-    .single();
-  if (error || !data) return null;
-  const post = data as unknown as Post;
-  // views 업데이트 실패해도 페이지 렌더링은 계속
-  client.from('posts').update({ views: (post.views ?? 0) + 1 }).eq('id', post.id).then(() => {});
-  return post;
+  try {
+    const decoded = decodeURIComponent(slug);
+    const client = makeFreshClient();
+    const { data, error } = await client
+      .from('posts')
+      .select('*')
+      .eq('slug', decoded)
+      .eq('status', 'published')
+      .single();
+    if (error || !data) return null;
+    const post = data as unknown as Post;
+    // views 업데이트 실패해도 페이지 렌더링은 계속
+    client.from('posts').update({ views: (post.views ?? 0) + 1 }).eq('id', post.id).then(() => {});
+    return post;
+  } catch {
+    return null;
+  }
 }
 
 export async function generateStaticParams() {

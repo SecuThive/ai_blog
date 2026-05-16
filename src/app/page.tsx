@@ -38,12 +38,12 @@ function timeAgo(dateStr: string): string {
 }
 
 const TOPICS = [
-  { glyph: '01', name: 'AI 도구', href: '/category/AI%20%26%20%EC%9E%90%EB%8F%99%ED%99%94', count: 'AI & 자동화' },
-  { glyph: '02', name: '에이전트', href: '/category/AI%20%26%20%EC%9E%90%EB%8F%99%ED%99%94', count: 'AI & 자동화' },
-  { glyph: '03', name: '개발', href: '/category/%EA%B0%9C%EB%B0%9C', count: '개발' },
-  { glyph: '04', name: '툴 리뷰', href: '/category/%ED%88%B4%20%EB%A6%AC%EB%B7%B0', count: '툴 리뷰' },
-  { glyph: '05', name: 'IT 트렌드', href: '/category/IT%20%ED%8A%B8%EB%A0%8C%EB%93%9C', count: 'IT 트렌드' },
-  { glyph: '06', name: '리서치', href: '/category/IT%20%ED%8A%B8%EB%A0%8C%EB%93%9C', count: 'IT 트렌드' },
+  { glyph: '01', name: 'AI 도구', href: '/category/AI & 자동화', count: 'AI & 자동화' },
+  { glyph: '02', name: '에이전트', href: '/category/AI & 자동화', count: 'AI & 자동화' },
+  { glyph: '03', name: '개발', href: '/category/개발', count: '개발' },
+  { glyph: '04', name: '툴 리뷰', href: '/category/툴 리뷰', count: '툴 리뷰' },
+  { glyph: '05', name: 'IT 트렌드', href: '/category/IT 트렌드', count: 'IT 트렌드' },
+  { glyph: '06', name: '리서치', href: '/category/IT 트렌드', count: 'IT 트렌드' },
   { glyph: '07', name: '에세이', href: '/', count: '컬렉션' },
   { glyph: '08', name: '인터뷰', href: '/', count: '컬렉션' },
 ];
