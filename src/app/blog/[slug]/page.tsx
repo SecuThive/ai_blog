@@ -1,5 +1,6 @@
 import { supabase, readingTime } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
+import { unstable_noStore as noStore } from 'next/cache';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -17,6 +18,7 @@ function makeFreshClient() {
 }
 
 async function getRelatedPosts(category: string, excludeId: number): Promise<import('@/lib/types').PostSummary[]> {
+  noStore();
   const client = makeFreshClient();
   const { data } = await client
     .from('posts')
@@ -34,6 +36,7 @@ async function getRelatedPosts(category: string, excludeId: number): Promise<imp
 }
 
 async function getPost(slug: string): Promise<Post | null> {
+  noStore();
   try {
     const decoded = decodeURIComponent(slug);
     const client = makeFreshClient();
