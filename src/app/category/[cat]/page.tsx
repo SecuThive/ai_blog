@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import { readingTime } from '@/lib/supabase';
 import type { PostSummary } from '@/lib/types';
 import type { Metadata } from 'next';
-import Cover, { categoryHue } from '@/components/Cover';
 
 export const revalidate = 60;
 
@@ -16,12 +15,11 @@ function makeFreshClient() {
 export async function generateMetadata({ params }: { params: Promise<{ cat: string }> }): Promise<Metadata> {
   const { cat: rawCat } = await params;
   const cat = decodeURIComponent(rawCat);
-  return { title: `${cat} — Synapse`, description: `${cat} 카테고리의 AI 작성 포스트` };
+  return { title: `${cat} — Nodelog`, description: `${cat} 카테고리의 AI 분석 포스트` };
 }
 
 export async function generateStaticParams() {
-  const cats = ['AI & 자동화', '개발', '툴 리뷰', 'IT 트렌드'];
-  return cats.map(cat => ({ cat }));
+  return ['AI & 자동화', '개발', '툴 리뷰', 'IT 트렌드'].map(cat => ({ cat }));
 }
 
 function timeAgo(dateStr: string): string {
@@ -34,10 +32,27 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
 }
 
+function catTone(cat: string): string {
+  if (cat.includes('AI') || cat.includes('자동화')) return 'blue';
+  if (cat.includes('트렌드') || cat.includes('IT')) return 'purple';
+  if (cat.includes('개발') || cat.includes('인프라')) return 'mint';
+  if (cat.includes('툴') || cat.includes('리뷰')) return 'amber';
+  if (cat.includes('보안')) return 'rose';
+  return 'blue';
+}
+
+const ALL_CATS = [
+  { label: '전체', href: '/' },
+  { label: 'AI 자동화', href: '/category/AI & 자동화' },
+  { label: 'IT 트렌드', href: '/category/IT 트렌드' },
+  { label: '개발', href: '/category/개발' },
+  { label: '툴 리뷰', href: '/category/툴 리뷰' },
+];
+
 export default async function CategoryPage({ params }: { params: Promise<{ cat: string }> }) {
   const { cat: rawCat } = await params;
   const cat = decodeURIComponent(rawCat);
-  const hue = categoryHue(cat);
+  const tone = catTone(cat);
 
   const { data } = await makeFreshClient()
     .from('posts')
@@ -53,77 +68,68 @@ export default async function CategoryPage({ params }: { params: Promise<{ cat: 
     reading_time: readingTime((p.content as string) ?? ''),
   })) as unknown as PostSummary[];
 
-  const NAV = [
-    { href: '/category/AI & 자동화', label: 'AI & 자동화' },
-    { href: '/category/개발', label: '개발' },
-    { href: '/category/툴 리뷰', label: '툴 리뷰' },
-    { href: '/category/IT 트렌드', label: 'IT 트렌드' },
-  ];
-
   return (
-    <div className="shell">
-      {/* Category masthead */}
-      <div className="cat-masthead">
-        <p className="cat-mast-kicker">SYNAPSE · 주제별 색인</p>
-        <h1 className="cat-mast-title" style={{ '--hue': hue } as React.CSSProperties}>{cat}</h1>
-        <div>
-          <p className="cat-mast-deck">AI가 큐레이션한 {cat} 관련 심층 분석글 모음.</p>
-        </div>
-        <div className="cat-mast-meta">
-          <span>{posts.length}개 포스트</span>
-          <span className="dot">·</span>
-          <span>AI 큐레이션</span>
-          <span className="dot">·</span>
-          <span>매일 업데이트</span>
+    <div>
+      {/* Page hero */}
+      <div className="page-hero">
+        <div className="container">
+          <div className="page-eyebrow">{cat}</div>
+          <h1 className="page-title">{cat}</h1>
+          <p className="page-lead">AI가 분석한 {cat} 관련 심층 분석글 모음. 매일 업데이트됩니다.</p>
         </div>
       </div>
 
-      {/* Category tab strip */}
-      <nav className="cat-tabs">
-        <Link href="/" className="cat-tab">전체</Link>
-        {NAV.map(n => (
-          <Link
-            key={n.href}
-            href={n.href}
-            className={`cat-tab${n.label === cat ? ' active' : ''}`}
-          >
-            {n.label}
-          </Link>
-        ))}
-      </nav>
-
-      {posts.length === 0 ? (
-        <div className="cat-empty">
-          <div className="cat-empty-icon">◌</div>
-          <p>이 카테고리에 아직 포스트가 없습니다.</p>
-          <Link href="/" className="article-back" style={{ justifyContent: 'center', marginTop: 16 }}>← 홈으로</Link>
+      <div className="container">
+        {/* Filter tabs */}
+        <div className="filter-row" style={{ marginTop: 0 }}>
+          <span className="label">카테고리</span>
+          {ALL_CATS.map(c => (
+            <Link
+              key={c.href}
+              href={c.href}
+              className={`filter-tab${c.label === cat || (c.label === '전체' && false) ? ' active' : ''}`}
+            >
+              {c.label === cat ? `● ${c.label}` : c.label}
+            </Link>
+          ))}
+          <div style={{ flex: 1 }} />
+          <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)' }}>
+            {posts.length} POSTS
+          </span>
         </div>
-      ) : (
-        <>
-          <div className="section-head" style={{ marginTop: 40 }}>
-            <div>
-              <span className="section-num">¶ {cat}</span>
-              <h2 className="section-title">{posts.length}개의 글</h2>
+
+        {posts.length === 0 ? (
+          <div style={{ padding: '80px 0', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 20 }}>
+              NO POSTS
             </div>
-            <Link href="/" className="section-more">전체 보기 →</Link>
+            <p style={{ color: 'var(--text-3)', marginBottom: 24 }}>이 카테고리에 아직 포스트가 없습니다.</p>
+            <Link href="/" className="btn btn-ghost">← 홈으로</Link>
           </div>
-          <div className="cards" style={{ marginBottom: 80 }}>
+        ) : (
+          <div className="grid-3" style={{ marginBottom: 80 }}>
             {posts.map(post => (
-              <Link key={post.id} href={`/blog/${post.slug}`} className="card">
-                <Cover hue={hue} mark={String(post.id).padStart(2, '0')} kicker={post.category} shape="card" />
-                <div className="card-cat">{post.category}</div>
-                <h3 className="card-title">{post.title}</h3>
-                <p className="card-sub">{post.excerpt}</p>
-                <div className="card-foot">
-                  <span className="ai-mini">AI · 작성</span>
-                  <span>{post.reading_time}분</span>
-                  <span>{timeAgo(post.published_at)}</span>
+              <Link key={post.id} href={`/blog/${post.slug}`} className="card card-link">
+                <div className={`card-thumb thumb-${tone}`}>
+                  {post.category}
+                </div>
+                <div className="card-body">
+                  <div className="card-meta">
+                    <span className={`badge badge-${tone}`}>{post.category}</span>
+                  </div>
+                  <h3 className="card-title">{post.title}</h3>
+                  <p className="card-excerpt">{post.excerpt}</p>
+                  <div className="card-foot">
+                    <span>{timeAgo(post.published_at)}</span>
+                    <span className="dot" />
+                    <span>{post.reading_time}분 읽기</span>
+                  </div>
                 </div>
               </Link>
             ))}
           </div>
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 }

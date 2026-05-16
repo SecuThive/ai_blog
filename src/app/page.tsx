@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { readingTime } from '@/lib/supabase';
 import type { PostSummary } from '@/lib/types';
-import Cover, { categoryHue } from '@/components/Cover';
 
 function makeFreshClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
@@ -37,253 +36,215 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
 }
 
-const TOPICS = [
-  { glyph: '01', name: 'AI 도구', href: '/category/AI & 자동화', count: 'AI & 자동화' },
-  { glyph: '02', name: '에이전트', href: '/category/AI & 자동화', count: 'AI & 자동화' },
-  { glyph: '03', name: '개발', href: '/category/개발', count: '개발' },
-  { glyph: '04', name: '툴 리뷰', href: '/category/툴 리뷰', count: '툴 리뷰' },
-  { glyph: '05', name: 'IT 트렌드', href: '/category/IT 트렌드', count: 'IT 트렌드' },
-  { glyph: '06', name: '리서치', href: '/category/IT 트렌드', count: 'IT 트렌드' },
-  { glyph: '07', name: '에세이', href: '/', count: '컬렉션' },
-  { glyph: '08', name: '인터뷰', href: '/', count: '컬렉션' },
+function catTone(cat: string): string {
+  if (cat.includes('AI') || cat.includes('자동화')) return 'blue';
+  if (cat.includes('트렌드') || cat.includes('IT')) return 'purple';
+  if (cat.includes('개발') || cat.includes('인프라') || cat.includes('클라우드')) return 'mint';
+  if (cat.includes('툴') || cat.includes('리뷰') || cat.includes('생산성')) return 'amber';
+  if (cat.includes('보안')) return 'rose';
+  return 'blue';
+}
+
+const CATEGORIES = [
+  { label: 'AI 자동화', href: '/category/AI & 자동화', tone: 'blue', icon: '⚡' },
+  { label: 'IT 트렌드', href: '/category/IT 트렌드', tone: 'purple', icon: '📡' },
+  { label: '개발', href: '/category/개발', tone: 'mint', icon: '</>' },
+  { label: '툴 리뷰', href: '/category/툴 리뷰', tone: 'amber', icon: '★' },
 ];
 
-const AD_EMAIL = 'thivenshc@gmail.com';
-
-function AdSlot({ type = 'leaderboard', note }: { type?: string; note?: string }) {
-  const sizes: Record<string, string> = {
-    leaderboard: '728 × 90',
-    rectangle: '300 × 250',
-    skyscraper: '300 × 600',
-    billboard: '970 × 250',
-  };
+function HeroHub() {
+  const cells = [
+    { top: '8%', right: '5%', title: 'AI 자동화', sub: '+47% 효율' },
+    { top: '36%', right: '-4%', title: '개발 트렌드', sub: '주간 업데이트' },
+    { bottom: '14%', right: '8%', title: '보안 동향', sub: 'AI 위협 분석' },
+    { bottom: '20%', left: '2%', title: '클라우드', sub: '최신 인사이트' },
+    { top: '14%', left: '4%', title: 'IT 트렌드', sub: '글로벌 현황' },
+  ];
   return (
-    <div className={`ad-slot ad-${type}`}>
-      <div className="ad-slot-label">
-        <div className="ad-soon-badge">AdSense 준비 중</div>
-        <div style={{ fontSize: 10, letterSpacing: '0.14em', color: 'var(--muted)' }}>{sizes[type] ?? 'FLUID'}</div>
-        <a href={`mailto:${AD_EMAIL}`} className="ad-contact-link">
-          광고 문의 · {AD_EMAIL}
-        </a>
-        <small>{note ?? type.toUpperCase()}</small>
-      </div>
+    <div className="hub">
+      <div className="hub-ring" />
+      <div className="hub-ring r2" />
+      <div className="hub-ring r3" />
+      <div className="hub-core" />
+      {cells.map((c, i) => (
+        <div key={i} className="hub-cell" style={c as React.CSSProperties}>
+          <div className="cell-title">{c.title}</div>
+          <div style={{ color: 'var(--text-3)', fontSize: 11 }}>{c.sub}</div>
+        </div>
+      ))}
     </div>
+  );
+}
+
+function PostCard({ post }: { post: PostSummary }) {
+  const tone = catTone(post.category);
+  return (
+    <Link href={`/blog/${post.slug}`} className="card card-link">
+      <div className={`card-thumb thumb-${tone}`}>
+        {post.category}
+      </div>
+      <div className="card-body">
+        <div className="card-meta">
+          <span className={`badge badge-${tone}`}>{post.category}</span>
+        </div>
+        <h3 className="card-title">{post.title}</h3>
+        <p className="card-excerpt">{post.excerpt}</p>
+        <div className="card-foot">
+          <span>{timeAgo(post.published_at)}</span>
+          <span className="dot" />
+          <span>{post.reading_time}분 읽기</span>
+        </div>
+      </div>
+    </Link>
   );
 }
 
 export default async function HomePage() {
   const posts = await getPosts();
-  const [hero, ...rest] = posts;
 
-  if (!hero) {
+  if (posts.length === 0) {
     return (
-      <div className="shell" style={{ paddingTop: 80, paddingBottom: 80, textAlign: 'center' }}>
-        <div style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.24em', color: 'var(--muted)', marginBottom: 24 }}>
-          SYNAPSE · AI EDITORIAL
+      <div className="container" style={{ paddingTop: 80, paddingBottom: 80, textAlign: 'center' }}>
+        <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, letterSpacing: '.16em', color: 'var(--text-3)', marginBottom: 24, textTransform: 'uppercase' }}>
+          NODELOG · AI IT MEDIA
         </div>
-        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(36px,5vw,72px)', fontWeight: 900, letterSpacing: '-.03em', marginBottom: 20 }}>
-          AI가 첫 번째 글을 준비 중입니다.
+        <h1 style={{ fontSize: 'clamp(36px,5vw,60px)', fontWeight: 600, letterSpacing: '-.035em', marginBottom: 20 }}>
+          첫 번째 글을 준비 중입니다.
         </h1>
-        <p style={{ fontFamily: 'var(--serif)', fontSize: 18, color: 'var(--muted)', lineHeight: 1.6 }}>
-          SafeSquare AI Company에서 블로그 목표를 설정하고 에이전트를 시작하세요.
+        <p style={{ fontSize: 17, color: 'var(--text-3)', lineHeight: 1.6, maxWidth: 480, margin: '0 auto' }}>
+          AI 에이전트가 최신 IT 트렌드를 분석하고 글을 작성 중입니다.
         </p>
       </div>
     );
   }
 
-  const heroHue = categoryHue(hero.category);
-  const heroMark = String(hero.id).padStart(2, '0');
-  const dateStr = hero.published_at
-    ? new Date(hero.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
-    : '';
-
   return (
     <div>
-      {/* Leaderboard ad */}
-      <div className="ad-leaderboard-wrap">
-        <AdSlot type="leaderboard" />
-      </div>
-
-      <div className="shell">
-        {/* HERO */}
-        <section className="hero">
-          <div className="hero-text">
-            <div className="hero-num">
-              <span>Nº {String(hero.id).padStart(2, '0')}</span>
-              <span style={{ fontFamily: 'var(--mono)', fontSize: 11, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--muted)' }}>
-                {hero.category}
-              </span>
-            </div>
-            <Link href={`/blog/${hero.slug}`} className="hero-title">{hero.title}</Link>
-            <p className="hero-sub">{hero.excerpt}</p>
-            <div className="hero-byline">
-              <span className="byline-ai">AI 작성 · 사람 검수</span>
-              <span className="byline-meta">
-                <span>{dateStr}</span>
-                <span className="dot">·</span>
-                <span>{hero.reading_time}분 읽기</span>
-              </span>
-            </div>
-          </div>
-          <Link href={`/blog/${hero.slug}`} style={{ display: 'block' }}>
-            <Cover hue={heroHue} mark={heroMark} kicker={hero.category} shape="hero" />
-          </Link>
-        </section>
-
-        {/* MAIN FEED + SIDEBAR */}
-        <div className="feed">
-          <div className="feed-main">
-            <div className="section-head">
-              <div>
-                <span className="section-num">¶ 최신 발행</span>
-                <h2 className="section-title">이번 주의 글</h2>
+      {/* ===== Hero ===== */}
+      <section className="hero">
+        <div className="container">
+          <div className="hero-grid">
+            <div>
+              <div className="hero-status">
+                <span className="live-dot" />
+                NODELOG · AI-POWERED IT MEDIA
               </div>
-              <a href="/" className="section-more">전체 보기 →</a>
-            </div>
-
-            <div className="cards">
-              {rest.slice(0, 3).map(post => {
-                const hue = categoryHue(post.category);
-                const mark = String(post.id).padStart(2, '0');
-                return (
-                  <Link key={post.id} href={`/blog/${post.slug}`} className="card">
-                    <Cover hue={hue} mark={mark} kicker={post.category} shape="card" />
-                    <div className="card-cat">{post.category}</div>
-                    <h3 className="card-title">{post.title}</h3>
-                    <p className="card-sub">{post.excerpt}</p>
-                    <div className="card-foot">
-                      <span className="ai-mini">AI · 작성</span>
-                      <span>{post.reading_time}분</span>
-                      <span>{timeAgo(post.published_at)}</span>
-                    </div>
-                  </Link>
-                );
-              })}
-
-              {/* In-feed 광고 문의 카드 */}
-              <div className="card adcard">
-                <div className="card-cover">
-                  <div className="adcard-tag">ADVERTISE</div>
-                  <div className="adcard-size">광고 문의</div>
-                </div>
-                <h3 className="adcard-h">이 자리에 광고를 올려보세요</h3>
-                <p className="adcard-p">
-                  AI·개발·IT에 관심 있는 독자층을 대상으로 한 네이티브 광고 슬롯입니다.
-                  AdSense 연동 전 직접 문의를 통해 먼저 시작하실 수 있습니다.
-                </p>
-                <a href={`mailto:${AD_EMAIL}`} className="adcard-cta">
-                  {AD_EMAIL} 로 문의하기 →
-                </a>
-              </div>
-
-              {rest.slice(3).map(post => {
-                const hue = categoryHue(post.category);
-                const mark = String(post.id).padStart(2, '0');
-                return (
-                  <Link key={post.id} href={`/blog/${post.slug}`} className="card">
-                    <Cover hue={hue} mark={mark} kicker={post.category} shape="card" />
-                    <div className="card-cat">{post.category}</div>
-                    <h3 className="card-title">{post.title}</h3>
-                    <p className="card-sub">{post.excerpt}</p>
-                    <div className="card-foot">
-                      <span className="ai-mini">AI · 작성</span>
-                      <span>{post.reading_time}분</span>
-                      <span>{timeAgo(post.published_at)}</span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* SIDEBAR */}
-          <aside className="feed-side">
-            <div className="side-block">
-              <div className="side-h"><span>가장 많이 읽은 글</span><span>TOP 5</span></div>
-              {rest.slice(0, 5).map((post, i) => (
-                <Link key={post.id} href={`/blog/${post.slug}`} className="most-row">
-                  <div className="most-num">{String(i + 1).padStart(2, '0')}</div>
-                  <div>
-                    <h4 className="most-title">{post.title}</h4>
-                    <div className="most-meta">{post.category} · {post.reading_time}min</div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            <div className="side-block">
-              <div className="side-h"><span>광고 문의</span><span>ADVERTISE</span></div>
-              <div className="ad-inquiry-card">
-                <div className="ad-inquiry-icon">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
-                    <rect x="2" y="4" width="20" height="16" rx="2" />
-                    <path d="M2 7l10 7 10-7" />
+              <h1>
+                AI가 분석하는<br />
+                <span className="grad">IT의 최전선</span>
+              </h1>
+              <p className="lead">
+                인공지능이 취재하고 사람이 검수하는 IT·개발·보안·인프라 전문 미디어.
+                매일 업데이트되는 깊이 있는 기술 인사이트를 만나보세요.
+              </p>
+              <div className="hero-actions">
+                <Link href={`/blog/${posts[0].slug}`} className="btn btn-primary btn-lg">
+                  최신 글 읽기
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
-                </div>
-                <div className="ad-inquiry-title">광고 지면을 찾고 계신가요?</div>
-                <p className="ad-inquiry-desc">
-                  AI·개발·IT 관심 독자를 대상으로 광고를 집행하세요. AdSense 연동 전 직접 문의도 가능합니다.
-                </p>
-                <a href={`mailto:${AD_EMAIL}`} className="ad-inquiry-btn">
-                  이메일로 문의하기
-                </a>
-                <div className="ad-inquiry-email">{AD_EMAIL}</div>
+                </Link>
+                <Link href="/category/AI & 자동화" className="btn btn-ghost btn-lg">
+                  카테고리 보기
+                </Link>
               </div>
-            </div>
-
-            <div className="side-block">
-              <div className="news-card">
-                <div className="news-kicker">★ SYNAPSE 모닝 브리프</div>
-                <div className="news-h">매일 아침, 한 편의 깊은 글.</div>
-                <p className="news-p">사람이 검수한 AI 큐레이션을 이메일로. 30초면 구독 완료.</p>
-                <div className="news-input">
-                  <input type="email" name="email" placeholder="you@example.com" />
-                  <button>구독</button>
+              <div className="hero-meta">
+                <div>
+                  <div className="stat-num">{posts.length}+</div>
+                  <div className="stat-lab">발행 글</div>
+                </div>
+                <div>
+                  <div className="stat-num">4</div>
+                  <div className="stat-lab">카테고리</div>
+                </div>
+                <div>
+                  <div className="stat-num">Daily</div>
+                  <div className="stat-lab">업데이트</div>
                 </div>
               </div>
             </div>
-
-            <div className="side-block">
-              <div className="side-h"><span>스폰서</span><span>광고</span></div>
-              <div className="ad-skyscraper">
-                <AdSlot type="skyscraper" />
-              </div>
-              <div className="ad-caption">Google AdSense · 300 × 600</div>
-            </div>
-          </aside>
-        </div>
-
-        {/* TOPIC TILES */}
-        <section className="topics">
-          <div>
-            <span className="topics-h-num">¶ 04 · 주제별 색인</span>
-            <h3 className="topics-h">
-              <small>BROWSE BY TOPIC</small>
-              주제별로 둘러보기
-            </h3>
-            <p style={{ fontFamily: 'var(--serif)', fontSize: 16, lineHeight: 1.5, color: 'var(--muted)', marginTop: 20, maxWidth: '30ch' }}>
-              관심사를 따라 깊이 파고드세요. 매일 자동으로 큐레이션됩니다.
-            </p>
+            <HeroHub />
           </div>
-          <div className="topic-grid">
-            {TOPICS.map(t => (
-              <Link key={t.glyph} href={t.href} className="topic-tile">
-                <div className="topic-glyph">{t.glyph}</div>
-                <div className="topic-name">{t.name}</div>
-                <div className="topic-count">{t.count} →</div>
+        </div>
+      </section>
+
+      {/* ===== Category tiles ===== */}
+      <section className="section" style={{ paddingBottom: 32 }}>
+        <div className="container">
+          <div style={{ display: 'flex', gap: 12 }}>
+            {CATEGORIES.map(c => (
+              <Link
+                key={c.href}
+                href={c.href}
+                className="card"
+                style={{ flex: 1, padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 10, cursor: 'pointer', textDecoration: 'none' }}
+              >
+                <div style={{ fontSize: 22 }}>{c.icon}</div>
+                <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-1)' }}>{c.label}</div>
+                <div className={`badge badge-${c.tone}`} style={{ alignSelf: 'flex-start' }}>{c.tone.toUpperCase()}</div>
               </Link>
             ))}
           </div>
-        </section>
-
-        {/* Billboard ad — hidden on mobile */}
-        <div className="ad-billboard-wrap" style={{ padding: '60px 0 40px' }}>
-          <div className="ad-rectangle" style={{ aspectRatio: '970/250', maxWidth: 970, margin: '0 auto' }}>
-            <AdSlot type="billboard" note="AdSense · Billboard 970 × 250" />
-          </div>
-          <div className="ad-caption" style={{ marginTop: 8 }}>Google AdSense · 970 × 250 · Billboard</div>
         </div>
-      </div>
+      </section>
+
+      {/* ===== Latest posts ===== */}
+      <section className="section">
+        <div className="container">
+          <div className="section-head">
+            <div>
+              <div className="section-eyebrow">LATEST</div>
+              <h2 className="section-title">최신 글</h2>
+            </div>
+            <Link href="/" className="section-link">
+              전체 보기
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+          <div className="grid-3">
+            {posts.slice(0, 6).map(post => (
+              <PostCard key={post.id} post={post} />
+            ))}
+          </div>
+
+          {posts.length > 6 && (
+            <>
+              <div style={{ margin: '48px 0 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h3 style={{ margin: 0, fontSize: 20, fontWeight: 600, letterSpacing: '-0.02em' }}>더 많은 글</h3>
+              </div>
+              <div className="grid-3">
+                {posts.slice(6).map(post => (
+                  <PostCard key={post.id} post={post} />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* ===== Subscribe band ===== */}
+      <section className="section" style={{ paddingTop: 0 }}>
+        <div className="container">
+          <div className="subscribe">
+            <div>
+              <div className="section-eyebrow" style={{ marginBottom: 16 }}>NEWSLETTER</div>
+              <h3>IT 인사이트를 이메일로 받아보세요</h3>
+              <p>AI가 분석한 최신 기술 트렌드와 깊이 있는 분석 글을 매일 아침 받아보세요. 30초면 구독 완료.</p>
+            </div>
+            <div>
+              <form className="subscribe-form" action="#" method="post">
+                <input className="input" type="email" name="email" placeholder="you@example.com" />
+                <button type="submit" className="btn btn-primary">구독하기</button>
+              </form>
+              <div style={{ marginTop: 12, fontSize: 12, color: 'var(--text-4)', fontFamily: 'var(--ff-mono)' }}>
+                언제든 구독 해지 가능 · 스팸 없음
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { supabase, readingTime } from '@/lib/supabase';
+import { readingTime } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Post } from '@/lib/types';
@@ -6,7 +6,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import Cover, { categoryHue } from '@/components/Cover';
 import { ProgressBar, TableOfContents, CopyLinkBtn, ScrollToTopBtn, ShareBtn, MobileActionBar } from './ArticleClient';
 
 export const revalidate = 60;
@@ -15,6 +14,15 @@ function makeFreshClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? '';
   return createClient(url, key);
+}
+
+function catTone(cat: string): string {
+  if (cat.includes('AI') || cat.includes('자동화')) return 'blue';
+  if (cat.includes('트렌드') || cat.includes('IT')) return 'purple';
+  if (cat.includes('개발') || cat.includes('인프라')) return 'mint';
+  if (cat.includes('툴') || cat.includes('리뷰')) return 'amber';
+  if (cat.includes('보안')) return 'rose';
+  return 'blue';
 }
 
 async function getRelatedPosts(category: string, excludeId: number): Promise<import('@/lib/types').PostSummary[]> {
@@ -48,7 +56,6 @@ async function getPost(slug: string): Promise<Post | null> {
       .single();
     if (error || !data) return null;
     const post = data as unknown as Post;
-    // views 업데이트 실패해도 페이지 렌더링은 계속
     client.from('posts').update({ views: (post.views ?? 0) + 1 }).eq('id', post.id).then(() => {});
     return post;
   } catch {
@@ -73,7 +80,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description: post.excerpt,
       type: 'article',
       publishedTime: post.published_at ?? undefined,
-      images: post.cover_image ? [{ url: post.cover_image, width: 1200, height: 630 }] : [{ url: '/og-default.png', width: 1200, height: 630 }],
+      images: post.cover_image
+        ? [{ url: post.cover_image, width: 1200, height: 630 }]
+        : [{ url: '/og-default.png', width: 1200, height: 630 }],
     },
   };
 }
@@ -138,18 +147,19 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   if (!post) {
     return (
-      <div className="shell" style={{ paddingTop: 80, paddingBottom: 80, textAlign: 'center' }}>
-        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 48, fontWeight: 900 }}>404</h1>
-        <p style={{ fontFamily: 'var(--serif)', fontSize: 20, color: 'var(--muted)' }}>포스트를 찾을 수 없습니다</p>
-        <Link href="/" className="article-back" style={{ justifyContent: 'center', marginTop: 24 }}>← 홈으로 돌아가기</Link>
+      <div className="err">
+        <div>
+          <div className="err-code">404</div>
+          <p style={{ color: 'var(--text-3)', fontSize: 18, margin: '16px 0 28px' }}>포스트를 찾을 수 없습니다</p>
+          <Link href="/" className="btn btn-ghost">← 홈으로 돌아가기</Link>
+        </div>
       </div>
     );
   }
 
   const mins = readingTime(post.content);
   const wordCount = post.content.trim().split(/\s+/).length;
-  const hue = categoryHue(post.category);
-  const mark = String(post.id).padStart(2, '0');
+  const tone = catTone(post.category);
   const headings = extractHeadings(post.content);
   const authorInitials = post.author.replace(/[^a-zA-Z가-힣]/g, '').slice(0, 2).toUpperCase() || 'AI';
   const dateStr = post.published_at
@@ -164,36 +174,68 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       <ProgressBar />
       <ScrollToTopBtn />
       <MobileActionBar />
-      <div className="shell">
-        <Link href="/" className="article-back">← 홈으로</Link>
 
-        {/* Article header */}
-        <header className="article-head">
-          {/* Full-width banner cover */}
-          <div className="article-banner">
-            <Cover hue={hue} mark={mark} kicker={post.category} shape="banner" />
+      {/* Article hero */}
+      <div className="article-hero">
+        <div className="container">
+          <div className="crumbs">
+            <Link href="/">홈</Link>
+            <span className="sep">/</span>
+            <Link href={`/category/${post.category}`}>{post.category}</Link>
+            <span className="sep">/</span>
+            <span style={{ color: 'var(--text-5)' }}>{post.title.slice(0, 32)}…</span>
           </div>
 
-          <div className="article-kicker">
-            <span className="cat">{post.category}</span>
-            <span className="rule" />
-            <span className="num">Nº {String(post.id).padStart(2, '0')}</span>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
+            <span className={`badge badge-${tone}`}>{post.category}</span>
+            {post.tags.slice(0, 2).map(tag => (
+              <span key={tag} className="badge">{tag}</span>
+            ))}
           </div>
-          <h1 className="article-h1">{post.title}</h1>
+
+          <h1 className="article-title">{post.title}</h1>
           <p className="article-deck">{post.excerpt}</p>
-          <div className="article-meta">
-            <span className="byline-ai">AI 작성 · 사람 검수</span>
-            <span className="dot">·</span>
-            <span>{dateStr}</span>
-            <span className="dot">·</span>
-            <span>{mins}분 읽기</span>
-            <span className="dot">·</span>
-            <span>{post.views.toLocaleString()} 조회</span>
-          </div>
-        </header>
 
-        {/* 3-column layout */}
-        <div className="article-shell">
+          <div className="article-byline">
+            <span className="meta-item">
+              <span className="author-pip">{authorInitials}</span>
+              {post.author}
+            </span>
+            <span className="meta-item">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              {dateStr}
+            </span>
+            <span className="meta-item">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+              </svg>
+              {mins}분 읽기
+            </span>
+            <span className="meta-item">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+              </svg>
+              {post.views.toLocaleString()} 조회
+            </span>
+          </div>
+
+          {/* Cover image or placeholder */}
+          {post.cover_image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={post.cover_image} alt={post.title} style={{ marginTop: 32, width: '100%', borderRadius: 'var(--r-lg)', border: '1px solid var(--line-1)', aspectRatio: '16/7', objectFit: 'cover' }} />
+          ) : (
+            <div className={`article-thumb-ph thumb-${tone}`} style={{ marginTop: 32 }}>
+              <span className={`badge badge-${tone}`} style={{ fontSize: 14, padding: '6px 14px' }}>{post.category}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 3-column article body */}
+      <div className="container" style={{ paddingTop: 48, paddingBottom: 80 }}>
+        <div className="article-wrap">
           {/* TOC */}
           <TableOfContents headings={headings} />
 
@@ -206,14 +248,6 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               {post.content}
             </ReactMarkdown>
 
-            {/* In-article ad */}
-            <div className="ad-in-article">
-              <div className="ad-in-article-tag">광고</div>
-              <p className="ad-in-article-body">Google AdSense · In-Article · Fluid</p>
-              <div className="ad-in-article-meta">자동 매칭 광고가 이 위치에 표시됩니다</div>
-            </div>
-
-            {/* Tags */}
             {post.tags.length > 0 && (
               <div className="end-tags">
                 {post.tags.map(tag => (
@@ -225,74 +259,51 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             <div className="endmark">✦ ✦ ✦</div>
           </article>
 
-          {/* Sidebar */}
-          <aside className="article-side">
+          {/* Aside rail */}
+          <aside className="aside-rail">
             <div className="author-card">
               <div className="author-avatar">{authorInitials}</div>
               <div className="author-h">작성자</div>
               <div className="author-name">{post.author}</div>
-              <p className="author-bio">AI 에이전트가 최신 기술 트렌드를 분석하고 작성한 글입니다. 사람 편집자가 검수합니다.</p>
+              <p className="author-bio">AI 에이전트가 최신 기술 트렌드를 분석하고 작성했습니다. 사람 편집자가 검수합니다.</p>
             </div>
 
             <div className="article-info">
               <div className="article-info-h">이 글에 대해</div>
-              <div className="article-info-row">
-                <span>읽기 시간</span>
-                <span>{mins}분</span>
-              </div>
-              <div className="article-info-row">
-                <span>단어 수</span>
-                <span>{wordCount.toLocaleString()}</span>
-              </div>
-              <div className="article-info-row">
-                <span>섹션</span>
-                <span>{headings.filter(h => h.level === 2).length}</span>
-              </div>
-              <div className="article-info-row">
-                <span>발행일</span>
-                <span>{dateStr}</span>
-              </div>
+              <div className="article-info-row"><span>읽기 시간</span><span>{mins}분</span></div>
+              <div className="article-info-row"><span>단어 수</span><span>{wordCount.toLocaleString()}</span></div>
+              <div className="article-info-row"><span>섹션</span><span>{headings.filter(h => h.level === 2).length}</span></div>
+              <div className="article-info-row"><span>발행일</span><span style={{ fontSize: 11 }}>{dateStr}</span></div>
             </div>
 
             <div className="actions-rail">
               <CopyLinkBtn />
               <ShareBtn />
-              <button type="button" className="action-btn">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                </svg>
-                북마크
-              </button>
-            </div>
-
-            {/* Article ad */}
-            <div className="ad-in-article" style={{ margin: '0 0 24px' }}>
-              <div className="ad-in-article-tag">광고</div>
-              <p className="ad-in-article-body" style={{ fontSize: 14 }}>300 × 250</p>
-              <div className="ad-in-article-meta">Rectangle Ad</div>
             </div>
           </aside>
         </div>
 
-        {/* Related articles */}
+        {/* Related posts */}
         {relatedPosts.length > 0 && (
           <div className="related">
             <div className="related-h">
-              <span className="num">¶</span> 같은 주제의 글
+              <span className="num">✦</span> 같은 주제의 글
             </div>
             <div className="related-grid">
-              {relatedPosts.map((p) => {
-                const rHue = categoryHue(p.category);
-                const rMark = String(p.id).padStart(2, '0');
+              {relatedPosts.map(p => {
+                const rt = catTone(p.category);
                 return (
-                  <Link key={p.id} href={`/blog/${p.slug}`} className="card">
-                    <Cover hue={rHue} mark={rMark} kicker={p.category} shape="card" />
-                    <div className="card-cat">{p.category}</div>
-                    <h3 className="card-title">{p.title}</h3>
-                    <p className="card-sub">{p.excerpt}</p>
-                    <div className="card-foot">
-                      <span className="ai-mini">AI · 작성</span>
-                      <span>{p.reading_time}분</span>
+                  <Link key={p.id} href={`/blog/${p.slug}`} className="card card-link">
+                    <div className={`card-thumb thumb-${rt}`}>{p.category}</div>
+                    <div className="card-body">
+                      <div className="card-meta">
+                        <span className={`badge badge-${rt}`}>{p.category}</span>
+                      </div>
+                      <h3 className="card-title">{p.title}</h3>
+                      <p className="card-excerpt">{p.excerpt}</p>
+                      <div className="card-foot">
+                        <span>{p.reading_time}분 읽기</span>
+                      </div>
                     </div>
                   </Link>
                 );
