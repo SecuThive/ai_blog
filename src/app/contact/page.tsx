@@ -149,11 +149,11 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div style={{ color: 'var(--text-3)', fontSize: 12, marginBottom: 2 }}>제휴 / 광고</div>
-                    <a href="mailto:partners@nodelog.kr" style={{ color: 'var(--acc-blue)' }}>partners@nodelog.kr</a>
+                    <a href="mailto:thive8564@gmail.com" style={{ color: 'var(--acc-blue)' }}>thive8564@gmail.com</a>
                   </div>
                   <div>
                     <div style={{ color: 'var(--text-3)', fontSize: 12, marginBottom: 2 }}>제보 / 정정</div>
-                    <a href="mailto:tips@nodelog.kr" style={{ color: 'var(--acc-blue)' }}>tips@nodelog.kr</a>
+                    <a href="mailto:thive8564@gmail.com" style={{ color: 'var(--acc-blue)' }}>thive8564@gmail.com</a>
                   </div>
                 </div>
               </div>

@@ -42,7 +42,7 @@ export default function PolicyPage() {
               <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
             <div style={{ fontSize: 13.5, color: 'var(--text-2)' }}>
-              편집 정책에 대한 문의는 <a style={{ color: 'var(--acc-blue)' }} href="mailto:tips@nodelog.kr">tips@nodelog.kr</a> 로 보내주세요.
+              편집 정책에 대한 문의는 <a style={{ color: 'var(--acc-blue)' }} href="mailto:thive8564@gmail.com">thive8564@gmail.com</a> 로 보내주세요.
             </div>
           </div>
         </div>

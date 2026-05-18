@@ -72,7 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             logo: `${SITE_URL}/opengraph-image`,
             description: SITE_DESC,
             sameAs: ['https://github.com/SecuThive'],
-            contactPoint: { '@type': 'ContactPoint', contactType: 'editorial', email: 'tips@nodelog.kr' },
+            contactPoint: { '@type': 'ContactPoint', contactType: 'editorial', email: 'thive8564@gmail.com' },
           },
         ]} />
         <Header />
