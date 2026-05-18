@@ -3,6 +3,12 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 
+/* ===== Types ===== */
+export interface TickItem  { tag: string; title: string }
+export interface FeedItem  { time: string; tag: string; label: string; slug: string }
+export interface BarItem   { name: string; barW: string; tone: string }
+export interface TopicItem { tag: string; count: number; size: number }
+
 /* ===== Scroll Reveal Wrapper ===== */
 export function HomeScrollReveal({ children }: { children: React.ReactNode }) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -41,15 +47,7 @@ export function HomeScrollReveal({ children }: { children: React.ReactNode }) {
 }
 
 /* ===== Ticker Bar ===== */
-const TICKS = [
-  { t: 'AI',  l: 'GPT-5 Turbo 추론 비용 -28% 발표',           src: 'openai.com' },
-  { t: 'DEV', l: 'React 19.2 — Compiler 안정화 단계 진입',      src: 'react.dev' },
-  { t: 'INF', l: 'Postgres 17.2 — INCREMENTAL BACKUP GA',       src: 'postgresql.org' },
-  { t: 'SEC', l: 'Anthropic, MCP 보안 가이드라인 v1.0 발행',    src: 'anthropic.com' },
-  { t: 'PRO', l: 'Linear, AI Agent 워크플로우 베타 공개',        src: 'linear.app' },
-];
-
-export function TickerBar() {
+export function TickerBar({ ticks }: { ticks: TickItem[] }) {
   const [idx, setIdx] = useState(0);
   const [timeStr, setTimeStr] = useState('');
 
@@ -65,11 +63,13 @@ export function TickerBar() {
       setTimeStr(`${hhmm} KST · ${ymd}`);
     };
     fmt();
-    const id = setInterval(() => setIdx((v) => (v + 1) % TICKS.length), 3200);
-    return () => clearInterval(id);
-  }, []);
+    if (ticks.length > 1) {
+      const id = setInterval(() => setIdx((v) => (v + 1) % ticks.length), 3200);
+      return () => clearInterval(id);
+    }
+  }, [ticks.length]);
 
-  const cur = TICKS[idx];
+  const cur = ticks[idx % Math.max(ticks.length, 1)];
   return (
     <div className="heroX-top">
       <span className="live-dot" />
@@ -77,32 +77,19 @@ export function TickerBar() {
       <span className="sep">·</span>
       <span className="v">{timeStr}</span>
       <span className="sep">·</span>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-        <span className="feed-tag" style={{ fontSize: 9.5 }}>{cur.t}</span>
-        <span style={{ color: 'var(--text-2)' }}>{cur.l}</span>
-        <span style={{ color: 'var(--text-4)' }}>· {cur.src}</span>
-      </span>
+      {cur && (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <span className="feed-tag" style={{ fontSize: 9.5 }}>{cur.tag}</span>
+          <span style={{ color: 'var(--text-2)' }}>{cur.title}</span>
+        </span>
+      )}
       <span style={{ marginLeft: 'auto', color: 'var(--text-4)' }}>SIGNAL · NOMINAL</span>
     </div>
   );
 }
 
 /* ===== AI Control Panel ===== */
-const FEED = [
-  { t: '02:14', tag: 'AI',  l: 'gpt-5 추론 비용 감소',       src: 'openai.com' },
-  { t: '02:11', tag: 'INF', l: 'postgres 17.2 릴리스',        src: 'postgresql.org' },
-  { t: '02:08', tag: 'DEV', l: 'react 19.2 compiler',         src: 'react.dev' },
-  { t: '02:04', tag: 'SEC', l: 'mcp 보안 가이드 v1',           src: 'anthropic.com' },
-  { t: '02:00', tag: 'PRO', l: 'linear agent beta',            src: 'linear.app' },
-];
-const TOPIC_BARS = [
-  { name: 'AI · MCP',    barW: '92%', pct: '312%', tone: '' },
-  { name: '인프라',       barW: '68%', pct: '148%', tone: 't-amber' },
-  { name: '개발 · React', barW: '54%', pct: '96%',  tone: 't-mint' },
-  { name: '보안',         barW: '34%', pct: '42%',  tone: 't-rose' },
-];
-
-export function ControlPanel() {
+export function ControlPanel({ feed, bars }: { feed: FeedItem[]; bars: BarItem[] }) {
   const [pulse, setPulse] = useState(0);
 
   useEffect(() => {
@@ -130,23 +117,24 @@ export function ControlPanel() {
         <div className="ctrl-section">
           <h6>INDEX FEED · LIVE</h6>
           <ul className="feed-list">
-            {FEED.map((f, i) => (
+            {feed.map((f, i) => (
               <li key={i} className="feed-item">
-                <span className="feed-time">{f.t}</span>
+                <span className="feed-time">{f.time}</span>
                 <span>
                   <span className="feed-tag" style={{ marginRight: 8 }}>{f.tag}</span>
-                  <span className="feed-label">{f.l}</span>
+                  <Link href={`/blog/${f.slug}`} className="feed-label" style={{ color: 'inherit', textDecoration: 'none' }}>
+                    {f.label}
+                  </Link>
                 </span>
-                <span className="feed-source">{f.src}</span>
               </li>
             ))}
           </ul>
         </div>
 
         <div className="ctrl-section">
-          <h6>TOPIC ACTIVITY · 24H</h6>
+          <h6>TOPIC ACTIVITY · 게시물 수</h6>
           <div className="topic-bars">
-            {TOPIC_BARS.map((bar, i) => (
+            {bars.map((bar, i) => (
               <div
                 key={i}
                 className={`topic-bar${bar.tone ? ' ' + bar.tone : ''}`}
@@ -154,7 +142,7 @@ export function ControlPanel() {
               >
                 <span className="name">{bar.name}</span>
                 <div className="track"><div className="fill" /></div>
-                <span className="pct">{bar.pct}</span>
+                <span className="pct">{bar.barW}</span>
               </div>
             ))}
           </div>
@@ -211,7 +199,6 @@ export function SignalDashboard() {
         </div>
 
         <div className="signal-grid">
-          {/* MCP */}
           <div className="signal-card">
             <div className="signal-head">
               <span className="signal-eye">TOP MOVER · 24H</span>
@@ -231,7 +218,6 @@ export function SignalDashboard() {
             </div>
           </div>
 
-          {/* PG17 */}
           <div className="signal-card">
             <div className="signal-head">
               <span className="signal-eye">RISING · 24H</span>
@@ -251,7 +237,6 @@ export function SignalDashboard() {
             </div>
           </div>
 
-          {/* CURSOR */}
           <div className="signal-card">
             <div className="signal-head">
               <span className="signal-eye">SLOW BURN · 14D</span>
@@ -272,7 +257,6 @@ export function SignalDashboard() {
           </div>
         </div>
 
-        {/* Heatmap */}
         <div style={{ marginTop: 32, padding: 24, border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', background: 'var(--bg-2)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
             <div>
@@ -310,16 +294,7 @@ export function SignalDashboard() {
 }
 
 /* ===== Topic Cloud ===== */
-const TOPICS: [string, number][] = [
-  ['GPT-5', 5], ['Claude', 4], ['MCP', 5], ['Agent', 4],
-  ['React 19', 4], ['Cursor', 3], ['Postgres', 3], ['Edge', 3],
-  ['WASM', 2], ['Passkey', 2], ['Notion', 2], ['Linear', 2],
-  ['RAG', 2], ['Embeddings', 1], ['Cloudflare', 1], ['AWS', 1],
-  ['TypeScript', 3], ['Whisper', 1], ['CI/CD', 1], ['Tauri', 1],
-  ['Kubernetes', 2], ['LLM', 4], ['OWASP', 1], ['Auth', 1],
-];
-
-export function TopicCloud() {
+export function TopicCloud({ topics }: { topics: TopicItem[] }) {
   return (
     <section className="section">
       <div className="container">
@@ -328,7 +303,7 @@ export function TopicCloud() {
             <span className="num">05 / TOPICS</span>
             <div>
               <h2>지금 가장 많이 다루는 주제</h2>
-              <p className="sub">크기는 지난 30일 글 수 + 검색 빈도의 가중치. 클릭하면 해당 태그 페이지로 이동.</p>
+              <p className="sub">크기는 지난 글 수 기준. 클릭하면 해당 태그 페이지로 이동.</p>
             </div>
           </div>
           <Link href="/tags" className="section-link">
@@ -340,17 +315,20 @@ export function TopicCloud() {
         </div>
         <div className="cloud-band">
           <div className="cloud-row">
-            {TOPICS.map(([label, size], i) => (
+            {topics.map(({ tag, count, size }, i) => (
               <Link
-                key={label}
-                href={`/tag/${encodeURIComponent(label)}`}
+                key={tag}
+                href={`/tag/${encodeURIComponent(tag)}`}
                 className={`cloud-chip s-${size}`}
                 style={{ '--i': i } as React.CSSProperties}
               >
-                {label}
-                <span className="n">{Math.floor(size * 60 + ((i * 17 + 7) % 30))}</span>
+                {tag}
+                <span className="n">{count}</span>
               </Link>
             ))}
+            {topics.length === 0 && (
+              <span style={{ color: 'var(--text-4)', fontSize: 13 }}>태그를 준비 중입니다.</span>
+            )}
           </div>
         </div>
       </div>

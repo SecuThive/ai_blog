@@ -8,6 +8,10 @@ import {
   SignalDashboard,
   TopicCloud,
   HomeScrollReveal,
+  type TickItem,
+  type FeedItem,
+  type BarItem,
+  type TopicItem,
 } from '@/components/HomeClient';
 import SubscribeForm from '@/components/SubscribeForm';
 
@@ -80,11 +84,17 @@ function ArrowIcon({ size = 14 }: { size?: number }) {
 }
 
 /* ===== Hero v2 ===== */
-function HeroV2({ posts }: { posts: PostSummary[] }) {
+function HeroV2({ posts, ticks, feed, bars, seriesCount }: {
+  posts: PostSummary[];
+  ticks: TickItem[];
+  feed: FeedItem[];
+  bars: BarItem[];
+  seriesCount: number;
+}) {
   return (
     <section className="heroX">
       <div className="container">
-        <TickerBar />
+        <TickerBar ticks={ticks} />
         <div className="heroX-grid">
           <div>
             <span className="hero-status">
@@ -125,7 +135,7 @@ function HeroV2({ posts }: { posts: PostSummary[] }) {
                 <div className="stat-sub">PUBLISHED · 누적</div>
               </div>
               <div>
-                <div className="stat-num">4</div>
+                <div className="stat-num">{seriesCount}</div>
                 <div className="stat-sub">ACTIVE SERIES</div>
               </div>
               <div>
@@ -138,7 +148,7 @@ function HeroV2({ posts }: { posts: PostSummary[] }) {
               </div>
             </div>
           </div>
-          <ControlPanel />
+          <ControlPanel feed={feed} bars={bars} />
         </div>
       </div>
     </section>
@@ -564,6 +574,67 @@ function NewsletterBand() {
   );
 }
 
+const CAT_TAG: Record<string, string> = {
+  'AI & 자동화': 'AI', '개발': 'DEV', 'IT 트렌드': 'IT',
+  '인프라': 'INF', '보안': 'SEC', '툴 리뷰': 'TOOL',
+};
+const CAT_TONE: Record<string, string> = {
+  'AI & 자동화': '', '개발': 't-mint', 'IT 트렌드': 't-purple',
+  '보안': 't-rose', '툴 리뷰': 't-amber', '인프라': 't-amber',
+};
+
+function buildClientData(posts: PostSummary[]) {
+  const ticks: TickItem[] = posts.slice(0, 5).map(p => ({
+    tag: CAT_TAG[p.category] ?? p.category.slice(0, 3).toUpperCase(),
+    title: p.title,
+  }));
+
+  const feed: FeedItem[] = posts.slice(0, 5).map(p => {
+    const d = new Date(p.published_at);
+    const time = d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return {
+      time,
+      tag: CAT_TAG[p.category] ?? p.category.slice(0, 3).toUpperCase(),
+      label: p.title.length > 22 ? p.title.slice(0, 22) + '…' : p.title,
+      slug: p.slug,
+    };
+  });
+
+  const catCounts = new Map<string, number>();
+  for (const p of posts) {
+    catCounts.set(p.category, (catCounts.get(p.category) ?? 0) + 1);
+  }
+  const maxCat = Math.max(...Array.from(catCounts.values()), 1);
+  const bars: BarItem[] = Array.from(catCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([name, count]) => ({
+      name,
+      barW: Math.round((count / maxCat) * 100) + '%',
+      tone: CAT_TONE[name] ?? '',
+    }));
+
+  const tagCounts = new Map<string, number>();
+  for (const p of posts) {
+    for (const t of p.tags) {
+      if (!t.startsWith('series:')) {
+        tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1);
+      }
+    }
+  }
+  const maxTag = Math.max(...Array.from(tagCounts.values()), 1);
+  const topics: TopicItem[] = Array.from(tagCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 24)
+    .map(([tag, count]) => ({
+      tag,
+      count,
+      size: count >= maxTag * 0.75 ? 5 : count >= maxTag * 0.5 ? 4 : count >= maxTag * 0.25 ? 3 : count > 1 ? 2 : 1,
+    }));
+
+  return { ticks, feed, bars, topics };
+}
+
 /* ===== Page ===== */
 export default async function HomePage() {
   const [posts, series] = await Promise.all([getPosts(), getSeries()]);
@@ -584,14 +655,16 @@ export default async function HomePage() {
     );
   }
 
+  const { ticks, feed, bars, topics } = buildClientData(posts);
+
   return (
     <HomeScrollReveal>
-      <HeroV2 posts={posts} />
+      <HeroV2 posts={posts} ticks={ticks} feed={feed} bars={bars} seriesCount={series.length} />
       <DailyBriefing posts={posts} />
       <SignalDashboard />
       <ReadingLanes posts={posts} />
       <MagLatest posts={posts.slice(1, 8)} />
-      <TopicCloud />
+      <TopicCloud topics={topics} />
       <EditorQuote />
       <SeriesShowcase series={series} />
       <AIRecommendBlock posts={posts.slice(5, 8)} />
