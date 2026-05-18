@@ -4,6 +4,7 @@ import { unstable_noStore as noStore } from 'next/cache';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import JsonLd from '@/components/JsonLd';
 import PostThumb from '@/components/PostThumb';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -67,22 +68,33 @@ export async function generateStaticParams() {
   return ((data ?? []) as { slug: string }[]).map(p => ({ slug: p.slug }));
 }
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPost(slug);
   if (!post) return { title: '포스트를 찾을 수 없습니다' };
+  const url = `${SITE_URL}/blog/${post.slug}`;
+  const cleanTags = post.tags.filter(t => !t.startsWith('series:'));
   return {
     title: post.title,
     description: post.excerpt,
+    keywords: cleanTags.join(', '),
+    authors: [{ name: post.author }],
+    alternates: { canonical: url },
     openGraph: {
       title: post.title,
       description: post.excerpt,
       type: 'article',
+      url,
       publishedTime: post.published_at ?? undefined,
+      authors: [post.author],
+      tags: cleanTags,
       images: post.cover_image
         ? [{ url: post.cover_image, width: 1200, height: 630 }]
-        : [],
+        : [{ url: `${SITE_URL}/blog/${post.slug}/opengraph-image`, width: 1200, height: 630 }],
     },
+    twitter: { card: 'summary_large_image', title: post.title, description: post.excerpt },
   };
 }
 
@@ -171,8 +183,42 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   ]);
   const mdComponents = makeMdComponents();
 
+  const postUrl = `${SITE_URL}/blog/${post.slug}`;
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: post.title,
+    description: post.excerpt,
+    url: postUrl,
+    datePublished: post.published_at,
+    dateModified: post.published_at,
+    author: { '@type': 'Person', name: post.author },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Nodelog',
+      url: SITE_URL,
+      logo: { '@type': 'ImageObject', url: `${SITE_URL}/opengraph-image` },
+    },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl },
+    ...(post.cover_image ? { image: { '@type': 'ImageObject', url: post.cover_image, width: 1200, height: 630 } } : {}),
+    keywords: post.tags.filter(t => !t.startsWith('series:')).join(', '),
+    articleSection: post.category,
+    inLanguage: 'ko',
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: '홈', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: post.category, item: `${SITE_URL}/category/${encodeURIComponent(post.category)}` },
+      { '@type': 'ListItem', position: 3, name: post.title, item: postUrl },
+    ],
+  };
+
   return (
     <div>
+      <JsonLd data={[articleSchema, breadcrumbSchema]} />
       <ProgressBar />
       <ScrollToTopBtn />
       <MobileActionBar />

@@ -7,6 +7,7 @@ import { engCatTone, diffLabel } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from '@/components/CodeBlock';
+import JsonLd from '@/components/JsonLd';
 
 export const revalidate = 60;
 
@@ -53,13 +54,27 @@ export async function generateStaticParams() {
   return ((data ?? []) as { slug: string }[]).map(g => ({ slug: g.slug }));
 }
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const guide = await getGuide(slug);
   if (!guide) return { title: '가이드를 찾을 수 없습니다' };
+  const url = `${SITE_URL}/engineer/${guide.slug}`;
   return {
     title: `${guide.title} — Nodelog Engineer`,
     description: guide.summary,
+    keywords: guide.tags.join(', '),
+    authors: [{ name: guide.author }],
+    alternates: { canonical: url },
+    openGraph: {
+      title: `${guide.title} — Nodelog Engineer`,
+      description: guide.summary,
+      type: 'article',
+      url,
+      images: [{ url: `${SITE_URL}/engineer/${guide.slug}/opengraph-image`, width: 1200, height: 630 }],
+    },
+    twitter: { card: 'summary_large_image', title: guide.title, description: guide.summary },
   };
 }
 
@@ -153,8 +168,43 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
     ? new Date(guide.updated_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
     : null;
 
+  const guideUrl = `${SITE_URL}/engineer/${guide.slug}`;
+  const techArticleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline: guide.title,
+    description: guide.summary,
+    url: guideUrl,
+    datePublished: guide.created_at,
+    dateModified: guide.updated_at,
+    author: { '@type': 'Organization', name: guide.author, url: SITE_URL },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Nodelog',
+      url: SITE_URL,
+      logo: { '@type': 'ImageObject', url: `${SITE_URL}/opengraph-image` },
+    },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': guideUrl },
+    keywords: guide.tags.join(', '),
+    articleSection: guide.category,
+    proficiencyLevel: guide.difficulty === 'beginner' ? 'Beginner' : guide.difficulty === 'advanced' ? 'Expert' : 'Intermediate',
+    inLanguage: 'ko',
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: '홈', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: '엔지니어', item: `${SITE_URL}/engineer` },
+      { '@type': 'ListItem', position: 3, name: guide.category, item: `${SITE_URL}/engineer?cat=${encodeURIComponent(guide.category)}` },
+      { '@type': 'ListItem', position: 4, name: guide.title, item: guideUrl },
+    ],
+  };
+
   return (
     <div>
+      <JsonLd data={[techArticleSchema, breadcrumbSchema]} />
       {/* Hero */}
       <div className="article-hero">
         <div className="container">

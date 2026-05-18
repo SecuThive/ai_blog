@@ -8,10 +8,24 @@ import type { Metadata } from 'next';
 
 export const revalidate = 60;
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+
 export async function generateMetadata({ params }: { params: Promise<{ cat: string }> }): Promise<Metadata> {
   const { cat: rawCat } = await params;
   const cat = decodeURIComponent(rawCat);
-  return { title: `${cat} — Nodelog`, description: `${cat} 카테고리의 AI 분석 포스트` };
+  const url = `${SITE_URL}/category/${rawCat}`;
+  return {
+    title: `${cat} — Nodelog`,
+    description: `${cat} 카테고리의 AI 분석 포스트`,
+    alternates: { canonical: url },
+    openGraph: {
+      title: `${cat} — Nodelog`,
+      description: `${cat} 카테고리의 AI 분석 포스트`,
+      url,
+      type: 'website',
+    },
+    twitter: { card: 'summary_large_image' },
+  };
 }
 
 export async function generateStaticParams() {

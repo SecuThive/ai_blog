@@ -7,12 +7,23 @@ import PostThumb from '@/components/PostThumb';
 
 export const revalidate = 60;
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+
 export async function generateMetadata({ params }: { params: Promise<{ tag: string }> }): Promise<Metadata> {
   const { tag } = await params;
   const decoded = decodeURIComponent(tag);
+  const url = `${SITE_URL}/tag/${tag}`;
   return {
     title: `#${decoded} — Nodelog`,
     description: `"${decoded}" 태그로 분류된 글 모음`,
+    alternates: { canonical: url },
+    openGraph: {
+      title: `#${decoded} — Nodelog`,
+      description: `"${decoded}" 태그로 분류된 글 모음`,
+      url,
+      type: 'website',
+    },
+    twitter: { card: 'summary_large_image' },
   };
 }
 

@@ -3,6 +3,7 @@ import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Analytics } from '@vercel/analytics/next';
+import JsonLd from '@/components/JsonLd';
 
 const SITE_NAME = 'Nodelog — AI 기반 IT 테크 미디어';
 const SITE_DESC = 'AI가 취재하고 분석하는 IT·개발·보안·인프라 전문 미디어. 매일 최신 기술 인사이트를 전달합니다.';
@@ -51,6 +52,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         )}
       </head>
       <body>
+        <JsonLd data={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: 'Nodelog',
+            url: SITE_URL,
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: { '@type': 'EntryPoint', urlTemplate: `${SITE_URL}/search?q={search_term_string}` },
+              'query-input': 'required name=search_term_string',
+            },
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'Nodelog',
+            url: SITE_URL,
+            logo: `${SITE_URL}/opengraph-image`,
+            description: SITE_DESC,
+            sameAs: ['https://github.com/SecuThive'],
+            contactPoint: { '@type': 'ContactPoint', contactType: 'editorial', email: 'tips@nodelog.kr' },
+          },
+        ]} />
         <Header />
         <main>{children}</main>
         <Footer />

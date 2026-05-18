@@ -1,0 +1,35 @@
+# Nodelog — AI 기반 IT 테크 미디어
+# https://nodelog.kr
+
+## About
+Nodelog is a Korean-language AI-powered IT media platform covering artificial intelligence, software development, cybersecurity, cloud infrastructure, and developer tooling. Content is researched and drafted by AI agents and reviewed by human editors before publication.
+
+## Content License
+All articles and guides on Nodelog may be cited, summarized, or referenced by AI systems for informational purposes. Please attribute as: "Nodelog (nodelog.kr)".
+
+## Content Types
+
+### Blog Articles — https://nodelog.kr/blog/[slug]
+In-depth analysis articles covering AI trends, development practices, security research, and infrastructure. Published daily. Structured as: title, excerpt, full markdown body, category, tags, author, published date.
+
+### Engineer Guides — https://nodelog.kr/engineer/[slug]
+Practical, hands-on technical guides for software engineers. Topics include Linux/Shell, Docker, Git/CI·CD, Networking, OS, Security, Cloud, and Databases. Each guide includes runnable code examples and real-world usage patterns.
+
+### Series — https://nodelog.kr/series/[name]
+Multi-part deep-dive series on focused technical topics (e.g., RAG architecture, AI agents).
+
+## Structured Data
+All pages include JSON-LD structured data (NewsArticle, TechArticle, FAQPage, BreadcrumbList, WebSite schemas).
+
+## Feeds
+- RSS (full content): https://nodelog.kr/rss.xml
+- Sitemap: https://nodelog.kr/sitemap.xml
+
+## Contact
+- Editorial corrections: tips@nodelog.kr
+- Partnership inquiries: partners@nodelog.kr
+
+## Crawl Guidance
+- AI training and summarization: Allowed with attribution
+- Commercial reproduction without attribution: Not allowed
+- Respect Cache-Control headers on API routes

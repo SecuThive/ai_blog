@@ -48,12 +48,23 @@ export async function generateStaticParams() {
   return names.map(n => ({ id: n }));
 }
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const seriesName = decodeURIComponent(id);
+  const url = `${SITE_URL}/series/${id}`;
   return {
     title: `${seriesName} — Nodelog 시리즈`,
     description: `${seriesName} 시리즈의 모든 에피소드를 순서대로 탐색하세요.`,
+    alternates: { canonical: url },
+    openGraph: {
+      title: `${seriesName} — Nodelog 시리즈`,
+      description: `${seriesName} 시리즈의 모든 에피소드를 순서대로 탐색하세요.`,
+      url,
+      type: 'website',
+    },
+    twitter: { card: 'summary_large_image' },
   };
 }
 
