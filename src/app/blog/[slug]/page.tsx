@@ -1,5 +1,5 @@
-import { readingTime } from '@/lib/supabase';
-import { createClient } from '@supabase/supabase-js';
+import { readingTime, makeFreshClient } from '@/lib/supabase';
+import { catTone } from '@/lib/utils';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
@@ -9,21 +9,6 @@ import remarkGfm from 'remark-gfm';
 import { ProgressBar, TableOfContents, CopyLinkBtn, ScrollToTopBtn, ShareBtn, MobileActionBar, ArticleFeedback } from './ArticleClient';
 
 export const revalidate = 60;
-
-function makeFreshClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? '';
-  return createClient(url, key);
-}
-
-function catTone(cat: string): string {
-  if (cat.includes('AI') || cat.includes('자동화')) return 'blue';
-  if (cat.includes('트렌드') || cat.includes('IT')) return 'purple';
-  if (cat.includes('개발') || cat.includes('인프라')) return 'mint';
-  if (cat.includes('툴') || cat.includes('리뷰')) return 'amber';
-  if (cat.includes('보안')) return 'rose';
-  return 'blue';
-}
 
 async function getAdjacentPosts(publishedAt: string, id: number): Promise<{ prev: { title: string; slug: string } | null; next: { title: string; slug: string } | null }> {
   noStore();

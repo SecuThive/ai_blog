@@ -1,7 +1,6 @@
 import Link from 'next/link';
-import { createClient } from '@supabase/supabase-js';
-import { readingTime } from '@/lib/supabase';
-import { toneForSeries } from '@/lib/utils';
+import { readingTime, makeFreshClient } from '@/lib/supabase';
+import { catTone, toneForSeries } from '@/lib/utils';
 import type { PostSummary } from '@/lib/types';
 import {
   TickerBar,
@@ -10,14 +9,9 @@ import {
   TopicCloud,
   HomeScrollReveal,
 } from '@/components/HomeClient';
+import SubscribeForm from '@/components/SubscribeForm';
 
 export const revalidate = 60;
-
-function makeFreshClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? '';
-  return createClient(url, key);
-}
 
 interface SeriesInfo {
   name: string;
@@ -74,15 +68,6 @@ function timeAgo(dateStr: string): string {
   const d = Math.floor(h / 24);
   if (d < 7) return `${d}일 전`;
   return new Date(dateStr).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-}
-
-function catTone(cat: string): string {
-  if (cat.includes('AI') || cat.includes('자동화')) return 'blue';
-  if (cat.includes('트렌드') || cat.includes('IT')) return 'purple';
-  if (cat.includes('개발') || cat.includes('인프라') || cat.includes('클라우드')) return 'mint';
-  if (cat.includes('툴') || cat.includes('리뷰') || cat.includes('생산성')) return 'amber';
-  if (cat.includes('보안')) return 'rose';
-  return 'blue';
 }
 
 /* ===== Arrow icon ===== */
@@ -238,23 +223,18 @@ function DailyBriefing({ posts }: { posts: PostSummary[] }) {
 }
 
 /* ===== Reading Lanes ===== */
-const LANES = [
+const LANE_DEFS = [
   {
-    tag: 'DEV', title: '개발자',
+    tag: 'DEV', title: '개발자', category: '개발',
     sub: '코드를 쓰는 시간을 더 똑똑하게 만드는 도구와 패턴.',
     icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
       </svg>
     ),
-    steps: [
-      { t: 'React 19 — Compiler 시대의 코드 다이어트', m: '8분 · BEGINNER', href: '/category/개발' },
-      { t: 'Cursor·Zed·Helix 풀 비교', m: '17분 · INTERMEDIATE', href: '/category/개발' },
-      { t: 'TypeScript 5.6 Conditional Types', m: '7분 · ADVANCED', href: '/category/개발' },
-    ],
   },
   {
-    tag: 'AI', title: 'AI 실무자',
+    tag: 'AI', title: 'AI 실무자', category: 'AI & 자동화',
     sub: 'GPT·Claude·MCP를 실제 업무 흐름에 녹여 넣는 법.',
     icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -262,43 +242,28 @@ const LANES = [
         <path d="M5 3l.5 1.5L7 5l-1.5.5L5 7l-.5-1.5L3 5l1.5-.5z" />
       </svg>
     ),
-    steps: [
-      { t: 'GPT-5 에이전트로 80% 자동화한 4주', m: '11분 · CASE STUDY', href: '/category/AI & 자동화' },
-      { t: 'MCP로 만드는 사내 AI 데이터 허브', m: '12분 · DEEP DIVE', href: '/category/AI & 자동화' },
-      { t: '회의록을 안 쓰는 팀의 비밀', m: '9분 · WORKFLOW', href: '/category/AI & 자동화' },
-    ],
   },
   {
-    tag: 'SEC', title: '보안 담당',
+    tag: 'SEC', title: '보안 담당', category: '보안',
     sub: 'AI 시대의 새로운 위협 모델과 실무 방어 전략.',
     icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       </svg>
     ),
-    steps: [
-      { t: 'AI 코딩의 새로운 공급망 공격', m: '13분 · THREAT', href: '/category/보안' },
-      { t: 'Passkey 도입 전 체크리스트 9가지', m: '11분 · OPERATIONS', href: '/category/보안' },
-      { t: 'OWASP를 넘어, 2026년의 위협 지도', m: '14분 · STRATEGY', href: '/category/보안' },
-    ],
   },
   {
-    tag: 'PRO', title: '시니어 · PM',
+    tag: 'PRO', title: '시니어 · PM', category: 'IT 트렌드',
     sub: '시간·정보·도구를 다루는 비동기 워크플로우.',
     icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M12 2L8.5 9H1l6 5.5L4.5 22 12 17l7.5 5-2.5-7.5L23 9h-7.5z" />
       </svg>
     ),
-    steps: [
-      { t: '주 4일제 팀의 비동기 워크플로우 5가지', m: '10분 · TEAM', href: '/category/IT 트렌드' },
-      { t: '음성→결정사항 자동 추출 파이프라인', m: '9분 · TOOLING', href: '/category/IT 트렌드' },
-      { t: '서버리스의 종말? WASM 비교 매트릭스', m: '15분 · DECISION', href: '/category/IT 트렌드' },
-    ],
   },
 ];
 
-function ReadingLanes() {
+function ReadingLanes({ posts }: { posts: PostSummary[] }) {
   return (
     <section className="section">
       <div className="container">
@@ -308,7 +273,7 @@ function ReadingLanes() {
             <div>
               <h2>당신의 자리에서 시작하기</h2>
               <p className="sub">
-                역할별로 정리된 3편의 학습 경로. 입문 → 깊이 → 의사결정의 흐름으로 자연스럽게 이어집니다.
+                역할별로 정리된 학습 경로. 입문 → 깊이 → 의사결정의 흐름으로 자연스럽게 이어집니다.
               </p>
             </div>
           </div>
@@ -318,35 +283,46 @@ function ReadingLanes() {
         </div>
 
         <div className="lanes">
-          {LANES.map((lane, i) => (
-            <div key={i} className="lane">
-              <div className="lane-head">
-                <div>
-                  <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 10.5, color: 'var(--text-4)', letterSpacing: '0.10em', marginBottom: 6 }}>
-                    LANE · {lane.tag}
-                  </div>
-                  <h4>{lane.title}</h4>
-                </div>
-                <span className="ic">{lane.icon}</span>
-              </div>
-              <p className="lane-sub">{lane.sub}</p>
-              <div className="lane-steps">
-                {lane.steps.map((step, j) => (
-                  <Link key={j} className="lane-step" href={step.href}>
-                    <span className="num">{String(j + 1).padStart(2, '0')}</span>
-                    <div>
-                      <p className="t">{step.t}</p>
-                      <p className="m">{step.m}</p>
+          {LANE_DEFS.map((lane, i) => {
+            const lanePosts = posts.filter(p => p.category === lane.category).slice(0, 3);
+            return (
+              <div key={i} className="lane">
+                <div className="lane-head">
+                  <div>
+                    <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 10.5, color: 'var(--text-4)', letterSpacing: '0.10em', marginBottom: 6 }}>
+                      LANE · {lane.tag}
                     </div>
-                  </Link>
-                ))}
+                    <h4>{lane.title}</h4>
+                  </div>
+                  <span className="ic">{lane.icon}</span>
+                </div>
+                <p className="lane-sub">{lane.sub}</p>
+                <div className="lane-steps">
+                  {lanePosts.length > 0 ? lanePosts.map((p, j) => (
+                    <Link key={p.id} className="lane-step" href={`/blog/${p.slug}`}>
+                      <span className="num">{String(j + 1).padStart(2, '0')}</span>
+                      <div>
+                        <p className="t">{p.title}</p>
+                        <p className="m">{p.reading_time}분 읽기</p>
+                      </div>
+                    </Link>
+                  )) : (
+                    <Link className="lane-step" href={`/category/${lane.category}`}>
+                      <span className="num">→</span>
+                      <div>
+                        <p className="t">{lane.category} 글 보러가기</p>
+                        <p className="m">카테고리 전체</p>
+                      </div>
+                    </Link>
+                  )}
+                </div>
+                <div className="lane-foot">
+                  <span>{lanePosts.length} STEPS</span>
+                  <Link href={`/category/${lane.category}`}>전체 보기 →</Link>
+                </div>
               </div>
-              <div className="lane-foot">
-                <span>{lane.steps.length} STEPS</span>
-                <Link href="/curated">전체 경로 →</Link>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
@@ -577,10 +553,7 @@ function NewsletterBand() {
             <p>가장 의미 있는 변화 5개, 실무에 적용 가능한 도구 3개, 그리고 가장 깊이 있는 시리즈 1편. 4,200명이 구독 중.</p>
           </div>
           <div>
-            <form className="subscribe-form" action="#" method="post">
-              <input className="input" type="email" name="email" placeholder="email@example.com" />
-              <button type="submit" className="btn btn-primary">구독</button>
-            </form>
+            <SubscribeForm compact />
             <p style={{ marginTop: 10, fontSize: 12, color: 'var(--text-4)', fontFamily: 'var(--ff-mono)', letterSpacing: '0.04em' }}>
               NO SPAM · 언제든 해지 가능 · 평균 6분 분량
             </p>
@@ -616,7 +589,7 @@ export default async function HomePage() {
       <HeroV2 posts={posts} />
       <DailyBriefing posts={posts} />
       <SignalDashboard />
-      <ReadingLanes />
+      <ReadingLanes posts={posts} />
       <MagLatest posts={posts.slice(1, 8)} />
       <TopicCloud />
       <EditorQuote />

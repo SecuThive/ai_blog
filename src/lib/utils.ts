@@ -1,3 +1,12 @@
+export function catTone(cat: string): string {
+  if (cat.includes('AI') || cat.includes('자동화')) return 'blue';
+  if (cat.includes('트렌드') || cat.includes('IT')) return 'purple';
+  if (cat.includes('개발') || cat.includes('인프라')) return 'mint';
+  if (cat.includes('툴') || cat.includes('리뷰')) return 'amber';
+  if (cat.includes('보안')) return 'rose';
+  return 'blue';
+}
+
 export function toneForSeries(name: string): string {
   if (name.includes('RAG') || name.includes('벡터')) return 'blue';
   if (name.includes('AI') || name.includes('자동화') || name.includes('에이전트') || name.includes('Agent')) return 'blue';

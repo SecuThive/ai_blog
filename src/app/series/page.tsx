@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { createClient } from '@supabase/supabase-js';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
+import { makeFreshClient } from '@/lib/supabase';
 import { toneForSeries } from '@/lib/utils';
 
 export const metadata: Metadata = {
@@ -10,12 +10,6 @@ export const metadata: Metadata = {
 };
 
 export const revalidate = 60;
-
-function makeFreshClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? '';
-  return createClient(url, key);
-}
 
 interface SeriesInfo {
   name: string;

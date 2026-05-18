@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import SubscribeForm from '@/components/SubscribeForm';
 
 export const metadata: Metadata = {
   title: '구독하기 — Nodelog',
@@ -36,10 +37,7 @@ export default function SubscribePage() {
               <p style={{ color: 'var(--text-3)', margin: 0, fontSize: 14 }}>4,200명이 이미 구독 중입니다.</p>
             </div>
             <div>
-              <form className="subscribe-form" action="#" method="post">
-                <input className="input" type="email" name="email" placeholder="email@example.com" required />
-                <button type="submit" className="btn btn-primary">구독하기</button>
-              </form>
+              <SubscribeForm />
               <p style={{ marginTop: 12, fontSize: 12, color: 'var(--text-4)', fontFamily: 'var(--ff-mono)', letterSpacing: '0.04em' }}>
                 NO SPAM · 언제든 해지 가능 · 4,200명 구독 중
               </p>
