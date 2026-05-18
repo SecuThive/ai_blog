@@ -1,23 +1,55 @@
 import type { Metadata } from 'next';
+import { makeFreshClient } from '@/lib/supabase';
 
 export const metadata: Metadata = {
   title: 'About — Nodelog',
   description: 'Nodelog는 AI 에이전트와 사람 편집자가 함께 운영하는 IT 미디어입니다.',
 };
 
-const STATS = [
-  { num: '957', label: 'PUBLISHED POSTS', sub: '2024년 9월부터' },
-  { num: '4,128', label: 'SOURCES MONITORED', sub: '뉴스 · 릴리스 · 논문 · 변경 로그' },
-  { num: '38', label: 'ACTIVE SERIES', sub: '학습 경로형 콘텐츠' },
-  { num: '92%', label: 'FACT-CHECK PASS', sub: '편집자 1차 검토 기준' },
-  { num: '4.2K', label: 'SUBSCRIBERS', sub: '주간 뉴스레터' },
-  { num: '14분', label: 'AVG READ TIME', sub: '실제 체류 데이터' },
-];
+export const revalidate = 3600;
+
+interface SiteStats {
+  postCount: number;
+  seriesCount: number;
+  subscriberCount: number;
+  guideCount: number;
+}
+
+async function getStats(): Promise<SiteStats> {
+  const client = makeFreshClient();
+
+  const [postsRes, subscribersRes, guidesRes] = await Promise.all([
+    client.from('posts').select('tags', { count: 'exact', head: false }).eq('status', 'published'),
+    client.from('subscribers').select('id', { count: 'exact', head: true }),
+    client.from('engineer_guides').select('id', { count: 'exact', head: true }).eq('status', 'published'),
+  ]);
+
+  const posts = (postsRes.data ?? []) as { tags: string[] }[];
+  const postCount = posts.length;
+
+  const seriesSet = new Set<string>();
+  for (const p of posts) {
+    const tag = (p.tags ?? []).find((t: string) => t.startsWith('series:'));
+    if (tag) seriesSet.add(tag);
+  }
+
+  return {
+    postCount,
+    seriesCount: seriesSet.size,
+    subscriberCount: subscribersRes.count ?? 0,
+    guideCount: guidesRes.count ?? 0,
+  };
+}
+
+function formatNum(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return String(n);
+}
 
 const STEPS = [
-  { n: '01', t: '수집', d: '4,128개 소스 (공식 블로그·릴리스 노트·논문·OSS 커밋·X 신호)를 실시간 색인.' },
+  { n: '01', t: '수집', d: '공식 블로그·릴리스 노트·논문·OSS 커밋·X 신호를 실시간 색인.' },
   { n: '02', t: '신호 분석', d: '단순 빈도가 아닌 변화율·중요도·맥락 점수를 계산. 일·주·월 단위로 추세화.' },
-  { n: '03', t: '초고 생성', d: 'Claude·GPT-5 기반 에이전트가 1차 정리. 모든 출처가 함께 기록됩니다.' },
+  { n: '03', t: '초고 생성', d: 'Claude 기반 에이전트가 1차 정리. 모든 출처가 함께 기록됩니다.' },
   { n: '04', t: '편집자 검토', d: '사실관계, 톤, 맥락의 적절성을 사람이 점검. 출처를 재확인.' },
   { n: '05', t: '발행', d: '카테고리·시리즈·태그·관련 글 자동 연결. 메타데이터 색인.' },
   { n: '06', t: '피드백 학습', d: '독자의 완독·체류·피드백 데이터가 다음 추천 모델로 환류됩니다.' },
@@ -30,7 +62,18 @@ const PRINCIPLES = [
   { t: '실패도 다룹니다', d: '도입에 실패한 도구, 잘못된 판단의 회고를 거르지 않습니다.' },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const stats = await getStats();
+
+  const STATS = [
+    { num: `${stats.postCount}+`, label: 'PUBLISHED POSTS', sub: '2024년 9월부터' },
+    { num: `${stats.guideCount}+`, label: 'ENGINEER GUIDES', sub: 'Linux · Docker · Git · 보안' },
+    { num: String(stats.seriesCount), label: 'ACTIVE SERIES', sub: '학습 경로형 콘텐츠' },
+    { num: '92%', label: 'FACT-CHECK PASS', sub: '편집자 1차 검토 기준' },
+    { num: stats.subscriberCount > 0 ? formatNum(stats.subscriberCount) : '—', label: 'SUBSCRIBERS', sub: '주간 뉴스레터' },
+    { num: '14분', label: 'AVG READ TIME', sub: '실제 체류 데이터' },
+  ];
+
   return (
     <div>
       <section className="page-hero">
@@ -38,7 +81,7 @@ export default function AboutPage() {
           <div className="page-eyebrow">ABOUT NODELOG</div>
           <h1 className="page-title">AI가 운영하는 IT 미디어,<br />그러나 결정은 사람이.</h1>
           <p className="page-lead">
-            Nodelog는 4,128개의 IT 소스를 24시간 모니터링하는 AI 큐레이션 시스템과,
+            Nodelog는 최신 IT 소스를 24시간 모니터링하는 AI 큐레이션 시스템과,
             매일 그 결과를 검토하는 한 명의 편집자가 함께 운영하는 디지털 미디어입니다.
           </p>
         </div>

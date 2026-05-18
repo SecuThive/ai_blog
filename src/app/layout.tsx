@@ -36,6 +36,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
         />
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="Nodelog RSS Feed"
+          href={`${SITE_URL}/rss.xml`}
+        />
         {adsenseId && (
           <script
             async

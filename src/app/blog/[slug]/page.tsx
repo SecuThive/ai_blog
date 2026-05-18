@@ -256,9 +256,9 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               {post.content}
             </ReactMarkdown>
 
-            {post.tags.length > 0 && (
+            {post.tags.filter(t => !t.startsWith('series:')).length > 0 && (
               <div className="end-tags">
-                {post.tags.map(tag => (
+                {post.tags.filter(t => !t.startsWith('series:')).map(tag => (
                   <span key={tag} className="end-tag">#{tag}</span>
                 ))}
               </div>

@@ -50,6 +50,13 @@ async function getSeries(): Promise<SeriesInfo[]> {
     .slice(0, 3);
 }
 
+async function getSubscriberCount(): Promise<number> {
+  const { count } = await makeFreshClient()
+    .from('subscribers')
+    .select('id', { count: 'exact', head: true });
+  return count ?? 0;
+}
+
 async function getPosts(): Promise<PostSummary[]> {
   const { data } = await makeFreshClient()
     .from('posts')
@@ -85,12 +92,14 @@ function ArrowIcon({ size = 14 }: { size?: number }) {
 }
 
 /* ===== Hero v2 ===== */
-function HeroV2({ posts, ticks, feed, bars, seriesCount }: {
+function HeroV2({ posts, ticks, feed, bars, seriesCount, postCount, subscriberCount }: {
   posts: PostSummary[];
   ticks: TickItem[];
   feed: FeedItem[];
   bars: BarItem[];
   seriesCount: number;
+  postCount: number;
+  subscriberCount: number;
 }) {
   return (
     <section className="heroX">
@@ -132,7 +141,7 @@ function HeroV2({ posts, ticks, feed, bars, seriesCount }: {
             </div>
             <div className="heroX-meta">
               <div>
-                <div className="stat-num">{posts.length > 0 ? `${posts.length}+` : '—'}</div>
+                <div className="stat-num">{postCount > 0 ? `${postCount}+` : '—'}</div>
                 <div className="stat-sub">PUBLISHED · 누적</div>
               </div>
               <div>
@@ -140,11 +149,11 @@ function HeroV2({ posts, ticks, feed, bars, seriesCount }: {
                 <div className="stat-sub">ACTIVE SERIES</div>
               </div>
               <div>
-                <div className="stat-num">4,128</div>
-                <div className="stat-sub">SOURCES · 모니터링</div>
+                <div className="stat-num">AI</div>
+                <div className="stat-sub">CURATED · 24/7</div>
               </div>
               <div>
-                <div className="stat-num">4.2K</div>
+                <div className="stat-num">{subscriberCount > 0 ? (subscriberCount >= 1000 ? `${(subscriberCount / 1000).toFixed(1)}K` : String(subscriberCount)) : '—'}</div>
                 <div className="stat-sub">SUBSCRIBERS</div>
               </div>
             </div>
@@ -551,7 +560,10 @@ function AIRecommendBlock({ posts }: { posts: PostSummary[] }) {
 }
 
 /* ===== Newsletter Band ===== */
-function NewsletterBand() {
+function NewsletterBand({ subscriberCount }: { subscriberCount: number }) {
+  const subLabel = subscriberCount > 0
+    ? `${subscriberCount >= 1000 ? (subscriberCount / 1000).toFixed(1) + 'K' : subscriberCount}명이 구독 중.`
+    : '지금 바로 구독하세요.';
   return (
     <section className="section">
       <div className="container">
@@ -559,7 +571,7 @@ function NewsletterBand() {
           <div>
             <div className="section-eyebrow" style={{ marginBottom: 14 }}>NEWSLETTER · WEEKLY · 매주 화요일</div>
             <h3>한 주의 IT를, AI가 정리해 보냅니다.</h3>
-            <p>가장 의미 있는 변화 5개, 실무에 적용 가능한 도구 3개, 그리고 가장 깊이 있는 시리즈 1편. 4,200명이 구독 중.</p>
+            <p>가장 의미 있는 변화 5개, 실무에 적용 가능한 도구 3개, 그리고 가장 깊이 있는 시리즈 1편. {subLabel}</p>
           </div>
           <div>
             <SubscribeForm compact />
@@ -636,7 +648,7 @@ function buildClientData(posts: PostSummary[]) {
 
 /* ===== Page ===== */
 export default async function HomePage() {
-  const [posts, series] = await Promise.all([getPosts(), getSeries()]);
+  const [posts, series, subscriberCount] = await Promise.all([getPosts(), getSeries(), getSubscriberCount()]);
 
   if (posts.length === 0) {
     return (
@@ -658,7 +670,7 @@ export default async function HomePage() {
 
   return (
     <HomeScrollReveal>
-      <HeroV2 posts={posts} ticks={ticks} feed={feed} bars={bars} seriesCount={series.length} />
+      <HeroV2 posts={posts} ticks={ticks} feed={feed} bars={bars} seriesCount={series.length} postCount={posts.length} subscriberCount={subscriberCount} />
       <DailyBriefing posts={posts} />
       <SignalDashboard />
       <ReadingLanes posts={posts} />
@@ -667,7 +679,7 @@ export default async function HomePage() {
       <EditorQuote />
       <SeriesShowcase series={series} />
       <AIRecommendBlock posts={posts.slice(5, 8)} />
-      <NewsletterBand />
+      <NewsletterBand subscriberCount={subscriberCount} />
     </HomeScrollReveal>
   );
 }

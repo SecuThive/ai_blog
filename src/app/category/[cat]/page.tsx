@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ cat: stri
 }
 
 export async function generateStaticParams() {
-  return ['AI & 자동화', '개발', '툴 리뷰', 'IT 트렌드', '보안'].map(cat => ({ cat }));
+  return ['AI & 자동화', '개발', '툴 리뷰', 'IT 트렌드', '보안', '인프라'].map(cat => ({ cat }));
 }
 
 function timeAgo(dateStr: string): string {
@@ -29,11 +29,13 @@ function timeAgo(dateStr: string): string {
 }
 
 const ALL_CATS = [
-  { label: '전체', href: '/' },
-  { label: 'AI 자동화', href: '/category/AI & 자동화' },
-  { label: 'IT 트렌드', href: '/category/IT 트렌드' },
-  { label: '개발', href: '/category/개발' },
-  { label: '툴 리뷰', href: '/category/툴 리뷰' },
+  { label: '전체', href: '/', cat: '' },
+  { label: 'AI 자동화', href: '/category/AI & 자동화', cat: 'AI & 자동화' },
+  { label: 'IT 트렌드', href: '/category/IT 트렌드', cat: 'IT 트렌드' },
+  { label: '개발', href: '/category/개발', cat: '개발' },
+  { label: '툴 리뷰', href: '/category/툴 리뷰', cat: '툴 리뷰' },
+  { label: '보안', href: '/category/보안', cat: '보안' },
+  { label: '인프라', href: '/category/인프라', cat: '인프라' },
 ];
 
 export default async function CategoryPage({ params }: { params: Promise<{ cat: string }> }) {
@@ -71,15 +73,18 @@ export default async function CategoryPage({ params }: { params: Promise<{ cat: 
         {/* Filter tabs */}
         <div className="filter-row" style={{ marginTop: 0 }}>
           <span className="label">카테고리</span>
-          {ALL_CATS.map(c => (
-            <Link
-              key={c.href}
-              href={c.href}
-              className={`filter-tab${c.label === cat || (c.label === '전체' && false) ? ' active' : ''}`}
-            >
-              {c.label === cat ? `● ${c.label}` : c.label}
-            </Link>
-          ))}
+          {ALL_CATS.map(c => {
+            const isActive = c.cat === cat;
+            return (
+              <Link
+                key={c.href}
+                href={c.href}
+                className={`filter-tab${isActive ? ' active' : ''}`}
+              >
+                {isActive ? `● ${c.label}` : c.label}
+              </Link>
+            );
+          })}
           <div style={{ flex: 1 }} />
           <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)' }}>
             {posts.length} POSTS

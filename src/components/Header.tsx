@@ -45,6 +45,7 @@ interface SearchResult {
   excerpt: string;
   category: string;
   published_at: string;
+  source?: 'post' | 'guide';
 }
 
 function SearchModal({ onClose }: { onClose: () => void }) {
@@ -134,18 +135,23 @@ function SearchModal({ onClose }: { onClose: () => void }) {
             <div className="search-section-title">
               {loading ? '검색 중…' : `글 · ${results.length}건`}
             </div>
-            {results.map(p => (
-              <Link key={p.id} href={`/blog/${p.slug}`} className="search-result" onClick={onClose}>
-                <span className={`badge badge-${catTone(p.category)}`} style={{ flexShrink: 0 }}>{p.category}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, color: 'var(--text-1)', lineHeight: 1.4 }}>{p.title}</div>
-                  <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', marginTop: 3 }}>{p.category}</div>
-                </div>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ color: 'var(--text-4)', flexShrink: 0 }}>
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </Link>
-            ))}
+            {results.map(p => {
+              const href = p.source === 'guide' ? `/engineer/${p.slug}` : `/blog/${p.slug}`;
+              return (
+                <Link key={`${p.source}-${p.id}`} href={href} className="search-result" onClick={onClose}>
+                  <span className={`badge badge-${catTone(p.category)}`} style={{ flexShrink: 0 }}>{p.category}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, color: 'var(--text-1)', lineHeight: 1.4 }}>{p.title}</div>
+                    <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', marginTop: 3 }}>
+                      {p.source === 'guide' ? 'ENGINEER GUIDE' : p.category}
+                    </div>
+                  </div>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ color: 'var(--text-4)', flexShrink: 0 }}>
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </Link>
+              );
+            })}
             {results.length === 0 && !loading && (
               <div style={{ padding: '20px 18px', color: 'var(--text-3)', fontSize: 14 }}>
                 &quot;{q}&quot;에 대한 결과를 찾을 수 없습니다.
@@ -255,7 +261,6 @@ export default function Header() {
               {n.label}
             </Link>
           ))}
-          <Link href="/engineer" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>엔지니어</Link>
           <Link href="/tags" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>태그</Link>
           <Link href="/archive" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>아카이브</Link>
           <Link href="/trending" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>트렌딩</Link>

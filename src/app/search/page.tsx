@@ -11,6 +11,7 @@ interface SearchResult {
   excerpt: string;
   category: string;
   published_at: string;
+  source?: 'post' | 'guide';
 }
 
 function catTone(cat: string) {
@@ -101,12 +102,19 @@ function SearchContent() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {results.map(p => {
                     const tone = catTone(p.category);
+                    const isGuide = p.source === 'guide';
+                    const href = isGuide ? `/engineer/${p.slug}` : `/blog/${p.slug}`;
                     return (
-                      <Link key={p.id} href={`/blog/${p.slug}`} className="card card-link" style={{ padding: 22, display: 'grid', gridTemplateColumns: '160px 1fr', gap: 22 }}>
+                      <Link key={`${p.source}-${p.id}`} href={href} className="card card-link" style={{ padding: 22, display: 'grid', gridTemplateColumns: '160px 1fr', gap: 22 }}>
                         <div className={`card-thumb thumb-${tone}`} style={{ aspectRatio: '16/10', borderRadius: 8 }}>{p.category}</div>
                         <div>
-                          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                          <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
                             <span className={`badge badge-${tone}`}>{p.category}</span>
+                            {isGuide && (
+                              <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 10, color: 'var(--text-4)', background: 'var(--bg-3)', borderRadius: 4, padding: '2px 6px', letterSpacing: '0.06em' }}>
+                                GUIDE
+                              </span>
+                            )}
                             <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', display: 'flex', alignItems: 'center' }}>
                               {new Date(p.published_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
                             </span>

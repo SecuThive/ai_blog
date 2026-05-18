@@ -4,11 +4,34 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 export default function ContactPage() {
-  const [submitted, setSubmitted] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [type, setType] = useState('');
+  const [company, setCompany] = useState('');
+  const [message, setMessage] = useState('');
+  const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitted(true);
+    setState('loading');
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, type, company, message }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setState('ok');
+      } else {
+        setState('error');
+        setErrorMsg(data.error ?? '오류가 발생했습니다.');
+      }
+    } catch {
+      setState('error');
+      setErrorMsg('네트워크 오류가 발생했습니다.');
+    }
   }
 
   return (
@@ -24,7 +47,7 @@ export default function ContactPage() {
       <section className="section">
         <div className="container" style={{ maxWidth: 980 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 48, alignItems: 'start' }}>
-            {submitted ? (
+            {state === 'ok' ? (
               <div className="card" style={{ padding: 48, textAlign: 'center' }}>
                 <div style={{ fontSize: 32, marginBottom: 16 }}>✓</div>
                 <h3 style={{ margin: '0 0 10px', fontSize: 20 }}>문의가 접수되었습니다</h3>
@@ -37,17 +60,37 @@ export default function ContactPage() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                     <div className="field">
                       <label>이름</label>
-                      <input className="input" placeholder="홍길동" required />
+                      <input
+                        className="input"
+                        placeholder="홍길동"
+                        required
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                        disabled={state === 'loading'}
+                      />
                     </div>
                     <div className="field">
                       <label>이메일</label>
-                      <input className="input" type="email" placeholder="you@company.com" required />
+                      <input
+                        className="input"
+                        type="email"
+                        placeholder="you@company.com"
+                        required
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        disabled={state === 'loading'}
+                      />
                     </div>
                   </div>
                   <div className="field">
                     <label>문의 유형</label>
-                    <select className="input" defaultValue="">
-                      <option value="" disabled>선택해주세요</option>
+                    <select
+                      className="input"
+                      value={type}
+                      onChange={e => setType(e.target.value)}
+                      disabled={state === 'loading'}
+                    >
+                      <option value="">선택해주세요</option>
                       <option>기사 제보 / 정정 요청</option>
                       <option>콘텐츠 제휴 / 협업</option>
                       <option>광고 / 스폰서십</option>
@@ -57,19 +100,39 @@ export default function ContactPage() {
                   </div>
                   <div className="field">
                     <label>회사 / 소속 (선택)</label>
-                    <input className="input" placeholder="Company name" />
+                    <input
+                      className="input"
+                      placeholder="Company name"
+                      value={company}
+                      onChange={e => setCompany(e.target.value)}
+                      disabled={state === 'loading'}
+                    />
                   </div>
                   <div className="field">
                     <label>메시지</label>
-                    <textarea className="input" rows={5} placeholder="구체적으로 알려주시면 빠른 답변에 도움이 됩니다." required style={{ resize: 'vertical', minHeight: 120 }} />
+                    <textarea
+                      className="input"
+                      rows={5}
+                      placeholder="구체적으로 알려주시면 빠른 답변에 도움이 됩니다."
+                      required
+                      value={message}
+                      onChange={e => setMessage(e.target.value)}
+                      disabled={state === 'loading'}
+                      style={{ resize: 'vertical', minHeight: 120 }}
+                    />
                   </div>
+                  {state === 'error' && (
+                    <p style={{ color: 'var(--acc-rose)', fontSize: 13, margin: 0 }}>{errorMsg}</p>
+                  )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
                     <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', letterSpacing: '0.04em' }}>평균 답변 시간 · 영업일 기준 36시간</div>
-                    <button className="btn btn-primary" type="submit">
-                      메시지 보내기
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M7 17L17 7M7 7h10v10" />
-                      </svg>
+                    <button className="btn btn-primary" type="submit" disabled={state === 'loading'}>
+                      {state === 'loading' ? '전송 중…' : '메시지 보내기'}
+                      {state !== 'loading' && (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M7 17L17 7M7 7h10v10" />
+                        </svg>
+                      )}
                     </button>
                   </div>
                 </div>
