@@ -1451,6 +1451,104 @@ mark { background: color-mix(in oklch, var(--acc-blue) 18%, transparent); color:
 .article-info-row:last-child { border-bottom: 0; }
 .article-info-row span:last-child { color: var(--text-2); }
 
+/* ── Code block 개선 ────────────────────────────────── */
+
+/* 언어 뱃지 */
+.code-lang-badge {
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-1);
+  flex-shrink: 0;
+}
+
+/* 복사 버튼 */
+.code-copy-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--text-4);
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--line-1);
+  background: transparent;
+  cursor: pointer;
+  transition: color 140ms, border-color 140ms, background 140ms;
+  white-space: nowrap;
+}
+.code-copy-btn:hover {
+  color: var(--text-1);
+  border-color: var(--line-2);
+  background: var(--bg-3);
+}
+.code-copy-btn.copied {
+  color: var(--acc-mint);
+  border-color: color-mix(in oklch, var(--acc-mint) 30%, transparent);
+}
+
+/* bash 주석 줄 */
+.cl-comment {
+  color: var(--text-4);
+  font-style: italic;
+}
+/* bash 프롬프트 줄 (> ...) */
+.cl-prompt {
+  color: var(--acc-mint);
+  opacity: 0.7;
+}
+
+/* 인라인 코드 구분 */
+.prose-inline-code {
+  font-family: var(--ff-mono);
+  font-size: 0.85em;
+  padding: 1px 6px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-1);
+  border-radius: 4px;
+  color: var(--acc-mint);
+  white-space: nowrap;
+}
+
+/* Callout 박스 (blockquote 대체) */
+.eng-callout {
+  display: flex;
+  gap: 12px;
+  margin: 24px 0;
+  padding: 14px 18px;
+  background: color-mix(in oklch, var(--acc-blue) 6%, var(--bg-2));
+  border: 1px solid color-mix(in oklch, var(--acc-blue) 20%, transparent);
+  border-left: 3px solid var(--acc-blue);
+  border-radius: var(--r-md);
+}
+.eng-callout-icon {
+  flex-shrink: 0;
+  color: var(--acc-blue);
+  margin-top: 2px;
+}
+.eng-callout-body {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+.eng-callout-body p { margin: 0; }
+.eng-callout-body p + p { margin-top: 6px; }
+
+/* 구분선 */
+.eng-hr {
+  border: 0;
+  height: 1px;
+  background: var(--line-1);
+  margin: 40px 0;
+}
+
 /* Responsive */
 @media (max-width: 960px) {
   .eng-cat-grid { grid-template-columns: repeat(2, 1fr); }

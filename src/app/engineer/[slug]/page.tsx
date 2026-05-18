@@ -6,6 +6,7 @@ import { makeFreshClient } from '@/lib/supabase';
 import { engCatTone, diffLabel } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import CodeBlock from '@/components/CodeBlock';
 
 export const revalidate = 60;
 
@@ -76,6 +77,23 @@ function extractHeadings(md: string) {
 
 function makeMdComponents() {
   return {
+    // 코드 블록: pre를 가로채 CodeBlock으로 교체
+    pre: ({ children }: { children?: React.ReactNode }) => {
+      const child = Array.isArray(children) ? children[0] : children;
+      if (child && typeof child === 'object' && 'props' in (child as object)) {
+        const { className, children: code } = (child as React.ReactElement<{ className?: string; children?: React.ReactNode }>).props;
+        const match = /language-(\w+)/.exec(className ?? '');
+        const lang = match?.[1];
+        const content = String(code ?? '').replace(/\n$/, '');
+        return <CodeBlock code={content} lang={lang} />;
+      }
+      return <pre>{children}</pre>;
+    },
+    // 인라인 코드 (백틱 한 개)
+    code: ({ children, className }: { children?: React.ReactNode; className?: string }) => {
+      if (className?.startsWith('language-')) return <code>{children}</code>;
+      return <code className="prose-inline-code">{children}</code>;
+    },
     h2: ({ children }: { children?: React.ReactNode }) => {
       const id = String(children).toLowerCase().replace(/[^a-z0-9가-힣]+/g, '-').replace(/^-|-$/g, '');
       return <h2 id={id}>{children}</h2>;
@@ -84,8 +102,16 @@ function makeMdComponents() {
       const id = String(children).toLowerCase().replace(/[^a-z0-9가-힣]+/g, '-').replace(/^-|-$/g, '');
       return <h3 id={id}>{children}</h3>;
     },
+    // blockquote → callout 박스 (팁/주의)
     blockquote: ({ children }: { children?: React.ReactNode }) => (
-      <blockquote className="prose-callout">{children}</blockquote>
+      <div className="eng-callout">
+        <div className="eng-callout-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+        </div>
+        <div className="eng-callout-body">{children}</div>
+      </div>
     ),
     table: ({ children }: { children?: React.ReactNode }) => (
       <div className="prose-table-wrap"><table>{children}</table></div>
@@ -95,7 +121,7 @@ function makeMdComponents() {
     tr: ({ children }: { children?: React.ReactNode }) => <tr>{children}</tr>,
     th: ({ children }: { children?: React.ReactNode }) => <th>{children}</th>,
     td: ({ children }: { children?: React.ReactNode }) => <td>{children}</td>,
-    hr: () => <hr />,
+    hr: () => <hr className="eng-hr" />,
   };
 }
 
