@@ -1392,6 +1392,11 @@ mark { background: color-mix(in oklch, var(--acc-blue) 18%, transparent); color:
 
 .eng-cat-card .eng-cat-icon { color: var(--eng-acc, var(--acc-blue)); }
 .eng-cat-card:hover { border-color: color-mix(in oklch, var(--eng-acc, var(--acc-blue)) 30%, transparent); }
+.eng-cat-active {
+  border-color: color-mix(in oklch, var(--eng-acc, var(--acc-blue)) 50%, transparent) !important;
+  background: color-mix(in oklch, var(--eng-acc, var(--acc-blue)) 8%, var(--bg-2)) !important;
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--eng-acc, var(--acc-blue)) 25%, transparent);
+}
 
 /* Guide list */
 .eng-guide-list {

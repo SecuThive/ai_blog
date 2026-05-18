@@ -96,14 +96,16 @@ const CATEGORIES = [
   },
 ];
 
-async function getGuides(): Promise<EngineerGuide[]> {
+async function getGuides(category?: string): Promise<EngineerGuide[]> {
   noStore();
-  const { data } = await makeFreshClient()
+  let q = makeFreshClient()
     .from('engineer_guides')
     .select('*')
     .eq('status', 'published')
-    .order('created_at', { ascending: false })
-    .limit(24);
+    .order('created_at', { ascending: false });
+  if (category) q = q.eq('category', category);
+  else q = q.limit(24);
+  const { data } = await q;
   return (data ?? []) as EngineerGuide[];
 }
 
@@ -129,9 +131,12 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
 }
 
-export default async function EngineerPage() {
-  const [guides, counts] = await Promise.all([getGuides(), getCategoryCounts()]);
-  const totalGuides = guides.length;
+export default async function EngineerPage({ searchParams }: { searchParams: Promise<{ cat?: string }> }) {
+  const { cat: rawCat } = await searchParams;
+  const activeCat = rawCat ? decodeURIComponent(rawCat) : undefined;
+
+  const [guides, counts] = await Promise.all([getGuides(activeCat), getCategoryCounts()]);
+  const totalGuides = Object.values(counts).reduce((a, b) => a + b, 0);
 
   return (
     <div>
@@ -139,14 +144,20 @@ export default async function EngineerPage() {
       <section className="page-hero">
         <div className="container">
           <div className="page-eyebrow">ENGINEER · 엔지니어 가이드</div>
-          <h1 className="page-title">엔지니어 레퍼런스</h1>
+          <h1 className="page-title">{activeCat ?? '엔지니어 레퍼런스'}</h1>
           <p className="page-lead">
-            Linux, Docker, Git, 네트워킹, 보안 설정 등 실무에서 바로 써먹는 기술 가이드 모음.
-            설정 방법부터 트러블슈팅까지 단계별로 정리했습니다.
+            {activeCat
+              ? CATEGORIES.find(c => c.name === activeCat)?.desc ?? '해당 카테고리의 가이드 모음.'
+              : 'Linux, Docker, Git, 네트워킹, 보안 설정 등 실무에서 바로 써먹는 기술 가이드 모음.'}
           </p>
-          <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-3)', letterSpacing: '0.04em', marginTop: 14 }}>
-            <strong style={{ color: 'var(--text-1)', fontVariantNumeric: 'tabular-nums' }}>{totalGuides}</strong>
-            {' '}GUIDES · {CATEGORIES.length} CATEGORIES
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 14, flexWrap: 'wrap' }}>
+            <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-3)', letterSpacing: '0.04em' }}>
+              <strong style={{ color: 'var(--text-1)', fontVariantNumeric: 'tabular-nums' }}>{totalGuides}</strong>
+              {' '}GUIDES · {CATEGORIES.length} CATEGORIES
+            </div>
+            {activeCat && (
+              <Link href="/engineer" className="btn btn-sm btn-ghost">← 전체 보기</Link>
+            )}
           </div>
         </div>
       </section>
@@ -162,11 +173,12 @@ export default async function EngineerPage() {
             {CATEGORIES.map(cat => {
               const tone = engCatTone(cat.name);
               const count = counts[cat.name] ?? 0;
+              const isActive = activeCat === cat.name;
               return (
                 <Link
                   key={cat.name}
-                  href={`/engineer?cat=${encodeURIComponent(cat.name)}`}
-                  className={`eng-cat-card eng-cat-${tone}`}
+                  href={isActive ? '/engineer' : `/engineer?cat=${encodeURIComponent(cat.name)}`}
+                  className={`eng-cat-card eng-cat-${tone}${isActive ? ' eng-cat-active' : ''}`}
                 >
                   <div className="eng-cat-icon">{cat.icon}</div>
                   <div className="eng-cat-name">{cat.name}</div>
@@ -183,7 +195,12 @@ export default async function EngineerPage() {
       <section className="section">
         <div className="container">
           <div className="section-eyebrow" style={{ marginBottom: 4 }}>GUIDES</div>
-          <h2 style={{ margin: '0 0 24px', fontSize: 20, letterSpacing: '-0.02em' }}>최근 가이드</h2>
+          <h2 style={{ margin: '0 0 24px', fontSize: 20, letterSpacing: '-0.02em' }}>
+            {activeCat ? `${activeCat} 가이드` : '최근 가이드'}
+            <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 13, fontWeight: 400, color: 'var(--text-4)', marginLeft: 10 }}>
+              {guides.length}
+            </span>
+          </h2>
 
           {guides.length === 0 ? (
             <div className="card" style={{ padding: 56, textAlign: 'center' }}>
