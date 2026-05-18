@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import type { Metadata } from 'next';
+import { toneForSeries } from '@/lib/utils';
 
 export const revalidate = 60;
 
@@ -10,15 +11,6 @@ function makeFreshClient() {
   return createClient(url, key);
 }
 
-function catTone(cat: string): string {
-  if (cat.includes('AI') || cat.includes('자동화')) return 'blue';
-  if (cat.includes('트렌드') || cat.includes('IT')) return 'purple';
-  if (cat.includes('개발') || cat.includes('인프라')) return 'mint';
-  if (cat.includes('툴') || cat.includes('리뷰')) return 'amber';
-  if (cat.includes('보안')) return 'rose';
-  return 'blue';
-}
-
 interface PostRow {
   id: number;
   title: string;
@@ -26,42 +18,53 @@ interface PostRow {
   category: string;
   excerpt: string;
   published_at: string;
-  content?: string;
+  tags: string[];
 }
 
-async function getCategoryPosts(category: string): Promise<PostRow[]> {
+async function getSeriesPosts(seriesName: string): Promise<PostRow[]> {
   const { data } = await makeFreshClient()
     .from('posts')
-    .select('id,title,slug,category,excerpt,published_at')
+    .select('id,title,slug,category,excerpt,published_at,tags')
     .eq('status', 'published')
-    .eq('category', category)
+    .contains('tags', [`series:${seriesName}`])
     .order('published_at', { ascending: true });
   return (data ?? []) as PostRow[];
 }
 
-export async function generateStaticParams() {
+async function getAllSeriesNames(): Promise<string[]> {
   const { data } = await makeFreshClient()
     .from('posts')
-    .select('category')
+    .select('tags')
     .eq('status', 'published');
-  const cats = [...new Set((data ?? []).map((p: { category: string }) => p.category))];
-  return cats.map(c => ({ id: encodeURIComponent(c) }));
+
+  const names = new Set<string>();
+  for (const p of (data ?? [])) {
+    const tags: string[] = p.tags ?? [];
+    const seriesTag = tags.find((t: string) => t.startsWith('series:'));
+    if (seriesTag) names.add(seriesTag.replace('series:', ''));
+  }
+  return Array.from(names);
+}
+
+export async function generateStaticParams() {
+  const names = await getAllSeriesNames();
+  return names.map(n => ({ id: encodeURIComponent(n) }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  const category = decodeURIComponent(id);
+  const seriesName = decodeURIComponent(id);
   return {
-    title: `${category} 시리즈 — Nodelog`,
-    description: `${category} 카테고리의 모든 글을 순서대로 탐색하세요.`,
+    title: `${seriesName} — Nodelog 시리즈`,
+    description: `${seriesName} 시리즈의 모든 에피소드를 순서대로 탐색하세요.`,
   };
 }
 
 export default async function SeriesDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const category = decodeURIComponent(id);
-  const posts = await getCategoryPosts(category);
-  const tone = catTone(category);
+  const seriesName = decodeURIComponent(id);
+  const posts = await getSeriesPosts(seriesName);
+  const tone = toneForSeries(seriesName);
 
   return (
     <div>
@@ -72,15 +75,15 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ i
             <span className="sep">/</span>
             <Link href="/series">시리즈</Link>
             <span className="sep">/</span>
-            <span style={{ color: 'var(--text-1)' }}>{category}</span>
+            <span style={{ color: 'var(--text-1)' }}>{seriesName}</span>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8, marginBottom: 12 }}>
-            <span className={`badge badge-${tone}`}>{category}</span>
+            <span className={`badge badge-${tone}`}>시리즈</span>
             <span className="badge">{posts.length}편</span>
           </div>
-          <h1 className="article-title">{category} 시리즈</h1>
+          <h1 className="article-title">{seriesName}</h1>
           <p className="article-deck">
-            {category} 카테고리의 {posts.length}편 글을 순서대로 탐색하세요.
+            {posts.length}편으로 구성된 심층 연재입니다.
             각 편은 독립적으로 읽어도 좋지만, 순서대로 따라가면 더 큰 그림이 보입니다.
           </p>
           {posts.length > 0 && (
@@ -173,8 +176,8 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ i
                     <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{posts.length}편</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--text-3)' }}>카테고리</span>
-                    <span className={`badge badge-${tone}`}>{category}</span>
+                    <span style={{ color: 'var(--text-3)' }}>형식</span>
+                    <span className={`badge badge-${tone}`}>연재 시리즈</span>
                   </div>
                   {posts.length > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>

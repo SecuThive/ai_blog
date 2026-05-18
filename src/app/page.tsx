@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { readingTime } from '@/lib/supabase';
+import { toneForSeries } from '@/lib/utils';
 import type { PostSummary } from '@/lib/types';
 import {
   TickerBar,
@@ -16,6 +17,38 @@ function makeFreshClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? '';
   return createClient(url, key);
+}
+
+interface SeriesInfo {
+  name: string;
+  count: number;
+  latestDate: string;
+  tone: string;
+}
+
+async function getSeries(): Promise<SeriesInfo[]> {
+  const { data } = await makeFreshClient()
+    .from('posts')
+    .select('tags,published_at')
+    .eq('status', 'published')
+    .order('published_at', { ascending: false });
+
+  const map = new Map<string, { count: number; latestDate: string }>();
+  for (const p of (data ?? [])) {
+    const tags: string[] = p.tags ?? [];
+    const seriesTag = tags.find((t: string) => t.startsWith('series:'));
+    if (!seriesTag) continue;
+    const seriesName = seriesTag.replace('series:', '');
+    if (!map.has(seriesName)) {
+      map.set(seriesName, { count: 0, latestDate: p.published_at ?? '' });
+    }
+    map.get(seriesName)!.count++;
+  }
+
+  return Array.from(map.entries())
+    .map(([name, v]) => ({ name, ...v, tone: toneForSeries(name) }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3);
 }
 
 async function getPosts(): Promise<PostSummary[]> {
@@ -430,13 +463,7 @@ function EditorQuote() {
 }
 
 /* ===== Series Showcase ===== */
-const SERIES_LIST = [
-  { label: 'AI 자동화', href: '/series/AI & 자동화', tone: 'blue', desc: 'GPT, Claude, MCP를 실무에 적용하는 방법을 단계별로 다룹니다.', count: 12 },
-  { label: 'IT 트렌드', href: '/series/IT 트렌드', tone: 'purple', desc: '매월 주요 기술 변화와 흐름을 분석하는 연재 시리즈입니다.', count: 8 },
-  { label: '개발 딥다이브', href: '/series/개발', tone: 'mint', desc: 'React, TypeScript, 인프라 등 개발 심화 주제를 탐구합니다.', count: 10 },
-];
-
-function SeriesShowcase() {
+function SeriesShowcase({ series }: { series: SeriesInfo[] }) {
   return (
     <section className="section" style={{ background: 'linear-gradient(180deg, transparent, rgba(20,24,36,0.4) 30%, transparent)' }}>
       <div className="container">
@@ -452,25 +479,33 @@ function SeriesShowcase() {
             전체 시리즈 <ArrowIcon size={14} />
           </Link>
         </div>
-        <div className="grid-3">
-          {SERIES_LIST.map((s) => (
-            <Link key={s.href} href={s.href} className="card card-link">
-              <div className={`card-thumb thumb-${s.tone}`} style={{ aspectRatio: '16/7' }}>
-                {s.label}
-              </div>
-              <div className="card-body">
-                <div className="card-meta">
-                  <span className={`badge badge-${s.tone}`}>SERIES</span>
-                  <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)' }}>
-                    {s.count}편
-                  </span>
+        {series.length === 0 ? (
+          <p style={{ color: 'var(--text-3)', textAlign: 'center', padding: '40px 0' }}>
+            시리즈를 준비 중입니다.
+          </p>
+        ) : (
+          <div className="grid-3">
+            {series.map((s) => (
+              <Link key={s.name} href={`/series/${encodeURIComponent(s.name)}`} className="card card-link">
+                <div className={`card-thumb thumb-${s.tone}`} style={{ aspectRatio: '16/7' }}>
+                  {s.name}
                 </div>
-                <h3 className="card-title">{s.label}</h3>
-                <p className="card-excerpt">{s.desc}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
+                <div className="card-body">
+                  <div className="card-meta">
+                    <span className={`badge badge-${s.tone}`}>SERIES</span>
+                    <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)' }}>
+                      {s.count}편
+                    </span>
+                  </div>
+                  <h3 className="card-title">{s.name}</h3>
+                  <p className="card-excerpt">
+                    {s.count}편으로 구성된 심층 연재. 처음부터 끝까지 따라가며 주제를 완전히 이해하세요.
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -558,7 +593,7 @@ function NewsletterBand() {
 
 /* ===== Page ===== */
 export default async function HomePage() {
-  const posts = await getPosts();
+  const [posts, series] = await Promise.all([getPosts(), getSeries()]);
 
   if (posts.length === 0) {
     return (
@@ -585,7 +620,7 @@ export default async function HomePage() {
       <MagLatest posts={posts.slice(1, 8)} />
       <TopicCloud />
       <EditorQuote />
-      <SeriesShowcase />
+      <SeriesShowcase series={series} />
       <AIRecommendBlock posts={posts.slice(5, 8)} />
       <NewsletterBand />
     </HomeScrollReveal>
