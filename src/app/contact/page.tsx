@@ -145,7 +145,7 @@ export default function ContactPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13.5 }}>
                   <div>
                     <div style={{ color: 'var(--text-3)', fontSize: 12, marginBottom: 2 }}>일반 문의</div>
-                    <a href="mailto:hello@nodelog.kr" style={{ color: 'var(--acc-blue)' }}>hello@nodelog.kr</a>
+                    <a href="mailto:thive8564@gmail.com" style={{ color: 'var(--acc-blue)' }}>thive8564@gmail.com</a>
                   </div>
                   <div>
                     <div style={{ color: 'var(--text-3)', fontSize: 12, marginBottom: 2 }}>제휴 / 광고</div>
