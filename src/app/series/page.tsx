@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
+import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { toneForSeries } from '@/lib/utils';
 
@@ -24,6 +25,7 @@ interface SeriesInfo {
 }
 
 async function getSeries(): Promise<SeriesInfo[]> {
+  noStore();
   const { data } = await makeFreshClient()
     .from('posts')
     .select('tags,published_at')

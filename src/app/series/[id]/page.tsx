@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
+import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { toneForSeries } from '@/lib/utils';
 
@@ -22,6 +23,7 @@ interface PostRow {
 }
 
 async function getSeriesPosts(seriesName: string): Promise<PostRow[]> {
+  noStore();
   const { data } = await makeFreshClient()
     .from('posts')
     .select('id,title,slug,category,excerpt,published_at,tags')
@@ -32,6 +34,7 @@ async function getSeriesPosts(seriesName: string): Promise<PostRow[]> {
 }
 
 async function getAllSeriesNames(): Promise<string[]> {
+  noStore();
   const { data } = await makeFreshClient()
     .from('posts')
     .select('tags')

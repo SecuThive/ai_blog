@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
+import { unstable_noStore as noStore } from 'next/cache';
 import { readingTime } from '@/lib/supabase';
 import type { PostSummary } from '@/lib/types';
 import type { Metadata } from 'next';
@@ -50,6 +51,7 @@ const ALL_CATS = [
 ];
 
 export default async function CategoryPage({ params }: { params: Promise<{ cat: string }> }) {
+  noStore();
   const { cat: rawCat } = await params;
   const cat = decodeURIComponent(rawCat);
   const tone = catTone(cat);
