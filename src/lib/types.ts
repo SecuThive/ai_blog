@@ -15,6 +15,23 @@ export interface Post {
   published_at: string | null;
 }
 
+export interface EngineerGuide {
+  id: number;
+  title: string;
+  slug: string;
+  summary: string;
+  content: string;
+  category: string;
+  tags: string[];
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  os_compat: string[];
+  author: string;
+  views: number;
+  status: 'draft' | 'published';
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PostSummary {
   id: number;
   title: string;

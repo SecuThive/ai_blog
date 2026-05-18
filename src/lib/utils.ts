@@ -7,6 +7,21 @@ export function catTone(cat: string): string {
   return 'blue';
 }
 
+export function engCatTone(cat: string): string {
+  if (cat.startsWith('Linux') || cat.startsWith('OS')) return 'mint';
+  if (cat.startsWith('Docker') || cat.startsWith('클라우드')) return 'blue';
+  if (cat.startsWith('Git')) return 'purple';
+  if (cat.startsWith('네트워킹') || cat.startsWith('데이터베이스')) return 'amber';
+  if (cat.startsWith('보안')) return 'rose';
+  return 'blue';
+}
+
+export function diffLabel(d: string): string {
+  if (d === 'intermediate') return '중급';
+  if (d === 'advanced') return '고급';
+  return '초급';
+}
+
 export function toneForSeries(name: string): string {
   if (name.includes('RAG') || name.includes('벡터')) return 'blue';
   if (name.includes('AI') || name.includes('자동화') || name.includes('에이전트') || name.includes('Agent')) return 'blue';

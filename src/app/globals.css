@@ -1340,3 +1340,118 @@ mark { background: color-mix(in oklch, var(--acc-blue) 18%, transparent); color:
   .hero h1 { font-size: 34px; }
   :root { --gutter: 16px; }
 }
+
+/* ===== Engineer section ===== */
+
+/* Category hub grid */
+.eng-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 0;
+}
+
+.eng-cat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-1);
+  background: var(--bg-2);
+  transition: border-color 180ms, background 180ms, transform 180ms;
+  cursor: pointer;
+}
+.eng-cat-card:hover {
+  background: var(--bg-3);
+  transform: translateY(-2px);
+}
+
+.eng-cat-icon {
+  width: 36px; height: 36px;
+  border-radius: var(--r-sm);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-3);
+}
+.eng-cat-name {
+  font-size: 14px; font-weight: 600; letter-spacing: -0.01em; color: var(--text-1);
+}
+.eng-cat-desc {
+  font-size: 12px; color: var(--text-3); line-height: 1.5; flex: 1;
+}
+.eng-cat-count {
+  font-family: var(--ff-mono); font-size: 11px; color: var(--text-4); letter-spacing: 0.04em;
+}
+
+/* Tone accents for category cards */
+.eng-cat-mint  { --eng-acc: var(--acc-mint); }
+.eng-cat-blue  { --eng-acc: var(--acc-blue); }
+.eng-cat-purple{ --eng-acc: var(--acc-purple); }
+.eng-cat-amber { --eng-acc: var(--acc-amber); }
+.eng-cat-rose  { --eng-acc: var(--acc-rose); }
+
+.eng-cat-card .eng-cat-icon { color: var(--eng-acc, var(--acc-blue)); }
+.eng-cat-card:hover { border-color: color-mix(in oklch, var(--eng-acc, var(--acc-blue)) 30%, transparent); }
+
+/* Guide list */
+.eng-guide-list {
+  display: flex; flex-direction: column;
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.eng-guide-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line-1);
+  transition: background 160ms;
+  cursor: pointer;
+}
+.eng-guide-row:last-child { border-bottom: 0; }
+.eng-guide-row:hover { background: var(--bg-2); }
+.eng-guide-left { flex: 1; min-width: 0; }
+.eng-guide-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.eng-guide-title {
+  font-size: 15.5px; font-weight: 600; letter-spacing: -0.015em;
+  color: var(--text-1); margin: 0 0 4px; line-height: 1.35;
+}
+.eng-guide-row:hover .eng-guide-title { color: var(--acc-blue); }
+.eng-guide-summary {
+  font-size: 13px; color: var(--text-3); margin: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Difficulty badge */
+.eng-diff {
+  font-family: var(--ff-mono); font-size: 10.5px; letter-spacing: 0.04em;
+  padding: 2px 7px; border-radius: 4px; font-weight: 500;
+}
+.eng-diff-beginner  { color: var(--acc-mint);   background: color-mix(in oklch, var(--acc-mint)   12%, transparent); border: 1px solid color-mix(in oklch, var(--acc-mint)   22%, transparent); }
+.eng-diff-intermediate { color: var(--acc-amber); background: color-mix(in oklch, var(--acc-amber) 12%, transparent); border: 1px solid color-mix(in oklch, var(--acc-amber) 22%, transparent); }
+.eng-diff-advanced  { color: var(--acc-rose);   background: color-mix(in oklch, var(--acc-rose)   12%, transparent); border: 1px solid color-mix(in oklch, var(--acc-rose)   22%, transparent); }
+
+/* OS tag */
+.eng-os-tag {
+  font-family: var(--ff-mono); font-size: 10.5px; letter-spacing: 0.04em;
+  padding: 2px 7px; border-radius: 4px;
+  color: var(--text-3); background: var(--bg-3); border: 1px solid var(--line-1);
+}
+
+/* Article info row (reuse in engineer sidebar) */
+.article-info { display: flex; flex-direction: column; gap: 0; }
+.article-info-h { font-family: var(--ff-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); margin-bottom: 12px; }
+.article-info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line-1); font-size: 13px; color: var(--text-3); }
+.article-info-row:last-child { border-bottom: 0; }
+.article-info-row span:last-child { color: var(--text-2); }
+
+/* Responsive */
+@media (max-width: 960px) {
+  .eng-cat-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .eng-cat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .eng-guide-row { flex-direction: column; align-items: flex-start; }
+  .eng-guide-right { display: none; }
+}

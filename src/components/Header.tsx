@@ -12,6 +12,7 @@ const NAV = [
   { href: '/category/개발', label: '개발' },
   { href: '/category/툴 리뷰', label: '리뷰' },
   { href: '/series', label: '시리즈' },
+  { href: '/engineer', label: '엔지니어' },
 ];
 
 function decode(path: string) {
@@ -254,6 +255,7 @@ export default function Header() {
               {n.label}
             </Link>
           ))}
+          <Link href="/engineer" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>엔지니어</Link>
           <Link href="/tags" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>태그</Link>
           <Link href="/archive" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>아카이브</Link>
           <Link href="/trending" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>트렌딩</Link>
