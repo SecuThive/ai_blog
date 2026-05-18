@@ -98,7 +98,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ cat: 
           <div className="grid-3" style={{ marginBottom: 80 }}>
             {posts.map(post => (
               <Link key={post.id} href={`/blog/${post.slug}`} className="card card-link">
-                <PostThumb slug={post.slug} title={post.title} coverImage={post.cover_image} />
+                <PostThumb slug={post.slug} title={post.title} coverImage={post.cover_image} category={post.category} />
                 <div className="card-body">
                   <div className="card-meta">
                     <span className={`badge badge-${tone}`}>{post.category}</span>

@@ -224,12 +224,20 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           </div>
 
           {/* Cover image */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={post.cover_image ?? `/blog/${encodeURIComponent(post.slug)}/opengraph-image`}
-            alt={post.title}
-            style={{ marginTop: 32, width: '100%', borderRadius: 'var(--r-lg)', border: '1px solid var(--line-1)', aspectRatio: '16/7', objectFit: 'cover', display: 'block' }}
-          />
+          {post.cover_image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={post.cover_image}
+              alt={post.title}
+              style={{ marginTop: 32, width: '100%', borderRadius: 'var(--r-lg)', border: '1px solid var(--line-1)', aspectRatio: '16/7', objectFit: 'cover', display: 'block' }}
+            />
+          ) : (
+            <div className={`article-thumb-ph thumb-${tone}`} style={{ marginTop: 32 }}>
+              <span style={{ fontSize: 120, fontWeight: 800, opacity: 0.07, color: 'currentColor', lineHeight: 1, fontFamily: 'var(--ff-serif, Georgia, serif)', letterSpacing: -4, userSelect: 'none', display: 'block', pointerEvents: 'none' }}>
+                {post.title.trim().charAt(0)}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -313,7 +321,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                 const rt = catTone(p.category);
                 return (
                   <Link key={p.id} href={`/blog/${p.slug}`} className="card card-link">
-                    <PostThumb slug={p.slug} title={p.title} coverImage={p.cover_image} />
+                    <PostThumb slug={p.slug} title={p.title} coverImage={p.cover_image} category={p.category} />
                     <div className="card-body">
                       <div className="card-meta">
                         <span className={`badge badge-${rt}`}>{p.category}</span>

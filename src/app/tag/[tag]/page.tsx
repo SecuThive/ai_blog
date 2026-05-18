@@ -111,7 +111,7 @@ export default async function TagDetailPage({ params }: { params: Promise<{ tag:
                     const tone = catTone(p.category);
                     return (
                       <Link key={p.id} href={`/blog/${p.slug}`} className="card card-link">
-                        <PostThumb slug={p.slug} title={p.title} coverImage={p.cover_image} />
+                        <PostThumb slug={p.slug} title={p.title} coverImage={p.cover_image} category={p.category} />
                         <div className="card-body">
                           <div className="card-meta">
                             <span className={`badge badge-${tone}`}>{p.category}</span>
