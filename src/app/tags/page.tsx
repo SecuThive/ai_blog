@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
+import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -27,6 +28,7 @@ function catTone(cat: string): string {
 interface TagInfo { tag: string; count: number }
 
 async function getTags(): Promise<{ popular: TagInfo[]; byCategory: { cat: string; tone: string; tags: TagInfo[] }[] }> {
+  noStore();
   const { data } = await makeFreshClient()
     .from('posts')
     .select('tags,category')

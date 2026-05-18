@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ cat: stri
 }
 
 export async function generateStaticParams() {
-  return ['AI & 자동화', '개발', '툴 리뷰', 'IT 트렌드'].map(cat => ({ cat }));
+  return ['AI & 자동화', '개발', '툴 리뷰', 'IT 트렌드', '보안'].map(cat => ({ cat }));
 }
 
 function timeAgo(dateStr: string): string {

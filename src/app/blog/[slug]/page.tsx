@@ -95,7 +95,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       publishedTime: post.published_at ?? undefined,
       images: post.cover_image
         ? [{ url: post.cover_image, width: 1200, height: 630 }]
-        : [{ url: '/og-default.png', width: 1200, height: 630 }],
+        : [],
     },
   };
 }

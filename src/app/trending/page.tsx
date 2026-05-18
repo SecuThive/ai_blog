@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
+import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -35,6 +36,7 @@ interface PostRow {
 }
 
 async function getTrending(): Promise<{ top: PostRow[]; all: PostRow[]; byCategory: { cat: string; tone: string; post: PostRow }[] }> {
+  noStore();
   const { data } = await makeFreshClient()
     .from('posts')
     .select('id,title,slug,excerpt,category,views,published_at')

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
+import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { readingTime } from '@/lib/supabase';
 
@@ -31,6 +32,7 @@ interface PostRow {
 }
 
 async function getPosts(): Promise<PostRow[]> {
+  noStore();
   const { data } = await makeFreshClient()
     .from('posts')
     .select('id,title,slug,excerpt,category,published_at,content')

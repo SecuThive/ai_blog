@@ -51,7 +51,7 @@ async function getAllSeriesNames(): Promise<string[]> {
 
 export async function generateStaticParams() {
   const names = await getAllSeriesNames();
-  return names.map(n => ({ id: encodeURIComponent(n) }));
+  return names.map(n => ({ id: n }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
