@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import JsonLd from '@/components/JsonLd';
-import FaqAccordion, { ITEMS } from './FaqAccordion';
+import FaqAccordion from './FaqAccordion';
+import { FAQ_ITEMS } from './data';
 
 export const metadata: Metadata = {
   title: 'FAQ — Nodelog',
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 const faqSchema = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
-  mainEntity: ITEMS.map(item => ({
+  mainEntity: FAQ_ITEMS.map(item => ({
     '@type': 'Question',
     name: item.q,
     acceptedAnswer: {
