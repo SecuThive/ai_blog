@@ -14,6 +14,7 @@ import {
   type TopicItem,
 } from '@/components/HomeClient';
 import SubscribeForm from '@/components/SubscribeForm';
+import PostThumb from '@/components/PostThumb';
 
 export const revalidate = 60;
 
@@ -183,9 +184,7 @@ function DailyBriefing({ posts }: { posts: PostSummary[] }) {
 
         <div className="brief-wrap">
           <Link className="brief-main" href={`/blog/${lead.slug}`}>
-            <div className={`ph card-thumb thumb-${leadTone}`}>
-              {lead.category} · LEAD STORY
-            </div>
+            <PostThumb slug={lead.slug} title={lead.title} coverImage={lead.cover_image} className="ph card-thumb" />
             <div className="brief-main-body">
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 0 }}>
                 <span className={`badge badge-${leadTone}`}>{lead.category}</span>
@@ -370,7 +369,7 @@ function MagLatest({ posts }: { posts: PostSummary[] }) {
 
         <div className="mag-grid">
           <Link className="card card-link mag-card-1" href={`/blog/${big.slug}`}>
-            <div className={`card-thumb thumb-${bigTone}`}>{big.category} · FEATURED</div>
+            <PostThumb slug={big.slug} title={big.title} coverImage={big.cover_image} />
             <div className="card-body" style={{ padding: '22px 24px 26px' }}>
               <div className="card-meta">
                 <span className={`badge badge-${bigTone}`}>{big.category}</span>
@@ -391,7 +390,7 @@ function MagLatest({ posts }: { posts: PostSummary[] }) {
             const tone = catTone(p.category);
             return (
               <Link key={p.id} href={`/blog/${p.slug}`} className="card card-link">
-                <div className={`card-thumb thumb-${tone}`}>{p.category}</div>
+                <PostThumb slug={p.slug} title={p.title} coverImage={p.cover_image} />
                 <div className="card-body">
                   <div className="card-meta">
                     <span className={`badge badge-${tone}`}>{p.category}</span>

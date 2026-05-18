@@ -3,6 +3,7 @@ import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { catTone } from '@/lib/utils';
+import PostThumb from '@/components/PostThumb';
 
 export const revalidate = 60;
 
@@ -18,20 +19,21 @@ export async function generateMetadata({ params }: { params: Promise<{ tag: stri
 interface PostRow {
   id: number; title: string; slug: string; excerpt: string;
   category: string; published_at: string; reading_time: number;
+  cover_image?: string;
 }
 
 async function getPostsByTag(tag: string): Promise<PostRow[]> {
   noStore();
   const { data } = await makeFreshClient()
     .from('posts')
-    .select('id,title,slug,excerpt,category,tags,published_at,views,content')
+    .select('id,title,slug,excerpt,cover_image,category,tags,published_at,views,content')
     .eq('status', 'published')
     .contains('tags', [tag])
     .order('published_at', { ascending: false });
   return (data ?? []).map((p: Record<string, unknown>) => ({
     id: p.id as number, title: p.title as string, slug: p.slug as string,
     excerpt: p.excerpt as string, category: p.category as string,
-    published_at: p.published_at as string,
+    published_at: p.published_at as string, cover_image: p.cover_image as string | undefined,
     reading_time: readingTime((p.content as string) ?? ''),
   }));
 }
@@ -109,7 +111,7 @@ export default async function TagDetailPage({ params }: { params: Promise<{ tag:
                     const tone = catTone(p.category);
                     return (
                       <Link key={p.id} href={`/blog/${p.slug}`} className="card card-link">
-                        <div className={`card-thumb thumb-${tone}`}>{p.category}</div>
+                        <PostThumb slug={p.slug} title={p.title} coverImage={p.cover_image} />
                         <div className="card-body">
                           <div className="card-meta">
                             <span className={`badge badge-${tone}`}>{p.category}</span>

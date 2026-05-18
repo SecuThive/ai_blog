@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { unstable_noStore as noStore } from 'next/cache';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { catTone } from '@/lib/utils';
+import PostThumb from '@/components/PostThumb';
 import type { PostSummary } from '@/lib/types';
 import type { Metadata } from 'next';
 
@@ -97,9 +98,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ cat: 
           <div className="grid-3" style={{ marginBottom: 80 }}>
             {posts.map(post => (
               <Link key={post.id} href={`/blog/${post.slug}`} className="card card-link">
-                <div className={`card-thumb thumb-${tone}`}>
-                  {post.category}
-                </div>
+                <PostThumb slug={post.slug} title={post.title} coverImage={post.cover_image} />
                 <div className="card-body">
                   <div className="card-meta">
                     <span className={`badge badge-${tone}`}>{post.category}</span>

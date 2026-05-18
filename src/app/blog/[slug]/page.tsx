@@ -4,6 +4,7 @@ import { unstable_noStore as noStore } from 'next/cache';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import PostThumb from '@/components/PostThumb';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ProgressBar, TableOfContents, CopyLinkBtn, ScrollToTopBtn, ShareBtn, MobileActionBar, ArticleFeedback } from './ArticleClient';
@@ -222,15 +223,13 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             </span>
           </div>
 
-          {/* Cover image or placeholder */}
-          {post.cover_image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={post.cover_image} alt={post.title} style={{ marginTop: 32, width: '100%', borderRadius: 'var(--r-lg)', border: '1px solid var(--line-1)', aspectRatio: '16/7', objectFit: 'cover' }} />
-          ) : (
-            <div className={`article-thumb-ph thumb-${tone}`} style={{ marginTop: 32 }}>
-              <span className={`badge badge-${tone}`} style={{ fontSize: 14, padding: '6px 14px' }}>{post.category}</span>
-            </div>
-          )}
+          {/* Cover image */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={post.cover_image ?? `/blog/${encodeURIComponent(post.slug)}/opengraph-image`}
+            alt={post.title}
+            style={{ marginTop: 32, width: '100%', borderRadius: 'var(--r-lg)', border: '1px solid var(--line-1)', aspectRatio: '16/7', objectFit: 'cover', display: 'block' }}
+          />
         </div>
       </div>
 
@@ -314,7 +313,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                 const rt = catTone(p.category);
                 return (
                   <Link key={p.id} href={`/blog/${p.slug}`} className="card card-link">
-                    <div className={`card-thumb thumb-${rt}`}>{p.category}</div>
+                    <PostThumb slug={p.slug} title={p.title} coverImage={p.cover_image} />
                     <div className="card-body">
                       <div className="card-meta">
                         <span className={`badge badge-${rt}`}>{p.category}</span>
