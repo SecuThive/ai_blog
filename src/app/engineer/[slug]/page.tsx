@@ -8,6 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from '@/components/CodeBlock';
 import JsonLd from '@/components/JsonLd';
+import { TableOfContents, ProgressBar, ScrollToTopBtn, CopyLinkBtn, ShareBtn } from '@/app/blog/[slug]/ArticleClient';
 
 export const revalidate = 60;
 
@@ -80,12 +81,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 function extractHeadings(md: string) {
   const regex = /^(#{2,3}) (.+)$/gm;
-  const out: { id: string; text: string; level: number }[] = [];
+  const out: { id: string; text: string; level: number; index: number }[] = [];
   let m;
   while ((m = regex.exec(md)) !== null) {
     const text = m[2].trim();
     const id = text.toLowerCase().replace(/[^a-z0-9가-힣]+/g, '-').replace(/^-|-$/g, '');
-    out.push({ id, text, level: m[1].length });
+    out.push({ id, text, level: m[1].length, index: out.length });
   }
   return out;
 }
@@ -204,6 +205,8 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
 
   return (
     <div>
+      <ProgressBar />
+      <ScrollToTopBtn />
       <JsonLd data={[techArticleSchema, breadcrumbSchema]} />
       {/* Hero */}
       <div className="article-hero">
@@ -262,19 +265,8 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
       <div className="container" style={{ paddingTop: 48, paddingBottom: 80 }}>
         <div className="article-wrap">
           {/* TOC */}
-          <div className="toc-rail">
-            {headings.length > 0 && (
-              <>
-                <p className="toc-title">목차</p>
-                <ul className="toc-list">
-                  {headings.map((h, i) => (
-                    <li key={i} className={h.level === 3 ? 'h3' : ''}>
-                      <a href={`#${h.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>{h.text}</a>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
+          <div>
+            <TableOfContents headings={headings} />
             <div style={{ marginTop: 28 }}>
               <Link href="/engineer" className="btn btn-sm btn-ghost" style={{ width: '100%', justifyContent: 'center' }}>
                 ← 가이드 목록
@@ -354,6 +346,20 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
               <Link href="/engineer" className="btn btn-sm" style={{ width: '100%', justifyContent: 'center' }}>
                 가이드 허브
               </Link>
+            </div>
+
+            <div className="widget">
+              <h5>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                </svg>
+                공유
+              </h5>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <CopyLinkBtn />
+                <ShareBtn />
+              </div>
             </div>
           </aside>
         </div>

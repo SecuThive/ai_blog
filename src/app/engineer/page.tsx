@@ -226,7 +226,7 @@ export default async function EngineerPage({ searchParams }: { searchParams: Pro
                       <p className="eng-guide-summary">{g.summary}</p>
                     </div>
                     <div className="eng-guide-right">
-                      <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)' }}>
+                      <div className="eng-guide-date" style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)' }}>
                         {timeAgo(g.created_at)}
                       </div>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ color: 'var(--text-5)' }}>
