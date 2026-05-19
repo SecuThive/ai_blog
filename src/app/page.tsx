@@ -18,6 +18,8 @@ import {
 import SubscribeForm from '@/components/SubscribeForm';
 import PostThumb from '@/components/PostThumb';
 
+const SOURCE_COUNT = '4,128';
+
 export const revalidate = 60;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
@@ -127,9 +129,9 @@ function HeroV2({ posts, ticks, feed, bars, seriesCount, postCount, subscriberCo
           <div>
             <span className="hero-status">
               <span className="live-dot" />
-              <span>INDEX · 24/7 · 4,128 SOURCES</span>
+              <span>INDEX · 24/7 · {SOURCE_COUNT} SOURCES</span>
               <span style={{ color: 'var(--text-5)' }}>·</span>
-              <span>편집자 검토 92% 통과</span>
+              <span>POSTS {postCount > 0 ? `${postCount}+` : '...'}</span>
             </span>
             <h1>
               <span className="grad">AI가 분석하고 사람이 검토한,</span>
@@ -137,7 +139,7 @@ function HeroV2({ posts, ticks, feed, bars, seriesCount, postCount, subscriberCo
               <em>오늘의</em> 실전 IT 인사이트.
             </h1>
             <p className="heroX-lead">
-              자동화, 개발, 보안, 인프라, 생산성. 전 세계 4,128개 IT 소스를 24시간 모니터링하고,
+              자동화, 개발, 보안, 인프라, 생산성. 전 세계 {SOURCE_COUNT}개 IT 소스를 24시간 모니터링하고,
               변화의 신호를 점수화한 뒤, 사람 편집자의 검토를 거쳐 정제된 콘텐츠로 발행합니다.
             </p>
             <div className="heroX-actions">

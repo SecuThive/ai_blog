@@ -87,8 +87,8 @@ export function CopyLinkBtn() {
   };
 
   return (
-    <button className="action-btn" onClick={copy}>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <button className="action-btn" onClick={copy} aria-label="링크 복사">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
         <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
         <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
       </svg>
@@ -112,8 +112,8 @@ export function ShareBtn() {
   };
 
   return (
-    <button type="button" className="action-btn" onClick={share}>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <button type="button" className="action-btn" onClick={share} aria-label="공유하기">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
         <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
         <polyline points="16 6 12 2 8 6" />
         <line x1="12" y1="2" x2="12" y2="15" />
@@ -152,8 +152,10 @@ export function ArticleFeedback({ postSlug }: { postSlug: string }) {
       <button
         className={`feedback-btn${voted === 'up' ? ' liked' : ''}`}
         onClick={() => vote('up')}
+        aria-label="이 글이 도움됨"
+        aria-pressed={voted === 'up'}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
           <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
           <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
         </svg>
@@ -162,8 +164,10 @@ export function ArticleFeedback({ postSlug }: { postSlug: string }) {
       <button
         className={`feedback-btn${voted === 'down' ? ' disliked' : ''}`}
         onClick={() => vote('down')}
+        aria-label="이 글이 아쉬움"
+        aria-pressed={voted === 'down'}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
           <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z" />
           <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
         </svg>
@@ -197,23 +201,23 @@ export function MobileActionBar() {
 
   return (
     <div className="mobile-action-bar">
-      <button className="action-btn" onClick={copy}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <button className="action-btn" onClick={copy} aria-label="링크 복사">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
           <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
           <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
         </svg>
         {copied ? '복사됨!' : '링크 복사'}
       </button>
-      <button className="action-btn" onClick={share}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <button className="action-btn" onClick={share} aria-label="공유하기">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
           <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
           <polyline points="16 6 12 2 8 6" />
           <line x1="12" y1="2" x2="12" y2="15" />
         </svg>
         {shared ? '공유됨!' : '공유하기'}
       </button>
-      <button className="action-btn" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <button className="action-btn" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="맨 위로 이동">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
           <polyline points="18 15 12 9 6 15" />
         </svg>
         맨 위로

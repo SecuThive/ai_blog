@@ -22,18 +22,21 @@ interface SiteStats {
   seriesCount: number;
   subscriberCount: number;
   guideCount: number;
+  firstPostDate: string;
+  avgReadingTime: number;
+  totalViews: number;
 }
 
 async function getStats(): Promise<SiteStats> {
   const client = makeFreshClient();
 
   const [postsRes, subscribersRes, guidesRes] = await Promise.all([
-    client.from('posts').select('tags', { count: 'exact', head: false }).eq('status', 'published'),
+    client.from('posts').select('tags, published_at, views, reading_time').eq('status', 'published'),
     client.from('subscribers').select('id', { count: 'exact', head: true }),
     client.from('engineer_guides').select('id', { count: 'exact', head: true }).eq('status', 'published'),
   ]);
 
-  const posts = (postsRes.data ?? []) as { tags: string[] }[];
+  const posts = (postsRes.data ?? []) as { tags: string[]; published_at: string; views: number; reading_time: number }[];
   const postCount = posts.length;
 
   const seriesSet = new Set<string>();
@@ -42,11 +45,28 @@ async function getStats(): Promise<SiteStats> {
     if (tag) seriesSet.add(tag);
   }
 
+  const sortedDates = posts.map(p => p.published_at).filter(Boolean).sort();
+  let firstPostDate = '2024년 9월부터';
+  if (sortedDates.length) {
+    const d = new Date(sortedDates[0]);
+    firstPostDate = `${d.getFullYear()}년 ${d.getMonth() + 1}월부터`;
+  }
+
+  const readingTimes = posts.map(p => p.reading_time).filter(t => t > 0);
+  const avgReadingTime = readingTimes.length
+    ? Math.round(readingTimes.reduce((a, b) => a + b, 0) / readingTimes.length)
+    : 14;
+
+  const totalViews = posts.reduce((sum, p) => sum + (p.views ?? 0), 0);
+
   return {
     postCount,
     seriesCount: seriesSet.size,
     subscriberCount: subscribersRes.count ?? 0,
     guideCount: guidesRes.count ?? 0,
+    firstPostDate,
+    avgReadingTime,
+    totalViews,
   };
 }
 
@@ -75,12 +95,12 @@ export default async function AboutPage() {
   const stats = await getStats();
 
   const STATS = [
-    { num: `${stats.postCount}+`, label: 'PUBLISHED POSTS', sub: '2024년 9월부터' },
+    { num: `${stats.postCount}+`, label: 'PUBLISHED POSTS', sub: stats.firstPostDate },
     { num: `${stats.guideCount}+`, label: 'ENGINEER GUIDES', sub: 'Linux · Docker · Git · 보안' },
     { num: String(stats.seriesCount), label: 'ACTIVE SERIES', sub: '학습 경로형 콘텐츠' },
-    { num: '92%', label: 'FACT-CHECK PASS', sub: '편집자 1차 검토 기준' },
+    { num: stats.totalViews > 0 ? `${stats.totalViews.toLocaleString()}+` : '—', label: 'TOTAL VIEWS', sub: '누적 조회수' },
     { num: stats.subscriberCount > 0 ? formatNum(stats.subscriberCount) : '—', label: 'SUBSCRIBERS', sub: '주간 뉴스레터' },
-    { num: '14분', label: 'AVG READ TIME', sub: '실제 체류 데이터' },
+    { num: `${stats.avgReadingTime}분`, label: 'AVG READ TIME', sub: '글당 평균 읽기 시간' },
   ];
 
   return (

@@ -1,19 +1,43 @@
 import type { Metadata } from 'next';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export const metadata: Metadata = {
   title: '편집자 · AI 운영 모델 — Nodelog',
   description: 'Nodelog의 AI 에이전트와 사람 편집자의 협업 방식을 투명하게 공개합니다.',
 };
 
+export const revalidate = 3600;
+
+const SOURCE_COUNT = '4,128';
+
 const STAGES = [
-  { t: '소스 색인', s: '4,128 sources', tone: 'blue' },
+  { t: '소스 색인', s: `${SOURCE_COUNT} sources`, tone: 'blue' },
   { t: '신호 점수화', s: 'AI · 변화율 분석', tone: 'purple' },
   { t: '초고 생성', s: 'AI · 출처 동시 기록', tone: 'purple' },
   { t: '편집자 검토', s: 'Human · 사실/톤', tone: 'mint' },
   { t: '발행 & 학습', s: 'AI + Human', tone: 'amber' },
 ];
 
-export default function AuthorPage() {
+async function getAuthorStats() {
+  const { count: publishedCount } = await supabaseAdmin()
+    .from('posts')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'published');
+
+  const { count: totalCount } = await supabaseAdmin()
+    .from('posts')
+    .select('id', { count: 'exact', head: true });
+
+  const published = publishedCount ?? 0;
+  const total = totalCount ?? 0;
+  const publishRate = total > 0 ? Math.round((published / total) * 100) : 68;
+  const rejectRate = 100 - publishRate;
+
+  return { publishRate, rejectRate, publishedCount: published };
+}
+
+export default async function AuthorPage() {
+  const { publishRate, rejectRate } = await getAuthorStats();
   return (
     <div>
       <section className="page-hero">
@@ -39,12 +63,12 @@ export default function AuthorPage() {
                 </div>
               </div>
               <p style={{ color: 'var(--text-2)', fontSize: 14, lineHeight: 1.65, margin: '0 0 18px' }}>
-                Claude Sonnet 4.5와 GPT-5를 조합한 에이전트 시스템. 4,128개 소스를 24시간 모니터링하고,
+                Claude Sonnet 4.5와 GPT-5를 조합한 에이전트 시스템. {SOURCE_COUNT}개 소스를 24시간 모니터링하고,
                 변화 신호를 점수화합니다. 초고 작성, 관련 글 매칭, 1차 사실 점검을 담당합니다.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: 'var(--text-3)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>1차 초고 작성 비율</span><strong style={{ color: 'var(--text-1)' }}>100%</strong></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>최종 발행 반영 비율</span><strong style={{ color: 'var(--text-1)' }}>~ 68%</strong></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>최종 발행 반영 비율</span><strong style={{ color: 'var(--text-1)' }}>~ {publishRate}%</strong></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>사용 모델</span><strong style={{ color: 'var(--text-1)', fontFamily: 'var(--ff-mono)' }}>claude-4.5 / gpt-5</strong></div>
               </div>
             </div>
@@ -63,7 +87,7 @@ export default function AuthorPage() {
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: 'var(--text-3)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>검토 소요</span><strong style={{ color: 'var(--text-1)' }}>편당 25 ~ 60분</strong></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>리젝트 비율</span><strong style={{ color: 'var(--text-1)' }}>~ 32%</strong></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>리젝트 비율</span><strong style={{ color: 'var(--text-1)' }}>~ {rejectRate}%</strong></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>경력</span><strong style={{ color: 'var(--text-1)' }}>10y · 시니어 에디터</strong></div>
               </div>
             </div>
