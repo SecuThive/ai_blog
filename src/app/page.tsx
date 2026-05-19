@@ -20,7 +20,7 @@ import PostThumb from '@/components/PostThumb';
 
 export const revalidate = 60;
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
   title: 'Nodelog — AI 기반 IT 테크 미디어',

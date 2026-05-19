@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
   title: 'About — Nodelog',

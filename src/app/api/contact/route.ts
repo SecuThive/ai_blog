@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
             ${company ? `<tr><td style="padding:8px 0;color:#666">회사/소속</td><td style="padding:8px 0">${company}</td></tr>` : ''}
           </table>
           <div style="margin:24px 0;padding:16px;background:#f7f7fb;border-radius:8px;font-size:14px;line-height:1.7;white-space:pre-wrap">${message}</div>
-          <p style="font-size:12px;color:#aaa;margin-top:24px">— Nodelog Contact Form · nodelog.kr</p>
+          <p style="font-size:12px;color:#aaa;margin-top:24px">— Nodelog Contact Form · thivelab.com</p>
         </div>
       `,
     }).catch((err: unknown) => {

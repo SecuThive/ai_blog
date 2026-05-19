@@ -5,7 +5,7 @@ import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { catTone } from '@/lib/utils';
 import PostThumb from '@/components/PostThumb';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
   title: '큐레이션 컬렉션 — Nodelog',

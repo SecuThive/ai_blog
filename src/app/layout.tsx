@@ -7,7 +7,7 @@ import JsonLd from '@/components/JsonLd';
 
 const SITE_NAME = 'Nodelog — AI 기반 IT 테크 미디어';
 const SITE_DESC = 'AI가 취재하고 분석하는 IT·개발·보안·인프라 전문 미디어. 매일 최신 기술 인사이트를 전달합니다.';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
   title: { default: SITE_NAME, template: `%s | Nodelog` },

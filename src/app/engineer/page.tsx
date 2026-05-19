@@ -6,7 +6,7 @@ import { makeFreshClient } from '@/lib/supabase';
 import { engCatTone } from '@/lib/utils';
 import EngineerSearch from './EngineerSearch';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
   title: '엔지니어 가이드 — Nodelog',

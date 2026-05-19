@@ -21,7 +21,7 @@ export async function GET() {
     .limit(50);
 
   const posts = (data ?? []) as PostRow[];
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
   const items = posts.map(p => `
     <item>
