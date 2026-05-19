@@ -26,15 +26,23 @@ interface PostRow {
   slug: string;
   excerpt: string;
   category: string;
+  tags: string[];
   views: number;
   published_at: string;
 }
 
-async function getTrending(): Promise<{ top: PostRow[]; all: PostRow[]; byCategory: { cat: string; tone: string; post: PostRow }[] }> {
+interface RisingTopic { tag: string; pct: string; }
+
+async function getTrending(): Promise<{
+  top: PostRow[];
+  all: PostRow[];
+  byCategory: { cat: string; tone: string; post: PostRow }[];
+  risingTopics: RisingTopic[];
+}> {
   noStore();
   const { data } = await makeFreshClient()
     .from('posts')
-    .select('id,title,slug,excerpt,category,views,published_at')
+    .select('id,title,slug,excerpt,category,tags,views,published_at')
     .eq('status', 'published')
     .order('views', { ascending: false })
     .limit(20);
@@ -53,11 +61,29 @@ async function getTrending(): Promise<{ top: PostRow[]; all: PostRow[]; byCatego
     .slice(0, 5)
     .map(p => ({ cat: p.category, tone: catTone(p.category), post: p }));
 
-  return { top, all, byCategory };
+  // 태그별 조회수 합산으로 실제 트렌딩 토픽 계산
+  const tagViews = new Map<string, number>();
+  for (const p of posts) {
+    for (const t of (p.tags ?? [])) {
+      if (!t.startsWith('series:') && t.length > 1) {
+        tagViews.set(t, (tagViews.get(t) ?? 0) + p.views);
+      }
+    }
+  }
+  const maxViews = Math.max(...Array.from(tagViews.values()), 1);
+  const risingTopics: RisingTopic[] = Array.from(tagViews.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([tag, views], i) => ({
+      tag,
+      pct: i === 0 ? `조회 1위` : `+${Math.round((views / maxViews) * 100)}%`,
+    }));
+
+  return { top, all, byCategory, risingTopics };
 }
 
 export default async function TrendingPage() {
-  const { top, all, byCategory } = await getTrending();
+  const { top, all, byCategory, risingTopics } = await getTrending();
 
   return (
     <div>
@@ -159,22 +185,24 @@ export default async function TrendingPage() {
                   </ul>
                 </div>
               )}
-              <div className="ai-widget">
-                <span className="ai-tag">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-                  </svg>
-                  가장 빠르게 떠오르는 주제
-                </span>
-                <ul style={{ listStyle: 'none', padding: 0, margin: '12px 0 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {[['MCP', '+312%'], ['Postgres 17', '+148%'], ['Cursor', '+96%'], ['Edge AI', '+74%']].map(([t, pct]) => (
-                    <li key={t} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                      <span>{t}</span>
-                      <span style={{ fontFamily: 'var(--ff-mono)', color: 'var(--acc-mint)' }}>{pct}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {risingTopics.length > 0 && (
+                <div className="ai-widget">
+                  <span className="ai-tag">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                    </svg>
+                    조회수 기준 핵심 토픽
+                  </span>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: '12px 0 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {risingTopics.map(({ tag, pct }) => (
+                      <li key={tag} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                        <span>{tag}</span>
+                        <span style={{ fontFamily: 'var(--ff-mono)', color: 'var(--acc-mint)' }}>{pct}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </aside>
           </div>
         </div>

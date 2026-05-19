@@ -313,7 +313,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
             <div className="endmark">✦ ✦ ✦</div>
 
-            <ArticleFeedback />
+            <ArticleFeedback postSlug={post.slug} />
 
             <Comments postSlug={post.slug} />
 

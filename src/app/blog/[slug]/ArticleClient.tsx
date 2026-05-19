@@ -123,15 +123,35 @@ export function ShareBtn() {
   );
 }
 
-export function ArticleFeedback() {
+export function ArticleFeedback({ postSlug }: { postSlug: string }) {
   const [voted, setVoted] = useState<'up' | 'down' | null>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`feedback_${postSlug}`);
+    if (saved === 'up' || saved === 'down') setVoted(saved);
+  }, [postSlug]);
+
+  const vote = async (type: 'up' | 'down') => {
+    const next = voted === type ? null : type;
+    setVoted(next);
+    if (next) {
+      localStorage.setItem(`feedback_${postSlug}`, next);
+      await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ post_slug: postSlug, type: next }),
+      }).catch(() => {});
+    } else {
+      localStorage.removeItem(`feedback_${postSlug}`);
+    }
+  };
 
   return (
     <div className="article-feedback">
       <span className="feedback-label">이 글이 도움이 되었나요?</span>
       <button
         className={`feedback-btn${voted === 'up' ? ' liked' : ''}`}
-        onClick={() => setVoted(voted === 'up' ? null : 'up')}
+        onClick={() => vote('up')}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
@@ -141,7 +161,7 @@ export function ArticleFeedback() {
       </button>
       <button
         className={`feedback-btn${voted === 'down' ? ' disliked' : ''}`}
-        onClick={() => setVoted(voted === 'down' ? null : 'down')}
+        onClick={() => vote('down')}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z" />

@@ -42,6 +42,13 @@ async function getPosts(): Promise<PostRow[]> {
   }));
 }
 
+function matchScore(p: PostRow, maxViews: number): number {
+  const viewScore = maxViews > 0 ? (p.views / maxViews) * 60 : 0;
+  const daysSince = (Date.now() - new Date(p.published_at).getTime()) / 86400000;
+  const recencyScore = Math.max(0, 40 - daysSince * 1.5);
+  return Math.min(99, Math.max(60, Math.round(viewScore + recencyScore)));
+}
+
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const d = Math.floor(diff / 86400000);
@@ -53,11 +60,37 @@ function timeAgo(dateStr: string): string {
 export default async function RecommendPage() {
   const posts = await getPosts();
 
+  const maxViews = Math.max(...posts.map(p => p.views), 1);
+
+  // 카테고리 분포 계산
+  const catCount = new Map<string, number>();
+  for (const p of posts) catCount.set(p.category, (catCount.get(p.category) ?? 0) + 1);
+  const topCats = Array.from(catCount.entries()).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const total = posts.length || 1;
+
+  // 오늘 발행 수
+  const todayCount = posts.filter(p => {
+    const d = new Date(p.published_at);
+    const now = new Date();
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+  }).length;
+
+  const avgReading = posts.length
+    ? Math.round(posts.reduce((s, p) => s + p.reading_time, 0) / posts.length)
+    : 0;
+
+  // 추천 그룹: 실제 데이터 기반
+  const byViews = [...posts].sort((a, b) => b.views - a.views).slice(0, 3);
+  const byRecent = [...posts].sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime()).slice(0, 3);
+  const seenCats = new Set<string>();
+  const byCat = posts.filter(p => { if (seenCats.has(p.category)) return false; seenCats.add(p.category); return true; }).slice(0, 3);
+  const byDepth = [...posts].sort((a, b) => b.reading_time - a.reading_time).slice(0, 3);
+
   const groups = [
-    { t: '오늘 당신에게 가장 잘 맞는 글', s: '최근 발행 · 조회수 기준 상위 글', posts: posts.slice(0, 3) },
-    { t: '다음 단계로 추천', s: '지금까지 읽은 글의 자연스러운 다음 주제', posts: posts.slice(3, 6) },
-    { t: '비슷한 독자들이 선택한 글', s: '같은 카테고리를 자주 읽는 독자 기준', posts: posts.slice(6, 9) },
-    { t: '관심 밖이지만 가치 있는 글', s: '평소 잘 읽지 않는 주제 중 추천도가 높은 글', posts: posts.slice(9, 12) },
+    { t: '가장 많이 읽힌 글', s: '누적 조회수 기준 상위 3편', posts: byViews },
+    { t: '최신 발행', s: '가장 최근에 게재된 글', posts: byRecent },
+    { t: '카테고리 대표 글', s: '각 카테고리에서 가장 많이 읽힌 글', posts: byCat },
+    { t: '깊이 있는 글', s: '읽기 시간 기준 — 긴 호흡으로 읽을 만한 글', posts: byDepth },
   ];
 
   return (
@@ -71,34 +104,36 @@ export default async function RecommendPage() {
             AI RECOMMENDATIONS
           </div>
           <h1 className="page-title">AI 추천</h1>
-          <p className="page-lead">최근 읽기 패턴과 완독 데이터를 기반으로, 비슷한 관심사의 독자들이 선택한 글을 추천합니다.</p>
+          <p className="page-lead">조회수·최신성·카테고리 다양성 기준으로 선별한 추천 글입니다.</p>
         </div>
       </section>
 
       <section className="section">
         <div className="container">
-          <div className="card" style={{ padding: 24, marginBottom: 48, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 24 }}>
+          {/* 실제 데이터 기반 통계 카드 */}
+          <div className="card" style={{ padding: 24, marginBottom: 48, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
             <div>
-              <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.10em', marginBottom: 8 }}>YOUR READING PROFILE</div>
-              <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>AI 자동화 중심형</div>
-              <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginTop: 4 }}>30일간 14편 완독 · 평균 11분</div>
+              <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.10em', marginBottom: 8 }}>TOTAL POSTS</div>
+              <div style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>{total}편</div>
+              <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginTop: 4 }}>오늘 발행 {todayCount}편</div>
             </div>
             <div>
               <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.10em', marginBottom: 8 }}>TOP CATEGORIES</div>
               <div className="pill-row">
-                <span className="badge badge-blue">AI 자동화 · 42%</span>
-                <span className="badge badge-mint">개발 · 28%</span>
-                <span className="badge badge-purple">인프라 · 18%</span>
+                {topCats.map(([cat, cnt]) => (
+                  <span key={cat} className={`badge badge-${catTone(cat)}`}>{cat} · {Math.round((cnt / total) * 100)}%</span>
+                ))}
               </div>
             </div>
             <div>
-              <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.10em', marginBottom: 8 }}>READING STREAK</div>
-              <div style={{ fontSize: 22, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>12일 연속</div>
-              <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginTop: 4 }}>최장 기록 28일</div>
+              <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.10em', marginBottom: 8 }}>AVG READ TIME</div>
+              <div style={{ fontSize: 24, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{avgReading}분</div>
+              <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginTop: 4 }}>평균 읽기 시간</div>
             </div>
             <div>
-              <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.10em', marginBottom: 8 }}>NEXT SUGGESTION</div>
-              <div style={{ fontSize: 13.5, color: 'var(--text-2)', lineHeight: 1.5 }}>개발 카테고리를 1편 더 읽으면 균형이 잡힐 것 같습니다.</div>
+              <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.10em', marginBottom: 8 }}>TOP VIEWED</div>
+              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-1)', lineHeight: 1.4 }}>{byViews[0]?.title.slice(0, 28)}…</div>
+              <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 4, fontVariantNumeric: 'tabular-nums' }}>{byViews[0]?.views.toLocaleString()} 조회</div>
             </div>
           </div>
 
@@ -110,15 +145,16 @@ export default async function RecommendPage() {
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ display: 'inline', marginRight: 4 }}>
                       <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
                     </svg>
-                    AI · MATCH
+                    AI · PICK
                   </div>
                   <h2 style={{ margin: '0 0 6px', fontSize: 22, letterSpacing: '-0.02em' }}>{group.t}</h2>
                   <p style={{ margin: 0, color: 'var(--text-3)', fontSize: 13.5 }}>{group.s}</p>
                 </div>
               </div>
               <div className="grid-3">
-                {group.posts.map((p, i) => {
+                {group.posts.map(p => {
                   const tone = catTone(p.category);
+                  const score = matchScore(p, maxViews);
                   return (
                     <Link key={p.id} href={`/blog/${p.slug}`} className="card card-link" style={{ padding: 22 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -126,7 +162,7 @@ export default async function RecommendPage() {
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ display: 'inline', marginRight: 3 }}>
                             <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
                           </svg>
-                          MATCH {94 - i * 5}%
+                          MATCH {score}%
                         </span>
                         <span className={`badge badge-${tone}`}>{p.category}</span>
                       </div>
