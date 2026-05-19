@@ -88,16 +88,20 @@ export default function Comments({ postSlug }: { postSlug: string }) {
         </ul>
       )}
 
-      <form className="comment-form" onSubmit={handleSubmit}>
+      <form className="comment-form" onSubmit={handleSubmit} aria-label="댓글 작성 폼">
         <input
           type="text"
+          id="comment-name"
           placeholder="이름 (선택 · 기본: 익명)"
           value={name}
           onChange={e => setName(e.target.value)}
           maxLength={50}
           className="comment-input"
+          aria-label="작성자 이름 (선택)"
+          autoComplete="name"
         />
         <textarea
+          id="comment-content"
           placeholder="댓글을 입력하세요..."
           value={content}
           onChange={e => setContent(e.target.value)}
@@ -105,17 +109,21 @@ export default function Comments({ postSlug }: { postSlug: string }) {
           required
           rows={3}
           className="comment-textarea"
+          aria-label="댓글 내용"
+          aria-required="true"
         />
         {error && (
-          <p style={{ color: 'var(--danger)', fontSize: 13, margin: '0' }}>{error}</p>
+          <p role="alert" style={{ color: 'var(--danger)', fontSize: 13, margin: '0' }}>{error}</p>
         )}
         {submitted && (
-          <p style={{ color: 'var(--success)', fontSize: 13, margin: '0' }}>댓글이 등록되었습니다.</p>
+          <p role="status" style={{ color: 'var(--success)', fontSize: 13, margin: '0' }}>댓글이 등록되었습니다.</p>
         )}
         <button
           type="submit"
           disabled={submitting || !content.trim()}
           className="btn btn-primary btn-sm comment-submit"
+          aria-label="댓글 등록"
+          aria-disabled={submitting || !content.trim()}
         >
           {submitting ? '등록 중...' : '댓글 등록'}
         </button>
