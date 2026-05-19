@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0A0D14"/>
+  <rect width="1200" height="630" fill="url(#grad)" opacity="0.5"/>
+  <defs>
+    <radialGradient id="grad" cx="80%" cy="10%" r="60%">
+      <stop offset="0%" stop-color="#6E9FFF" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#0A0D14" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="600" cy="290" r="48" fill="none" stroke="#6E9FFF" stroke-width="1.5" stroke-dasharray="4 5" opacity="0.6"/>
+  <circle cx="600" cy="290" r="26" fill="url(#core)"/>
+  <defs>
+    <radialGradient id="core" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#7BB5FF"/>
+      <stop offset="100%" stop-color="#5535D4"/>
+    </radialGradient>
+  </defs>
+  <text x="600" y="390" font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="600" fill="#E8ECF4" text-anchor="middle" letter-spacing="-2">NODELOG</text>
+  <text x="600" y="438" font-family="monospace" font-size="15" fill="#565E72" text-anchor="middle" letter-spacing="6">AI · IT · INSIGHTS</text>
+</svg>
