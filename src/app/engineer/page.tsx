@@ -105,6 +105,17 @@ const CATEGORIES = [
       </svg>
     ),
   },
+  {
+    name: '트러블슈팅',
+    desc: '에러 메시지별 원인 진단·SSH 오류·502·디스크·포트 충돌 해결',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+    ),
+  },
 ];
 
 async function getGuides(category?: string): Promise<EngineerGuide[]> {

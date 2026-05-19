@@ -1389,6 +1389,7 @@ mark { background: color-mix(in oklch, var(--acc-blue) 18%, transparent); color:
 .eng-cat-purple{ --eng-acc: var(--acc-purple); }
 .eng-cat-amber { --eng-acc: var(--acc-amber); }
 .eng-cat-rose  { --eng-acc: var(--acc-rose); }
+.eng-cat-orange{ --eng-acc: var(--acc-amber); }
 
 .eng-cat-card .eng-cat-icon { color: var(--eng-acc, var(--acc-blue)); }
 .eng-cat-card:hover .eng-cat-icon {

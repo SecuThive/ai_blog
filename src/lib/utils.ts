@@ -13,6 +13,7 @@ export function engCatTone(cat: string): string {
   if (cat.startsWith('Git')) return 'purple';
   if (cat.startsWith('네트워킹') || cat.startsWith('데이터베이스')) return 'amber';
   if (cat.startsWith('보안')) return 'rose';
+  if (cat.startsWith('트러블슈팅')) return 'orange';
   return 'blue';
 }
 
