@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { catTone, toneForSeries } from '@/lib/utils';
 import type { PostSummary } from '@/lib/types';
@@ -12,11 +13,28 @@ import {
   type FeedItem,
   type BarItem,
   type TopicItem,
+  type SignalData,
 } from '@/components/HomeClient';
 import SubscribeForm from '@/components/SubscribeForm';
 import PostThumb from '@/components/PostThumb';
 
 export const revalidate = 60;
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+
+export const metadata: Metadata = {
+  title: 'Nodelog — AI 기반 IT 테크 미디어',
+  description: 'AI가 취재하고 분석하는 IT·개발·보안·인프라 전문 미디어. 매일 최신 기술 인사이트를 전달합니다.',
+  alternates: { canonical: SITE_URL },
+  openGraph: {
+    title: 'Nodelog — AI 기반 IT 테크 미디어',
+    description: 'AI가 취재하고 분석하는 IT·개발·보안·인프라 전문 미디어. 매일 최신 기술 인사이트를 전달합니다.',
+    url: SITE_URL,
+    type: 'website',
+    images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
+  },
+  twitter: { card: 'summary_large_image' },
+};
 
 interface SeriesInfo {
   name: string;
@@ -423,6 +441,8 @@ function MagLatest({ posts }: { posts: PostSummary[] }) {
 
 /* ===== Editor's Quote ===== */
 function EditorQuote() {
+  const now = new Date();
+  const yearMonth = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}`;
   return (
     <section className="section">
       <div className="container">
@@ -445,7 +465,7 @@ function EditorQuote() {
               <div>
                 <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: '-0.005em' }}>Nodelog Editorial Team</div>
                 <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.06em', marginTop: 2 }}>
-                  AI + HUMAN · 2026.05
+                  AI + HUMAN · {yearMonth}
                 </div>
               </div>
             </div>
@@ -643,7 +663,54 @@ function buildClientData(posts: PostSummary[]) {
       size: count >= maxTag * 0.75 ? 5 : count >= maxTag * 0.5 ? 4 : count >= maxTag * 0.25 ? 3 : count > 1 ? 2 : 1,
     }));
 
-  return { ticks, feed, bars, topics };
+  const dateMap = new Map<string, PostSummary[]>();
+  for (const p of posts) {
+    const d = (p.published_at ?? '').slice(0, 10);
+    if (d) {
+      if (!dateMap.has(d)) dateMap.set(d, []);
+      dateMap.get(d)!.push(p);
+    }
+  }
+  const sortedDates = [...dateMap.keys()].sort().slice(-14);
+  const half = Math.ceil(posts.length / 2);
+  const SIG_COLORS: Array<'blue' | 'mint' | 'purple'> = ['blue', 'mint', 'purple'];
+  const SIG_PERIODS = ['TOP MOVER', 'RISING', 'SLOW BURN'];
+
+  const signals: SignalData[] = Array.from(tagCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([tag, totalCount], i) => {
+      const raw = sortedDates.map(d =>
+        (dateMap.get(d) ?? []).filter(p => (p.tags ?? []).includes(tag)).length
+      );
+      const maxV = Math.max(...raw, 1);
+      const spark = raw.map(v => Math.round((v / maxV) * 100));
+      while (spark.length < 14) spark.unshift(0);
+      const recent = posts.slice(0, half).filter(p => (p.tags ?? []).includes(tag)).length;
+      const older = posts.slice(half).filter(p => (p.tags ?? []).includes(tag)).length;
+      const delta = older === 0 ? (recent > 0 ? 100 : 0) : Math.round(((recent - older) / older) * 100);
+      return {
+        ticker: tag.replace(/\s+/g, '').toUpperCase().slice(0, 6),
+        label: tag,
+        delta,
+        deltaLabel: delta >= 0 ? `↑ +${delta}%` : `↓ ${delta}%`,
+        periodLabel: `${SIG_PERIODS[i]} · 7D`,
+        spark,
+        desc: `최근 게시글 ${totalCount}건에서 언급된 키워드.`,
+        color: SIG_COLORS[i],
+      };
+    });
+
+  const now = new Date();
+  const heatmapDates: string[] = Array.from({ length: 14 }, (_, idx) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - (13 - idx));
+    return (13 - idx) % 3 === 0
+      ? `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+      : '';
+  });
+
+  return { ticks, feed, bars, topics, signals, heatmapDates };
 }
 
 /* ===== Page ===== */
@@ -666,13 +733,13 @@ export default async function HomePage() {
     );
   }
 
-  const { ticks, feed, bars, topics } = buildClientData(posts);
+  const { ticks, feed, bars, topics, signals, heatmapDates } = buildClientData(posts);
 
   return (
     <HomeScrollReveal>
       <HeroV2 posts={posts} ticks={ticks} feed={feed} bars={bars} seriesCount={series.length} postCount={posts.length} subscriberCount={subscriberCount} />
       <DailyBriefing posts={posts} />
-      <SignalDashboard />
+      <SignalDashboard signals={signals} heatmapDates={heatmapDates} />
       <ReadingLanes posts={posts} />
       <MagLatest posts={posts.slice(1, 8)} />
       <TopicCloud topics={topics} />

@@ -564,9 +564,24 @@ img { max-width: 100%; display: block; }
 .mb-8 { margin-bottom: 8px; } .mb-12 { margin-bottom: 12px; } .mb-16 { margin-bottom: 16px; } .mb-24 { margin-bottom: 24px; } .mb-32 { margin-bottom: 32px; }
 .center { text-align: center; }
 
-/* 404 */
+/* 404 / 500 */
 .err { min-height: calc(100vh - var(--header-h) - 200px); display: flex; align-items: center; justify-content: center; text-align: center; }
 .err-code { font-family: var(--ff-mono); font-size: 120px; letter-spacing: -0.04em; background: linear-gradient(180deg, var(--text-1), var(--text-5)); -webkit-background-clip: text; background-clip: text; color: transparent; line-height: 1; }
+
+/* ===== Comments ===== */
+.comments-section { margin-top: 48px; padding-top: 36px; border-top: 1px solid var(--line-1); }
+.comments-h { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 20px; color: var(--text-1); }
+.comment-list { list-style: none; margin: 0 0 28px; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.comment-item { padding: 16px 18px; background: var(--bg-2); border: 1px solid var(--line-1); border-radius: var(--r-md); }
+.comment-meta { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+.comment-name { font-size: 13.5px; font-weight: 500; color: var(--text-1); }
+.comment-time { font-family: var(--ff-mono); font-size: 11px; color: var(--text-4); letter-spacing: 0.04em; }
+.comment-body { margin: 0; font-size: 14px; color: var(--text-2); line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+.comment-form { display: flex; flex-direction: column; gap: 10px; }
+.comment-input, .comment-textarea { background: var(--bg-2); border: 1px solid var(--line-2); border-radius: var(--r-md); color: var(--text-1); font-family: var(--ff-sans); font-size: 14px; padding: 10px 14px; transition: border-color 0.15s; width: 100%; }
+.comment-input:focus, .comment-textarea:focus { outline: none; border-color: var(--acc-blue); }
+.comment-textarea { resize: vertical; min-height: 80px; }
+.comment-submit { align-self: flex-start; }
 
 /* ===== FAQ accordion ===== */
 .faq-item { border: 1px solid var(--line-1); border-radius: var(--r-md); background: var(--bg-2); overflow: hidden; }

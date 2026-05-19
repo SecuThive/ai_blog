@@ -9,6 +9,7 @@ import PostThumb from '@/components/PostThumb';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ProgressBar, TableOfContents, CopyLinkBtn, ScrollToTopBtn, ShareBtn, MobileActionBar, ArticleFeedback } from './ArticleClient';
+import Comments from '@/components/Comments';
 
 export const revalidate = 60;
 
@@ -313,6 +314,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             <div className="endmark">✦ ✦ ✦</div>
 
             <ArticleFeedback />
+
+            <Comments postSlug={post.slug} />
 
             {(adjacent.prev || adjacent.next) && (
               <nav className="article-nav">

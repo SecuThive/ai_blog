@@ -171,9 +171,18 @@ export function ControlPanel({ feed, bars }: { feed: FeedItem[]; bars: BarItem[]
 }
 
 /* ===== Signal Dashboard ===== */
-const HEATMAP_ROWS = [
-  'AI 자동화', '개발', '인프라', '보안', '생산성',
-];
+export interface SignalData {
+  ticker: string;
+  label: string;
+  delta: number;
+  deltaLabel: string;
+  periodLabel: string;
+  spark: number[];
+  desc: string;
+  color: 'blue' | 'mint' | 'purple';
+}
+
+const HEATMAP_ROWS = ['AI 자동화', '개발', '인프라', '보안', '생산성'];
 
 function denseVal(i: number, j: number) {
   const seed = (i * 31 + j * 7) % 13;
@@ -181,7 +190,7 @@ function denseVal(i: number, j: number) {
   return seed % 5;
 }
 
-export function SignalDashboard() {
+export function SignalDashboard({ signals, heatmapDates }: { signals: SignalData[]; heatmapDates: string[] }) {
   return (
     <section className="section">
       <div className="container">
@@ -199,62 +208,24 @@ export function SignalDashboard() {
         </div>
 
         <div className="signal-grid">
-          <div className="signal-card">
-            <div className="signal-head">
-              <span className="signal-eye">TOP MOVER · 24H</span>
-              <span className="signal-delta up">↑ +312%</span>
+          {signals.map((s, idx) => (
+            <div key={idx} className="signal-card">
+              <div className="signal-head">
+                <span className="signal-eye">{s.periodLabel}</span>
+                <span className={`signal-delta ${s.delta >= 0 ? 'up' : 'down'}`}>{s.deltaLabel}</span>
+              </div>
+              <div>
+                <div className="signal-num">{s.ticker}</div>
+                <div className="label" style={{ marginTop: 6 }}>{s.label}</div>
+              </div>
+              <p className="desc">{s.desc}</p>
+              <div className="spark">
+                {s.spark.map((h, i) => (
+                  <span key={i} className={s.color} style={{ height: h + '%', '--i': i } as React.CSSProperties} />
+                ))}
+              </div>
             </div>
-            <div>
-              <div className="signal-num">MCP</div>
-              <div className="label" style={{ marginTop: 6 }}>Model Context Protocol</div>
-            </div>
-            <p className="desc">
-              Anthropic의 표준이 빠르게 확산 중. 48개 회사가 자체 MCP 어댑터를 공개했고, 이 중 22개는 엔터프라이즈향이다.
-            </p>
-            <div className="spark">
-              {[20,30,25,40,35,50,60,55,70,65,80,90,100,95].map((h, i) => (
-                <span key={i} className="blue" style={{ height: h + '%', '--i': i } as React.CSSProperties} />
-              ))}
-            </div>
-          </div>
-
-          <div className="signal-card">
-            <div className="signal-head">
-              <span className="signal-eye">RISING · 24H</span>
-              <span className="signal-delta up">↑ +148%</span>
-            </div>
-            <div>
-              <div className="signal-num">PG17</div>
-              <div className="label" style={{ marginTop: 6 }}>Postgres 17 · Incremental Backup</div>
-            </div>
-            <p className="desc">
-              대용량 DB의 백업 시간을 평균 1/8로 줄이는 새 기능. 실제 도입 사례가 4개 회사에서 동시에 공개됐다.
-            </p>
-            <div className="spark">
-              {[10,18,22,28,25,35,40,45,55,60,70,75,85,92].map((h, i) => (
-                <span key={i} className="mint" style={{ height: h + '%', '--i': i } as React.CSSProperties} />
-              ))}
-            </div>
-          </div>
-
-          <div className="signal-card">
-            <div className="signal-head">
-              <span className="signal-eye">SLOW BURN · 14D</span>
-              <span className="signal-delta up">↑ +96%</span>
-            </div>
-            <div>
-              <div className="signal-num">CURSOR</div>
-              <div className="label" style={{ marginTop: 6 }}>AI Code Editors</div>
-            </div>
-            <p className="desc">
-              Cursor·Zed·Helix 3파전. 검색량은 Cursor가 우세하지만, 깊이 있는 글의 완독률은 Zed가 +24%.
-            </p>
-            <div className="spark">
-              {[35,42,38,50,45,55,60,58,65,72,70,80,85,88].map((h, i) => (
-                <span key={i} className="purple" style={{ height: h + '%', '--i': i } as React.CSSProperties} />
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
 
         <div style={{ marginTop: 32, padding: 24, border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', background: 'var(--bg-2)' }}>
@@ -282,7 +253,7 @@ export function SignalDashboard() {
             ))}
             <div className="heat" style={{ marginTop: 6 }}>
               <div className="day-lbl" style={{ color: 'var(--text-5)' }}>—</div>
-              {['05.04','','','05.07','','','05.10','','','05.13','','','','05.17'].map((d, i) => (
+              {heatmapDates.map((d, i) => (
                 <div key={i} style={{ fontFamily: 'var(--ff-mono)', fontSize: 9.5, color: 'var(--text-5)', textAlign: 'center', letterSpacing: '0.04em' }}>{d}</div>
               ))}
             </div>
