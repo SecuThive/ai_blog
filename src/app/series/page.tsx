@@ -4,9 +4,18 @@ import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
 import { toneForSeries } from '@/lib/utils';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+
 export const metadata: Metadata = {
   title: '시리즈 — Nodelog',
   description: '하나의 주제를 끝까지 따라갈 수 있도록 단계별로 구성된 연재.',
+  alternates: { canonical: `${SITE_URL}/series` },
+  openGraph: {
+    title: '시리즈 — Nodelog',
+    description: '하나의 주제를 끝까지 따라갈 수 있도록 단계별로 구성된 연재.',
+    url: `${SITE_URL}/series`,
+    type: 'website',
+  },
 };
 
 export const revalidate = 60;

@@ -5,9 +5,19 @@ import type { EngineerGuide } from '@/lib/types';
 import { makeFreshClient } from '@/lib/supabase';
 import { engCatTone, diffLabel } from '@/lib/utils';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+
 export const metadata: Metadata = {
   title: '엔지니어 가이드 — Nodelog',
   description: 'Linux, Docker, Git, 네트워킹, 보안 등 실무 엔지니어를 위한 기술 레퍼런스 모음.',
+  keywords: 'Linux, Docker, Git, 네트워킹, 보안, 클라우드, 데이터베이스, 엔지니어 가이드',
+  alternates: { canonical: `${SITE_URL}/engineer` },
+  openGraph: {
+    title: '엔지니어 가이드 — Nodelog',
+    description: 'Linux, Docker, Git, 네트워킹, 보안 등 실무 엔지니어를 위한 기술 레퍼런스 모음.',
+    url: `${SITE_URL}/engineer`,
+    type: 'website',
+  },
 };
 
 export const revalidate = 60;

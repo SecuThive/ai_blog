@@ -5,9 +5,18 @@ import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { catTone } from '@/lib/utils';
 import PostThumb from '@/components/PostThumb';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+
 export const metadata: Metadata = {
   title: '큐레이션 컬렉션 — Nodelog',
   description: '한 가지 목적을 가지고 모아둔 글 묶음.',
+  alternates: { canonical: `${SITE_URL}/curated` },
+  openGraph: {
+    title: '큐레이션 컬렉션 — Nodelog',
+    description: '한 가지 목적을 가지고 모아둔 글 묶음.',
+    url: `${SITE_URL}/curated`,
+    type: 'website',
+  },
 };
 
 export const revalidate = 60;

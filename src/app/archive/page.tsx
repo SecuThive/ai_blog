@@ -4,9 +4,18 @@ import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
 import { catTone } from '@/lib/utils';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+
 export const metadata: Metadata = {
   title: '아카이브 — Nodelog',
   description: '시간 순서로 정리된 전체 글.',
+  alternates: { canonical: `${SITE_URL}/archive` },
+  openGraph: {
+    title: '아카이브 — Nodelog',
+    description: '시간 순서로 정리된 전체 글.',
+    url: `${SITE_URL}/archive`,
+    type: 'website',
+  },
 };
 
 export const revalidate = 60;

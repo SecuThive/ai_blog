@@ -9,6 +9,15 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
         disallow: ['/api/', '/admin/'],
       },
+      // AI crawlers — allow full indexing for GEO (generative engine optimization)
+      { userAgent: 'GPTBot',        allow: '/' },
+      { userAgent: 'ChatGPT-User',  allow: '/' },
+      { userAgent: 'Claude-Web',    allow: '/' },
+      { userAgent: 'Anthropic-ai',  allow: '/' },
+      { userAgent: 'PerplexityBot', allow: '/' },
+      { userAgent: 'Googlebot',     allow: '/' },
+      { userAgent: 'bingbot',       allow: '/' },
+      { userAgent: 'CCBot',         allow: '/' },
     ],
     sitemap: `${base}/sitemap.xml`,
   };

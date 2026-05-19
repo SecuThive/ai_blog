@@ -4,9 +4,18 @@ import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
 import { catTone } from '@/lib/utils';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+
 export const metadata: Metadata = {
   title: '트렌딩 — Nodelog',
   description: '가장 많이 읽히고 완독된 글들.',
+  alternates: { canonical: `${SITE_URL}/trending` },
+  openGraph: {
+    title: '트렌딩 — Nodelog',
+    description: '가장 많이 읽히고 완독된 글들.',
+    url: `${SITE_URL}/trending`,
+    type: 'website',
+  },
 };
 
 export const revalidate = 30;

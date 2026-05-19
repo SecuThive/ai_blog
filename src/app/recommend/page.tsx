@@ -4,9 +4,18 @@ import type { Metadata } from 'next';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { catTone } from '@/lib/utils';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+
 export const metadata: Metadata = {
   title: 'AI 추천 — Nodelog',
   description: '읽기 패턴 기반으로 독자에게 맞는 글을 추천합니다.',
+  alternates: { canonical: `${SITE_URL}/recommend` },
+  openGraph: {
+    title: 'AI 추천 — Nodelog',
+    description: '읽기 패턴 기반으로 독자에게 맞는 글을 추천합니다.',
+    url: `${SITE_URL}/recommend`,
+    type: 'website',
+  },
 };
 
 export const revalidate = 60;

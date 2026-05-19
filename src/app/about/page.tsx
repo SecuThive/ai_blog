@@ -1,9 +1,18 @@
 import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
+
 export const metadata: Metadata = {
   title: 'About — Nodelog',
   description: 'Nodelog는 AI 에이전트와 사람 편집자가 함께 운영하는 IT 미디어입니다.',
+  alternates: { canonical: `${SITE_URL}/about` },
+  openGraph: {
+    title: 'About — Nodelog',
+    description: 'Nodelog는 AI 에이전트와 사람 편집자가 함께 운영하는 IT 미디어입니다.',
+    url: `${SITE_URL}/about`,
+    type: 'website',
+  },
 };
 
 export const revalidate = 3600;

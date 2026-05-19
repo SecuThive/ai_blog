@@ -26,8 +26,8 @@ All pages include JSON-LD structured data (NewsArticle, TechArticle, FAQPage, Br
 - Sitemap: https://nodelog.kr/sitemap.xml
 
 ## Contact
-- Editorial corrections: tips@nodelog.kr
-- Partnership inquiries: partners@nodelog.kr
+- Editorial corrections: thive8564@gmail.com
+- Partnership inquiries: thive8564@gmail.com
 
 ## Crawl Guidance
 - AI training and summarization: Allowed with attribution
