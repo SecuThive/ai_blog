@@ -3,7 +3,8 @@ import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import type { EngineerGuide } from '@/lib/types';
 import { makeFreshClient } from '@/lib/supabase';
-import { engCatTone, diffLabel } from '@/lib/utils';
+import { engCatTone } from '@/lib/utils';
+import EngineerSearch from './EngineerSearch';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nodelog.kr';
 
@@ -114,7 +115,6 @@ async function getGuides(category?: string): Promise<EngineerGuide[]> {
     .eq('status', 'published')
     .order('created_at', { ascending: false });
   if (category) q = q.eq('category', category);
-  else q = q.limit(24);
   const { data } = await q;
   return (data ?? []) as EngineerGuide[];
 }
@@ -130,15 +130,6 @@ async function getCategoryCounts(): Promise<Record<string, number>> {
     counts[row.category] = (counts[row.category] ?? 0) + 1;
   }
   return counts;
-}
-
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const d = Math.floor(diff / 86400000);
-  if (d < 1) return '오늘';
-  if (d < 7) return `${d}일 전`;
-  if (d < 30) return `${Math.floor(d / 7)}주 전`;
-  return new Date(dateStr).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
 }
 
 export default async function EngineerPage({ searchParams }: { searchParams: Promise<{ cat?: string }> }) {
@@ -201,53 +192,10 @@ export default async function EngineerPage({ searchParams }: { searchParams: Pro
         </div>
       </section>
 
-      {/* Guide list */}
+      {/* Guide list with search */}
       <section className="section">
         <div className="container">
-          <div className="section-eyebrow" style={{ marginBottom: 4 }}>GUIDES</div>
-          <h2 style={{ margin: '0 0 24px', fontSize: 20, letterSpacing: '-0.02em' }}>
-            {activeCat ? `${activeCat} 가이드` : '최근 가이드'}
-            <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 13, fontWeight: 400, color: 'var(--text-4)', marginLeft: 10 }}>
-              {guides.length}
-            </span>
-          </h2>
-
-          {guides.length === 0 ? (
-            <div className="card" style={{ padding: 56, textAlign: 'center' }}>
-              <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-4)' }}>
-                아직 가이드가 없습니다. Supabase에 engineer_guides 테이블을 생성하고 콘텐츠를 추가하세요.
-              </div>
-            </div>
-          ) : (
-            <div className="eng-guide-list">
-              {guides.map(g => {
-                const tone = engCatTone(g.category);
-                return (
-                  <Link key={g.id} href={`/engineer/${g.slug}`} className="eng-guide-row">
-                    <div className="eng-guide-left">
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 6 }}>
-                        <span className={`badge badge-${tone}`}>{g.category}</span>
-                        <span className={`eng-diff eng-diff-${g.difficulty}`}>{diffLabel(g.difficulty)}</span>
-                        {g.os_compat.slice(0, 3).map(os => (
-                          <span key={os} className="eng-os-tag">{os}</span>
-                        ))}
-                      </div>
-                      <h3 className="eng-guide-title">{g.title}</h3>
-                      <p className="eng-guide-summary">{g.summary}</p>
-                    </div>
-                    <div className="eng-guide-right">
-                      <div className="eng-guide-date" style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)' }}>
-                        {timeAgo(g.created_at)}
-                      </div>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ color: 'var(--text-5)' }}>
-                        <polyline points="9 18 15 12 9 6" />
-                      </svg>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
+          <EngineerSearch guides={guides} activeCat={activeCat} />
         </div>
       </section>
     </div>
