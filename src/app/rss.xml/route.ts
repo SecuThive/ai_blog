@@ -30,8 +30,8 @@ export async function GET() {
       <guid isPermaLink="true">${siteUrl}/blog/${p.slug}</guid>
       <description><![CDATA[${p.excerpt ?? ''}]]></description>
       <content:encoded><![CDATA[${p.content ?? p.excerpt ?? ''}]]></content:encoded>
-      <author>${p.author}</author>
-      <category>${p.category}</category>
+      <author><![CDATA[${p.author}]]></author>
+      <category><![CDATA[${p.category}]]></category>
       <pubDate>${new Date(p.published_at).toUTCString()}</pubDate>
     </item>`).join('\n');
 
