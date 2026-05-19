@@ -10,19 +10,27 @@ export default function FaqAccordion() {
   return (
     <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {FAQ_ITEMS.map((it, i) => (
-          <div key={i} className={`faq-item${open === i ? ' open' : ''}`}>
-            <button className="faq-q" onClick={() => setOpen(open === i ? null : i)}>
-              <span>{it.q}</span>
-              <span className="ic">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  {open === i ? <line x1="5" y1="12" x2="19" y2="12" /> : <><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>}
-                </svg>
-              </span>
-            </button>
-            <div className="faq-a">{it.a}</div>
-          </div>
-        ))}
+        {FAQ_ITEMS.map((it, i) => {
+          const isOpen = open === i;
+          return (
+            <div key={i} className={`faq-item${isOpen ? ' open' : ''}`}>
+              <button
+                className="faq-q"
+                onClick={() => setOpen(isOpen ? null : i)}
+                aria-expanded={isOpen}
+                aria-controls={`faq-answer-${i}`}
+              >
+                <span>{it.q}</span>
+                <span className="ic" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    {isOpen ? <line x1="5" y1="12" x2="19" y2="12" /> : <><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>}
+                  </svg>
+                </span>
+              </button>
+              <div id={`faq-answer-${i}`} className="faq-a" role="region" aria-label={it.q}>{it.a}</div>
+            </div>
+          );
+        })}
       </div>
 
       <div style={{ marginTop: 48, padding: 28, border: '1px dashed var(--line-2)', borderRadius: 12, textAlign: 'center' }}>

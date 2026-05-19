@@ -1,6 +1,18 @@
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = { title: '이용안내 — Nodelog' };
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
+
+export const metadata: Metadata = {
+  title: '이용안내 — Nodelog',
+  description: 'Nodelog 서비스 이용에 관한 기본 정책과 조건을 안내합니다.',
+  alternates: { canonical: `${SITE_URL}/terms` },
+  openGraph: {
+    title: '이용안내 — Nodelog',
+    description: 'Nodelog 서비스 이용에 관한 기본 정책과 조건을 안내합니다.',
+    url: `${SITE_URL}/terms`,
+    type: 'website',
+  },
+};
 
 const SECTIONS = [
   ['1. 서비스 범위', 'Nodelog는 IT 분야의 큐레이션 콘텐츠를 제공하는 디지털 미디어입니다. 모든 콘텐츠는 정보 제공 목적이며, 특정 의사결정에 대한 법적·전문적 자문이 아닙니다.'],
