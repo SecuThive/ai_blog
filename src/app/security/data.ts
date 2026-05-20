@@ -51,7 +51,7 @@ export const VENDORS: SecurityVendor[] = [
     categories: ['방화벽 / 네트워크', 'VPN / 원격접근'],
     products: ['SNIPER ONE', 'SNIPER UTM', 'SNIPER IPS'],
     desc: '네트워크 침입탐지·차단(IPS/IDS) 전문. SNIPER 시리즈 국내 공공 시장 점유.',
-    url: 'https://www.wins21.co.kr',
+    url: 'https://www.wins21.com',
     founded: '1999',
   },
   {
@@ -91,7 +91,7 @@ export const VENDORS: SecurityVendor[] = [
     categories: ['방화벽 / 네트워크', 'VPN / 원격접근'],
     products: ['SecureGUARD', 'SSL VPN', 'WebLink', 'NAC'],
     desc: 'SSL VPN·NAC 전문 중견 벤더. 공공기관·금융권 원격접근 보안 납품 다수.',
-    url: 'https://www.handreamnet.com',
+    url: 'https://www.handream.net',
     founded: '2000',
   },
   {
@@ -160,12 +160,12 @@ export const VENDORS: SecurityVendor[] = [
   /* ─── SIEM / 보안관제 ───────────────────────────────────── */
   {
     id: 'igloosec',
-    name: '이글루시큐리티',
-    nameEn: 'IGLOO Security',
+    name: '이글루코퍼레이션',
+    nameEn: 'IGLOO Corporation',
     categories: ['SIEM / 보안관제'],
-    products: ['SPiDER TM AI Edition', 'IGLOO SIEM', 'SOC 플랫폼'],
-    desc: '국내 SIEM 시장 선도 기업. AI 기반 위협 분석·SOC 자동화 플랫폼 보유.',
-    url: 'https://www.igloosec.co.kr',
+    products: ['SPiDER TM AI Edition', 'IGLOO SIEM', 'IGLOO XDR', 'IGLOO SOAR'],
+    desc: '국내 SIEM 시장 선도 기업(구 이글루시큐리티). AI 기반 위협 분석·XDR·SOC 자동화 플랫폼 보유.',
+    url: 'https://www.igloo.co.kr',
     founded: '2000',
   },
   {
@@ -190,23 +190,13 @@ export const VENDORS: SecurityVendor[] = [
   },
   {
     id: 'cyberwon',
-    name: '사이버원',
+    name: '싸이버원',
     nameEn: 'CyberOne',
     categories: ['SIEM / 보안관제'],
     products: ['ONE-SIGHT SIEM', 'SecuX SOAR'],
     desc: '통합보안관제센터(SOC) 운영 및 SIEM 솔루션 전문 기업.',
-    url: 'https://www.cyber-one.co.kr',
+    url: 'https://www.cyberone.kr',
     founded: '2004',
-  },
-  {
-    id: 'infosec',
-    name: '인포섹',
-    nameEn: 'Infosec',
-    categories: ['SIEM / 보안관제', '취약점 관리'],
-    products: ['Managed SOC', 'MDR', '취약점 진단 서비스', 'CERT 보안관제'],
-    desc: 'KT 계열 종합 보안 서비스 기업. 24시간 보안관제·모의해킹·취약점 진단.',
-    url: 'https://www.infosec.co.kr',
-    founded: '2000',
   },
 
   /* ─── WAF / 웹 방화벽 ───────────────────────────────────── */
@@ -267,9 +257,9 @@ export const VENDORS: SecurityVendor[] = [
     name: '유엠브이기술',
     nameEn: 'UMV Technology',
     categories: ['웹쉘 탐지'],
-    products: ['WebShell-Detector', 'UMV WebGuard'],
+    products: ['쉘모니터', 'UMV WebGuard'],
     desc: '웹쉘 탐지·차단 전문 솔루션. 공공기관 웹서버 보안 점검 다수 납품 이력.',
-    url: 'https://www.umvtech.com',
+    url: 'http://www.umv.co.kr',
     founded: '2007',
   },
   {
@@ -277,9 +267,9 @@ export const VENDORS: SecurityVendor[] = [
     name: 'SSR',
     nameEn: 'SSR',
     categories: ['취약점 관리', '웹쉘 탐지'],
-    products: ['V-Insight', 'SmartScan', 'SmartPatch', 'WebShell-Checker'],
-    desc: '서버·네트워크 장비 취약점 스캐닝 및 자동 패치 관리 솔루션.',
-    url: 'https://www.ssr.co.kr',
+    products: ['SolidStep', 'MetiEye', '취약점 진단', '모의해킹'],
+    desc: '서버·네트워크 장비 취약점 스캐닝·모의해킹 전문. SolidStep·MetiEye 자체 솔루션 보유.',
+    url: 'https://www.ssrinc.co.kr',
     founded: '2006',
   },
 
