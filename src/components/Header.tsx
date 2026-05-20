@@ -13,6 +13,7 @@ const NAV = [
   { href: '/category/툴 리뷰', label: '리뷰' },
   { href: '/series', label: '시리즈' },
   { href: '/engineer', label: '엔지니어' },
+  { href: '/security', label: '보안솔루션' },
 ];
 
 function decode(path: string) {
