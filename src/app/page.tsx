@@ -8,12 +8,14 @@ import {
   ControlPanel,
   SignalDashboard,
   TopicCloud,
+  MagLatestSection,
   HomeScrollReveal,
   type TickItem,
   type FeedItem,
   type BarItem,
   type TopicItem,
   type SignalData,
+  type MagPost,
 } from '@/components/HomeClient';
 import SubscribeForm from '@/components/SubscribeForm';
 import PostThumb from '@/components/PostThumb';
@@ -169,7 +171,14 @@ function HeroV2({ posts, ticks, feed, bars, seriesCount, postCount, subscriberCo
                 <div className="stat-sub">ACTIVE SERIES</div>
               </div>
               <div>
-                <div className="stat-num">AI</div>
+                <div style={{ marginBottom: 6 }}>
+                  <span className="ai-tag" style={{ fontSize: 11 }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
+                    </svg>
+                    AI
+                  </span>
+                </div>
                 <div className="stat-sub">CURATED · 24/7</div>
               </div>
               <div>
@@ -367,79 +376,7 @@ function ReadingLanes({ posts }: { posts: PostSummary[] }) {
   );
 }
 
-/* ===== Magazine grid: Latest ===== */
-function MagLatest({ posts }: { posts: PostSummary[] }) {
-  const big = posts[0];
-  const rest = posts.slice(1, 7);
-  if (!big) return null;
-  const bigTone = catTone(big.category);
-
-  return (
-    <section className="section">
-      <div className="container">
-        <div className="sec-head2">
-          <div className="left">
-            <span className="num">04 / LATEST</span>
-            <div>
-              <h2>최신 글</h2>
-              <p className="sub">AI 큐레이션 + 편집자 검토를 거친 신규 인사이트. 시간순으로 정리되어 있습니다.</p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span className="filter-tab active">전체</span>
-            <Link href="/category/AI & 자동화" className="filter-tab">AI</Link>
-            <Link href="/category/개발" className="filter-tab">개발</Link>
-            <Link href="/category/IT 트렌드" className="filter-tab">인프라</Link>
-            <Link href="/" className="section-link" style={{ marginLeft: 4 }}>
-              아카이브 <ArrowIcon size={14} />
-            </Link>
-          </div>
-        </div>
-
-        <div className="mag-grid">
-          <Link className="card card-link mag-card-1" href={`/blog/${big.slug}`}>
-            <PostThumb slug={big.slug} title={big.title} coverImage={big.cover_image} category={big.category} />
-            <div className="card-body" style={{ padding: '22px 24px 26px' }}>
-              <div className="card-meta">
-                <span className={`badge badge-${bigTone}`}>{big.category}</span>
-                <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)' }}>
-                  {big.reading_time}분 READ
-                </span>
-              </div>
-              <h3 className="card-title">{big.title}</h3>
-              <p className="card-excerpt" style={{ WebkitLineClamp: 3 } as React.CSSProperties}>{big.excerpt}</p>
-              <div className="card-foot">
-                <span>{timeAgo(big.published_at)}</span>
-                <span className="dot" />
-                <span>AI · EDITED BY HUMAN</span>
-              </div>
-            </div>
-          </Link>
-          {rest.map((p) => {
-            const tone = catTone(p.category);
-            return (
-              <Link key={p.id} href={`/blog/${p.slug}`} className="card card-link">
-                <PostThumb slug={p.slug} title={p.title} coverImage={p.cover_image} category={p.category} />
-                <div className="card-body">
-                  <div className="card-meta">
-                    <span className={`badge badge-${tone}`}>{p.category}</span>
-                  </div>
-                  <h3 className="card-title">{p.title}</h3>
-                  <p className="card-excerpt">{p.excerpt}</p>
-                  <div className="card-foot">
-                    <span>{timeAgo(p.published_at)}</span>
-                    <span className="dot" />
-                    <span>{p.reading_time}분 읽기</span>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
+/* MagLatest — client 컴포넌트로 이전 (HomeClient.tsx MagLatestSection 사용) */
 
 /* ===== Editor's Quote ===== */
 function EditorQuote() {
@@ -532,6 +469,8 @@ function AIRecommendBlock({ posts }: { posts: PostSummary[] }) {
   const recs = posts.slice(0, 3);
   if (recs.length === 0) return null;
 
+  const maxViews = Math.max(...recs.map(r => r.views), 1);
+
   return (
     <section className="section">
       <div className="container">
@@ -546,7 +485,7 @@ function AIRecommendBlock({ posts }: { posts: PostSummary[] }) {
                 </svg>
                 오늘 AI가 추천하는 글
               </h2>
-              <p className="sub">최근 30일 클릭·체류·완독 패턴을 분석해, 비슷한 관심사의 독자들이 선택한 글. 매시간 갱신.</p>
+              <p className="sub">최근 조회수·완독 패턴을 분석해, 같은 주제에 관심 있는 독자들이 선택한 글. 매시간 갱신.</p>
             </div>
           </div>
           <Link href="/recommend" className="section-link">
@@ -554,8 +493,9 @@ function AIRecommendBlock({ posts }: { posts: PostSummary[] }) {
           </Link>
         </div>
         <div className="grid-3">
-          {recs.map((p, i) => {
+          {recs.map((p) => {
             const tone = catTone(p.category);
+            const popularity = Math.min(99, Math.max(60, Math.round((p.views / maxViews) * 35 + 62)));
             return (
               <Link key={p.id} href={`/blog/${p.slug}`} className="card card-link" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -563,14 +503,14 @@ function AIRecommendBlock({ posts }: { posts: PostSummary[] }) {
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
                     </svg>
-                    MATCH {94 - i * 4}%
+                    인기 {popularity}%
                   </span>
                   <span className={`badge badge-${tone}`}>{p.category}</span>
                 </div>
                 <h3 style={{ margin: 0, fontSize: 16.5, lineHeight: 1.35, letterSpacing: '-0.015em' }}>{p.title}</h3>
                 <p style={{ margin: 0, color: 'var(--text-3)', fontSize: 13, lineHeight: 1.55 }}>{p.excerpt}</p>
                 <div style={{ marginTop: 'auto', paddingTop: 14, borderTop: '1px dashed var(--line-1)', fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', letterSpacing: '0.04em' }}>
-                  추천 근거 · {p.category} 카테고리 완독 · {620 - i * 80}명이 끝까지 읽음
+                  {p.category} · {p.reading_time}분 읽기 · 조회 {p.views.toLocaleString()}
                 </div>
               </Link>
             );
@@ -743,7 +683,7 @@ export default async function HomePage() {
       <DailyBriefing posts={posts} />
       <SignalDashboard signals={signals} heatmapDates={heatmapDates} />
       <ReadingLanes posts={posts} />
-      <MagLatest posts={posts.slice(1, 8)} />
+      <MagLatestSection posts={posts.slice(1) as MagPost[]} />
       <TopicCloud topics={topics} />
       <EditorQuote />
       <SeriesShowcase series={series} />

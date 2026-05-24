@@ -253,12 +253,12 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             <span className="sep">/</span>
             <Link href={`/category/${post.category}`}>{post.category}</Link>
             <span className="sep">/</span>
-            <span style={{ color: 'var(--text-5)' }}>{post.title.slice(0, 32)}…</span>
+            <span style={{ color: 'var(--text-5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px', display: 'inline-block', verticalAlign: 'bottom' }}>{post.title}</span>
           </div>
 
           <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
             <span className={`badge badge-${tone}`}>{post.category}</span>
-            {post.tags.slice(0, 2).map(tag => (
+            {post.tags.filter(t => !t.startsWith('series:')).slice(0, 2).map(tag => (
               <span key={tag} className="badge">{tag}</span>
             ))}
           </div>
@@ -327,7 +327,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             {post.tags.filter(t => !t.startsWith('series:')).length > 0 && (
               <div className="end-tags">
                 {post.tags.filter(t => !t.startsWith('series:')).map(tag => (
-                  <span key={tag} className="end-tag">#{tag}</span>
+                  <Link key={tag} href={`/tag/${encodeURIComponent(tag)}`} className="end-tag">#{tag}</Link>
                 ))}
               </div>
             )}

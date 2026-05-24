@@ -146,8 +146,16 @@ export function TableOfContents({ headings }: { headings: Heading[] }) {
         {headings.map(h => (
           <li
             key={h.id}
+            role="button"
+            tabIndex={0}
             className={`${h.level === 3 ? 'h3' : ''}${activeId === h.id ? ' active' : ''}`}
             onClick={() => document.getElementById(h.id)?.scrollIntoView({ behavior: 'smooth' })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                document.getElementById(h.id)?.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
           >
             {h.text}
           </li>

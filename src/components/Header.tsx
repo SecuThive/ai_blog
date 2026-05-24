@@ -54,10 +54,19 @@ function SearchModal({ onClose }: { onClose: () => void }) {
   const [q, setQ] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [recent, setRecent] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   useEffect(() => { inputRef.current?.focus(); }, []);
+
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('searchRecent') ?? '[]');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRecent(Array.isArray(stored) ? stored.slice(0, 5) : []);
+    } catch { setRecent([]); }
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -78,12 +87,21 @@ function SearchModal({ onClose }: { onClose: () => void }) {
     return () => clearTimeout(t);
   }, [q]);
 
+  const saveRecent = (term: string) => {
+    if (!term.trim()) return;
+    setRecent(prev => {
+      const next = [term.trim(), ...prev.filter(t => t !== term.trim())].slice(0, 5);
+      localStorage.setItem('searchRecent', JSON.stringify(next));
+      return next;
+    });
+  };
+
   const goSearch = () => {
+    if (q.trim()) saveRecent(q);
     onClose();
     router.push(`/search?q=${encodeURIComponent(q)}`);
   };
 
-  const RECENT = ['MCP', 'React 19', 'AI 자동화', 'Cursor'];
   const CATS = [
     { href: '/category/AI & 자동화', label: 'AI 자동화', tone: 'blue' },
     { href: '/category/개발', label: '개발', tone: 'mint' },
@@ -112,14 +130,16 @@ function SearchModal({ onClose }: { onClose: () => void }) {
         {!q && (
           <>
             <div className="search-section-title">최근 검색</div>
-            {RECENT.map(t => (
+            {recent.length > 0 ? recent.map(t => (
               <div key={t} className="search-result" onClick={() => setQ(t)}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ color: 'var(--text-4)', flexShrink: 0, marginTop: 2 }}>
                   <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                 </svg>
                 <span style={{ fontSize: 14, color: 'var(--text-2)' }}>{t}</span>
               </div>
-            ))}
+            )) : (
+              <div style={{ padding: '10px 18px', color: 'var(--text-4)', fontSize: 13 }}>최근 검색 기록이 없습니다.</div>
+            )}
             <div className="search-section-title">인기 카테고리</div>
             {CATS.map(c => (
               <Link key={c.href} href={c.href} className="search-result" onClick={onClose}>
@@ -141,7 +161,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
             {results.map(p => {
               const href = p.source === 'guide' ? `/engineer/${p.slug}` : `/blog/${p.slug}`;
               return (
-                <Link key={`${p.source}-${p.id}`} href={href} className="search-result" onClick={onClose}>
+                <Link key={`${p.source}-${p.id}`} href={href} className="search-result" onClick={() => { saveRecent(q); onClose(); }}>
                   <span className={`badge badge-${catTone(p.category)}`} style={{ flexShrink: 0 }}>{p.category}</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, color: 'var(--text-1)', lineHeight: 1.4 }}>{p.title}</div>
@@ -195,6 +215,15 @@ export default function Header() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [openSearch]);
+
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
 
   const isActive = (href: string) => {
     if (href === '/') return decoded === '/';
