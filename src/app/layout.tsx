@@ -69,6 +69,12 @@ export const metadata: Metadata = {
   },
   verification: {
     // google: '', // ← 구글 서치 콘솔 연동 시 추가
+    other: {
+      // 네이버 서치어드바이저: https://searchadvisor.naver.com 에서 사이트 등록 후 코드 추가
+      ...(process.env.NAVER_SITE_VERIFICATION
+        ? { 'naver-site-verification': process.env.NAVER_SITE_VERIFICATION }
+        : {}),
+    },
   },
 };
 
