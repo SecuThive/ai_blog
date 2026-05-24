@@ -126,7 +126,7 @@ function buildHtml(posts: Post[], email: string, weekStr: string): string {
         <a href="${SITE_URL}/blog/${p.slug}" style="text-decoration:none">
           <span style="font-size:11px;color:#888;font-weight:500">${CATEGORY_EMOJI[p.category] ?? '📄'} ${p.category}</span>
           <div style="font-size:15px;font-weight:600;color:#0A0D14;margin:4px 0 4px;line-height:1.4">${p.title}</div>
-          <span style="font-size:12px;color:#aaa">읽기 ${p.reading_time ?? 3}분</span>
+          <span style="font-size:12px;color:#aaa">조회 ${p.views}</span>
         </a>
       </td>
     </tr>`).join('');
