@@ -1,10 +1,34 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
+import { JetBrains_Mono, Source_Serif_4, Inter } from 'next/font/google';
 import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Analytics } from '@vercel/analytics/next';
 import JsonLd from '@/components/JsonLd';
 import ThemeProvider from '@/components/ThemeProvider';
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-jetbrains-mono',
+  display: 'swap',
+});
+
+const sourceSerif4 = Source_Serif_4({
+  subsets: ['latin'],
+  weight: ['400', '600'],
+  style: ['normal', 'italic'],
+  variable: '--font-source-serif-4',
+  display: 'swap',
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-inter',
+  display: 'swap',
+});
 
 const SITE_NAME = 'Nodelog — AI 기반 IT 테크 미디어';
 const SITE_DESC = 'AI가 취재하고 분석하는 IT·개발·보안·인프라 전문 미디어. 매일 최신 기술 인사이트를 전달합니다.';
@@ -44,28 +68,21 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
   },
   verification: {
-    // google: 'your-google-site-verification-code', // ← 구글 서치 콘솔 연동 시 추가
+    // google: '', // ← 구글 서치 콘솔 연동 시 추가
   },
 };
+
+const GA_ID = 'G-3WP9Z4DEFH';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID;
   return (
-    <html lang="ko">
+    <html lang="ko" className={`${jetbrainsMono.variable} ${sourceSerif4.variable} ${inter.variable}`}>
       <head>
-        {/* eslint-disable @next/next/no-page-custom-font */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;600&display=swap"
-        />
-        {/* eslint-enable @next/next/no-page-custom-font */}
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
         />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link
           rel="alternate"
           type="application/rss+xml"
@@ -110,6 +127,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Footer />
         <Analytics />
         </ThemeProvider>
+        <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
+        <Script id="ga4-init" strategy="afterInteractive">{`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', '${GA_ID}');
+        `}</Script>
       </body>
     </html>
   );

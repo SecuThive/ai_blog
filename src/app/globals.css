@@ -33,9 +33,9 @@
   --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 20px;
   --shadow-1: 0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 30px -12px rgba(0,0,0,0.6);
   --shadow-2: 0 1px 0 rgba(255,255,255,0.06) inset, 0 22px 60px -20px rgba(0,0,0,0.7);
-  --ff-sans: "Pretendard Variable", Pretendard, "Inter", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
-  --ff-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --ff-serif: "Source Serif 4", "Noto Serif KR", Georgia, serif;
+  --ff-sans: "Pretendard Variable", Pretendard, var(--font-inter), -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
+  --ff-mono: var(--font-jetbrains-mono), "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ff-serif: var(--font-source-serif-4), "Noto Serif KR", Georgia, serif;
   --maxw: 1320px;
   --gutter: 28px;
   --header-h: 64px;
