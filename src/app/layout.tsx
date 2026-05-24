@@ -69,22 +69,19 @@ export const metadata: Metadata = {
   },
   verification: {
     // google: '', // ← 구글 서치 콘솔 연동 시 추가
-    other: {
-      // 네이버 서치어드바이저: https://searchadvisor.naver.com 에서 사이트 등록 후 코드 추가
-      ...(process.env.NAVER_SITE_VERIFICATION
-        ? { 'naver-site-verification': process.env.NAVER_SITE_VERIFICATION }
-        : {}),
-    },
   },
 };
 
 const GA_ID = 'G-3WP9Z4DEFH';
+
+const NAVER_CODE = process.env.NAVER_SITE_VERIFICATION ?? '';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID;
   return (
     <html lang="ko" className={`${jetbrainsMono.variable} ${sourceSerif4.variable} ${inter.variable}`}>
       <head>
+        {NAVER_CODE && <meta name="naver-site-verification" content={NAVER_CODE} />}
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
