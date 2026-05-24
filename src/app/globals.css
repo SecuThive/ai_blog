@@ -236,6 +236,9 @@ img { max-width: 100%; display: block; }
 .badge-amber  { color: var(--acc-amber);  border-color: color-mix(in oklch, var(--acc-amber) 30%, transparent);  background: color-mix(in oklch, var(--acc-amber) 8%, transparent); }
 .badge-rose   { color: var(--acc-rose);   border-color: color-mix(in oklch, var(--acc-rose) 30%, transparent);   background: color-mix(in oklch, var(--acc-rose) 8%, transparent); }
 
+/* ===== Pill row (flex-wrap container for tag chips) ===== */
+.pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
 /* ===== Tag chip ===== */
 .tag-chip {
   display: inline-flex; align-items: center; gap: 6px;
