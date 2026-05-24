@@ -31,12 +31,12 @@ async function getStats(): Promise<SiteStats> {
   const client = makeFreshClient();
 
   const [postsRes, subscribersRes, guidesRes] = await Promise.all([
-    client.from('posts').select('tags, published_at, views, reading_time').eq('status', 'published'),
+    client.from('posts').select('tags, published_at, views, content').eq('status', 'published'),
     client.from('subscribers').select('id', { count: 'exact', head: true }),
     client.from('engineer_guides').select('id', { count: 'exact', head: true }).eq('status', 'published'),
   ]);
 
-  const posts = (postsRes.data ?? []) as { tags: string[]; published_at: string; views: number; reading_time: number }[];
+  const posts = (postsRes.data ?? []) as { tags: string[]; published_at: string; views: number; content: string }[];
   const postCount = posts.length;
 
   const seriesSet = new Set<string>();
@@ -52,7 +52,10 @@ async function getStats(): Promise<SiteStats> {
     firstPostDate = `${d.getFullYear()}년 ${d.getMonth() + 1}월부터`;
   }
 
-  const readingTimes = posts.map(p => p.reading_time).filter(t => t > 0);
+  // reading_time is not a DB column — compute from word count (200 wpm)
+  const readingTimes = posts
+    .map(p => Math.max(1, Math.round((p.content ?? '').trim().split(/\s+/).length / 200)))
+    .filter(t => t > 0);
   const avgReadingTime = readingTimes.length
     ? Math.round(readingTimes.reduce((a, b) => a + b, 0) / readingTimes.length)
     : 14;

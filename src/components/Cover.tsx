@@ -11,6 +11,8 @@ const CATEGORY_HUES: Record<string, number> = {
   '개발': 220,
   '툴 리뷰': 55,
   'IT 트렌드': 148,
+  '보안': 345,
+  '인프라': 195,
 };
 
 export function categoryHue(category: string): number {
