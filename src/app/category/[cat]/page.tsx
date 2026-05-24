@@ -127,7 +127,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ cat: 
         ) : (
           <LoadMore
             initialPosts={posts}
-            fetchUrl={(page) => `/api/posts?category=${encodeURIComponent(cat)}&page=${page}&limit=12`}
+            fetchUrl={`/api/posts?category=${encodeURIComponent(cat)}&limit=12`}
             pageSize={12}
             layout="grid"
           />

@@ -18,7 +18,7 @@ interface PostRow {
 
 interface LoadMoreProps {
   initialPosts: PostRow[];
-  fetchUrl: (page: number) => string;
+  fetchUrl: string;  // base URL — LoadMore appends &page=N automatically
   pageSize?: number;
   layout?: 'grid' | 'list';
 }
@@ -41,7 +41,7 @@ export default function LoadMore({ initialPosts, fetchUrl, pageSize = 12, layout
     setLoading(true);
     try {
       const next = page + 1;
-      const res = await fetch(fetchUrl(next));
+      const res = await fetch(`${fetchUrl}&page=${next}`);
       const data = await res.json();
       const newPosts: PostRow[] = data.posts ?? data ?? [];
       setPosts(prev => [...prev, ...newPosts]);
