@@ -65,6 +65,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
   }, [onClose]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!q.trim()) { setResults([]); return; }
     const t = setTimeout(async () => {
       setLoading(true);

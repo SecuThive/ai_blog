@@ -84,7 +84,7 @@ export default function EngineerSearch({ guides, activeCat }: Props) {
       {filtered.length === 0 ? (
         <div className="card" style={{ padding: 48, textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-4)' }}>
-            "{q}" 에 해당하는 가이드가 없습니다.
+            &ldquo;{q}&rdquo; 에 해당하는 가이드가 없습니다.
           </div>
         </div>
       ) : (

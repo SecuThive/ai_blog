@@ -1843,7 +1843,7 @@ async function run() {
     }
   }
 
-  console.log(`\n완료: \${ok}개 삽입, \${skip}개 건너뜀, \${fail}개 실패`);
+  console.log(`\n완료: ${ok}개 삽입, ${skip}개 건너뜀, ${fail}개 실패`);
 }
 
 run();

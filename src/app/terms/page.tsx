@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
@@ -28,7 +29,7 @@ export default function TermsPage() {
       <section className="page-hero">
         <div className="container">
           <div className="crumbs">
-            <a href="/">홈</a><span className="sep">/</span>
+            <Link href="/">홈</Link><span className="sep">/</span>
             <span style={{ color: 'var(--text-1)' }}>이용안내</span>
           </div>
           <div className="page-eyebrow" style={{ marginTop: 12 }}>TERMS OF USE</div>

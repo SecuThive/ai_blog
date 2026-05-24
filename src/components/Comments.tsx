@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface Comment {
   id: number;
@@ -30,14 +30,14 @@ export default function Comments({ postSlug }: { postSlug: string }) {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
 
-  function loadComments() {
+  const loadComments = useCallback(() => {
     fetch(`/api/comments?post_slug=${encodeURIComponent(postSlug)}`)
       .then(r => r.json())
       .then(d => { setComments(d.comments ?? []); setLoading(false); })
       .catch(() => setLoading(false));
-  }
+  }, [postSlug]);
 
-  useEffect(() => { loadComments(); }, [postSlug]);
+  useEffect(() => { loadComments(); }, [loadComments]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

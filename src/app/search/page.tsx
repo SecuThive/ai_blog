@@ -50,6 +50,7 @@ function SearchContent() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (initialQ) doSearch(initialQ);
   }, [initialQ, doSearch]);
 

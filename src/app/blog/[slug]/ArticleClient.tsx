@@ -128,6 +128,7 @@ export function ArticleFeedback({ postSlug }: { postSlug: string }) {
 
   useEffect(() => {
     const saved = localStorage.getItem(`feedback_${postSlug}`);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved === 'up' || saved === 'down') setVoted(saved);
   }, [postSlug]);
 

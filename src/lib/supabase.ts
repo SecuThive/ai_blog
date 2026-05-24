@@ -33,7 +33,7 @@ export const supabase: ReturnType<typeof createClient> = new Proxy({} as any, {
   get(_t, prop) {
     const client = getSupabase();
     const val = (client as Record<string | symbol, unknown>)[prop];
-    return typeof val === 'function' ? (val as Function).bind(client) : val;
+    return typeof val === 'function' ? (val as (...args: unknown[]) => unknown).bind(client) : val;
   },
 });
 

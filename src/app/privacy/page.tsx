@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: '개인정보처리방침 — Nodelog',
+  title: '개인정보처리방침 — Thivelab',
 };
 
 const SECTIONS = [
@@ -21,12 +22,12 @@ export default function PrivacyPage() {
       <section className="page-hero">
         <div className="container">
           <div className="crumbs">
-            <a href="/">홈</a><span className="sep">/</span>
+            <Link href="/">홈</Link><span className="sep">/</span>
             <span style={{ color: 'var(--text-1)' }}>개인정보처리방침</span>
           </div>
           <div className="page-eyebrow" style={{ marginTop: 12 }}>PRIVACY POLICY</div>
           <h1 className="page-title" style={{ marginBottom: 16 }}>개인정보처리방침</h1>
-          <p className="page-lead">Nodelog가 수집하는 정보의 범위, 사용 방식, 그리고 사용자의 권리를 명확하게 안내합니다.</p>
+          <p className="page-lead">Thivelab이 수집하는 정보의 범위, 사용 방식, 그리고 사용자의 권리를 명확하게 안내합니다.</p>
           <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11.5, color: 'var(--text-4)', letterSpacing: '0.06em', marginTop: 18 }}>
             최종 업데이트 · 2026.04.30 · 적용 시작일 2026.05.01
           </div>

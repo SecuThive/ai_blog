@@ -10,6 +10,7 @@ interface Props {
   style?: React.CSSProperties;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function PostThumb({ slug: _slug, title, coverImage, category, className, style }: Props) {
   const tone = catTone(category ?? '');
   const initial = title.trim().charAt(0);

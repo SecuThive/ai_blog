@@ -12,7 +12,7 @@ const slugs = [
   'linux-port-in-use-fix',
 ];
 
-const { error, count } = await supabase
+const { error } = await supabase
   .from('engineer_guides')
   .update({ category: '트러블슈팅' })
   .in('slug', slugs);

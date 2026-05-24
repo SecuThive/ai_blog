@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
-export const metadata: Metadata = { title: '편집 정책 — Nodelog' };
+export const metadata: Metadata = { title: '편집 정책 — Thivelab' };
 
 const SECTIONS = [
   ['1. AI 사용 범위', '모든 글의 1차 초고는 AI가 작성합니다. 발행 전 사람 편집자의 검토를 거치며, 어떤 단계에서 어떤 주체가 작업했는지 글 상단에 표기됩니다.'],
@@ -16,12 +17,12 @@ export default function PolicyPage() {
       <section className="page-hero">
         <div className="container">
           <div className="crumbs">
-            <a href="/">홈</a><span className="sep">/</span>
+            <Link href="/">홈</Link><span className="sep">/</span>
             <span style={{ color: 'var(--text-1)' }}>편집 정책</span>
           </div>
           <div className="page-eyebrow" style={{ marginTop: 12 }}>EDITORIAL POLICY</div>
           <h1 className="page-title" style={{ marginBottom: 16 }}>편집 정책</h1>
-          <p className="page-lead">Nodelog가 콘텐츠를 만들고 검토하는 원칙을 외부에 공개합니다.</p>
+          <p className="page-lead">Thivelab이 콘텐츠를 만들고 검토하는 원칙을 외부에 공개합니다.</p>
           <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11.5, color: 'var(--text-4)', letterSpacing: '0.06em', marginTop: 18 }}>
             최종 업데이트 · 2026.04.30 · 적용 시작일 2026.05.01
           </div>
