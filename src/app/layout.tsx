@@ -90,7 +90,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="alternate"
           type="application/rss+xml"
           title="Nodelog RSS Feed"
-          href={`${SITE_URL}/rss.xml`}
+          href={`${SITE_URL}/rss`}
         />
         {adsenseId && (
           <script
