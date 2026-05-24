@@ -328,15 +328,26 @@ img { max-width: 100%; display: block; }
 .prose hr { border: 0; height: 1px; background: var(--line-1); margin: 32px 0; }
 
 /* Code block */
-.code-block { margin: 28px 0; background: var(--bg-0); border: 1px solid var(--line-2); border-radius: var(--r-md); overflow: hidden; }
+.code-block { margin: 28px 0; background: #0d1117; border: 1px solid rgba(255,255,255,0.10); border-radius: var(--r-md); overflow: hidden; box-shadow: 0 4px 24px -8px rgba(0,0,0,0.5); }
 .code-block .code-head {
-  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
-  border-bottom: 1px solid var(--line-2); background: rgba(255,255,255,0.02);
+  display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.025);
   font-family: var(--ff-mono); font-size: 11.5px; color: var(--text-3);
 }
-.code-block .code-head .dots { display: flex; gap: 5px; }
-.code-block .code-head .dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--text-5); }
-.code-block pre { margin: 0; padding: 16px 18px; font-family: var(--ff-mono); font-size: 13px; line-height: 1.65; overflow-x: auto; color: var(--text-2); }
+.code-block .code-head .dots { display: flex; gap: 6px; }
+.code-block .code-head .dots span { width: 10px; height: 10px; border-radius: 50%; }
+.code-block .code-head .dot-red    { background: #FF5F56; }
+.code-block .code-head .dot-yellow { background: #FFBD2E; }
+.code-block .code-head .dot-green  { background: #27C93F; }
+.code-block .code-lang-badge { font-family: var(--ff-mono); font-size: 11px; letter-spacing: 0.05em; color: var(--text-4); text-transform: uppercase; }
+.code-block pre { margin: 0; padding: 20px 22px; font-family: var(--ff-mono); font-size: 13.5px; line-height: 1.7; overflow-x: auto; color: #c9d1d9; tab-size: 2; }
+/* Syntax token colors */
+.cl-kw      { color: #ff7b72; }
+.cl-str     { color: #a5d6ff; }
+.cl-cmt     { color: #6e7681; font-style: italic; }
+.cl-num     { color: #f2cc60; }
+.cl-builtin { color: #d2a8ff; }
+.cl-prompt  { color: #58a6ff; }
 
 /* Prose table */
 .prose-table-wrap { overflow-x: auto; margin: 24px 0; border: 1px solid var(--line-1); border-radius: var(--r-md); }
@@ -1567,16 +1578,7 @@ mark { background: color-mix(in oklch, var(--acc-blue) 18%, transparent); color:
   border-color: color-mix(in oklch, var(--acc-mint) 30%, transparent);
 }
 
-/* bash 주석 줄 */
-.cl-comment {
-  color: var(--text-4);
-  font-style: italic;
-}
-/* bash 프롬프트 줄 (> ...) */
-.cl-prompt {
-  color: var(--acc-mint);
-  opacity: 0.7;
-}
+/* Legacy aliases removed — token classes now defined in Code block section above */
 
 /* 인라인 코드 구분 */
 .prose-inline-code {

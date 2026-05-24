@@ -8,6 +8,7 @@ import JsonLd from '@/components/JsonLd';
 import PostThumb from '@/components/PostThumb';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import CodeBlock from '@/components/CodeBlock';
 import { ProgressBar, TableOfContents, CopyLinkBtn, ScrollToTopBtn, ShareBtn, MobileActionBar, ArticleFeedback } from './ArticleClient';
 import Comments from '@/components/Comments';
 
@@ -142,6 +143,21 @@ function makeMdComponents() {
     tr: ({ children }: { children?: React.ReactNode }) => <tr>{children}</tr>,
     th: ({ children }: { children?: React.ReactNode }) => <th>{children}</th>,
     td: ({ children }: { children?: React.ReactNode }) => <td>{children}</td>,
+    pre: ({ children }: { children?: React.ReactNode }) => {
+      const child = Array.isArray(children) ? children[0] : children;
+      if (child && typeof child === 'object' && 'props' in (child as object)) {
+        const { className, children: code } = (child as React.ReactElement<{ className?: string; children?: React.ReactNode }>).props;
+        const match = /language-(\w+)/.exec(className ?? '');
+        const lang = match?.[1];
+        const content = String(code ?? '').replace(/\n$/, '');
+        return <CodeBlock code={content} lang={lang} />;
+      }
+      return <pre>{children}</pre>;
+    },
+    code: ({ children, className }: { children?: React.ReactNode; className?: string }) => {
+      if (className?.startsWith('language-')) return <code>{children}</code>;
+      return <code>{children}</code>;
+    },
     hr: () => <hr />,
     img: ({ src, alt }: { src?: string; alt?: string }) => (
       <figure className="prose-figure">
