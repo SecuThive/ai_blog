@@ -9,6 +9,9 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
         disallow: ['/api/', '/admin/'],
       },
+      // 네이버 크롤러
+      { userAgent: 'Yeti',          allow: '/' },
+      { userAgent: 'NaverBot',      allow: '/' },
       // AI crawlers — allow full indexing for GEO (generative engine optimization)
       { userAgent: 'GPTBot',        allow: '/' },
       { userAgent: 'ChatGPT-User',  allow: '/' },
