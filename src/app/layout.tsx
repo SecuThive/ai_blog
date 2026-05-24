@@ -74,14 +74,19 @@ export const metadata: Metadata = {
 
 const GA_ID = 'G-3WP9Z4DEFH';
 
-const NAVER_CODE = process.env.NAVER_SITE_VERIFICATION ?? '2304805a68feee778fe525cc3932b9437163b03f';
+const NAVER_CODES = [
+  '5bd307f95964d7e0787d21b5763b18401597a1b7',
+  '2304805a68feee778fe525cc3932b9437163b03f',
+];
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID;
   return (
     <html lang="ko" className={`${jetbrainsMono.variable} ${sourceSerif4.variable} ${inter.variable}`}>
       <head>
-        {NAVER_CODE && <meta name="naver-site-verification" content={NAVER_CODE} />}
+        {NAVER_CODES.map(code => (
+          <meta key={code} name="naver-site-verification" content={code} />
+        ))}
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
