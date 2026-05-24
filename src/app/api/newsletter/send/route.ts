@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { makeFreshClient } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import { Resend } from 'resend';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
@@ -17,17 +17,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'RESEND_API_KEY not configured' }, { status: 500 });
   }
 
-  const client = makeFreshClient();
+  const client = supabaseAdmin();
 
   // 최근 7일간 발행된 글, 조회수 상위 8개
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const { data: posts } = await client
+  const { data: posts, error: postsError } = await client
     .from('posts')
-    .select('title,slug,excerpt,category,tags,views,reading_time,published_at')
+    .select('title,slug,excerpt,category,tags,views,published_at')
     .eq('status', 'published')
     .gte('published_at', since)
     .order('views', { ascending: false })
     .limit(8);
+
+  if (postsError) console.error('posts query error:', postsError);
 
   if (!posts || posts.length === 0) {
     return NextResponse.json({ error: '지난 7일간 발행된 글이 없습니다.' }, { status: 404 });
@@ -90,7 +92,6 @@ interface Post {
   category: string;
   tags: string[];
   views: number;
-  reading_time: number;
   published_at: string;
 }
 
@@ -114,7 +115,7 @@ function buildHtml(posts: Post[], email: string, weekStr: string): string {
           <span style="font-size:11px;font-weight:600;color:#5535D4;text-transform:uppercase;letter-spacing:0.5px">${CATEGORY_EMOJI[topPost.category] ?? '📄'} ${topPost.category} · 이번 주 TOP</span>
           <h2 style="font-size:18px;font-weight:700;color:#0A0D14;margin:8px 0 10px;line-height:1.4">${topPost.title}</h2>
           <p style="font-size:14px;color:#555;line-height:1.6;margin:0 0 12px">${topPost.excerpt?.slice(0, 120)}...</p>
-          <span style="font-size:12px;color:#888">읽기 ${topPost.reading_time ?? 3}분 · 조회 ${topPost.views}</span>
+          <span style="font-size:12px;color:#888">조회 ${topPost.views}</span>
         </a>
       </td>
     </tr>`;
