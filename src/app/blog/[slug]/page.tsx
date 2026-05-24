@@ -9,7 +9,7 @@ import PostThumb from '@/components/PostThumb';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from '@/components/CodeBlock';
-import { ProgressBar, TableOfContents, CopyLinkBtn, ScrollToTopBtn, ShareBtn, MobileActionBar, ArticleFeedback } from './ArticleClient';
+import { ProgressBar, TableOfContents, CopyLinkBtn, ScrollToTopBtn, ShareBtn, MobileActionBar, ArticleFeedback, ViewTracker, BookmarkBtn, ReadingPositionTracker } from './ArticleClient';
 import Comments from '@/components/Comments';
 
 export const revalidate = 60;
@@ -58,7 +58,7 @@ async function getPost(slug: string): Promise<Post | null> {
       .single();
     if (error || !data) return null;
     const post = data as unknown as Post;
-    client.from('posts').update({ views: (post.views ?? 0) + 1 }).eq('id', post.id).then(() => {});
+
     return post;
   } catch {
     return null;
@@ -147,10 +147,13 @@ function makeMdComponents() {
       const child = Array.isArray(children) ? children[0] : children;
       if (child && typeof child === 'object' && 'props' in (child as object)) {
         const { className, children: code } = (child as React.ReactElement<{ className?: string; children?: React.ReactNode }>).props;
-        const match = /language-(\w+)/.exec(className ?? '');
-        const lang = match?.[1];
+        // language-ts:filename.ts 형식 지원
+        const raw = /language-([^\s]+)/.exec(className ?? '')?.[1] ?? '';
+        const [langPart, filenamePart] = raw.split(':');
+        const lang = langPart || undefined;
+        const filename = filenamePart || undefined;
         const content = String(code ?? '').replace(/\n$/, '');
-        return <CodeBlock code={content} lang={lang} />;
+        return <CodeBlock code={content} lang={lang} filename={filename} />;
       }
       return <pre>{children}</pre>;
     },
@@ -236,6 +239,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   return (
     <div>
       <JsonLd data={[articleSchema, breadcrumbSchema]} />
+      <ViewTracker postId={post.id} table="posts" />
+      <ReadingPositionTracker slug={post.slug} />
       <ProgressBar />
       <ScrollToTopBtn />
       <MobileActionBar />
@@ -371,6 +376,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             <div className="actions-rail">
               <CopyLinkBtn />
               <ShareBtn />
+              <BookmarkBtn slug={post.slug} title={post.title} />
             </div>
           </aside>
         </div>

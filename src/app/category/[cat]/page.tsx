@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import { unstable_noStore as noStore } from 'next/cache';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
-import { catTone } from '@/lib/utils';
-import PostThumb from '@/components/PostThumb';
+import LoadMore from '@/components/LoadMore';
 import type { PostSummary } from '@/lib/types';
 import type { Metadata } from 'next';
 
@@ -32,15 +31,6 @@ export async function generateStaticParams() {
   return ['AI & 자동화', '개발', '툴 리뷰', 'IT 트렌드', '보안', '인프라'].map(cat => ({ cat }));
 }
 
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const h = Math.floor(diff / 3600000);
-  if (h < 1) return '방금 전';
-  if (h < 24) return `${h}시간 전`;
-  const d = Math.floor(h / 24);
-  if (d < 7) return `${d}일 전`;
-  return new Date(dateStr).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-}
 
 const ALL_CATS = [
   { label: '전체', href: '/', cat: '' },
@@ -56,7 +46,6 @@ export default async function CategoryPage({ params }: { params: Promise<{ cat: 
   noStore();
   const { cat: rawCat } = await params;
   const cat = decodeURIComponent(rawCat);
-  const tone = catTone(cat);
 
   const { data } = await makeFreshClient()
     .from('posts')
@@ -114,25 +103,12 @@ export default async function CategoryPage({ params }: { params: Promise<{ cat: 
             <Link href="/" className="btn btn-ghost">← 홈으로</Link>
           </div>
         ) : (
-          <div className="grid-3" style={{ marginBottom: 80 }}>
-            {posts.map(post => (
-              <Link key={post.id} href={`/blog/${post.slug}`} className="card card-link">
-                <PostThumb slug={post.slug} title={post.title} coverImage={post.cover_image} category={post.category} />
-                <div className="card-body">
-                  <div className="card-meta">
-                    <span className={`badge badge-${tone}`}>{post.category}</span>
-                  </div>
-                  <h3 className="card-title">{post.title}</h3>
-                  <p className="card-excerpt">{post.excerpt}</p>
-                  <div className="card-foot">
-                    <span>{timeAgo(post.published_at)}</span>
-                    <span className="dot" />
-                    <span>{post.reading_time}분 읽기</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <LoadMore
+            initialPosts={posts}
+            fetchUrl={(page) => `/api/posts?category=${encodeURIComponent(cat)}&page=${page}&limit=12`}
+            pageSize={12}
+            layout="grid"
+          />
         )}
       </div>
     </div>

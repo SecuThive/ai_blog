@@ -2,8 +2,7 @@ import Link from 'next/link';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
-import { catTone } from '@/lib/utils';
-import PostThumb from '@/components/PostThumb';
+import TagLoadMore from '@/components/TagLoadMore';
 
 export const revalidate = 60;
 
@@ -69,15 +68,6 @@ async function getRelatedTags(tag: string): Promise<string[]> {
     .map(([t]) => t);
 }
 
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const h = Math.floor(diff / 3600000);
-  if (h < 1) return '방금 전';
-  if (h < 24) return `${h}시간 전`;
-  const d = Math.floor(h / 24);
-  if (d < 7) return `${d}일 전`;
-  return new Date(dateStr).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-}
 
 export default async function TagDetailPage({ params }: { params: Promise<{ tag: string }> }) {
   const { tag: tagParam } = await params;
@@ -117,28 +107,7 @@ export default async function TagDetailPage({ params }: { params: Promise<{ tag:
                   </div>
                 </div>
               ) : (
-                <div className="grid-2">
-                  {posts.map((p) => {
-                    const tone = catTone(p.category);
-                    return (
-                      <Link key={p.id} href={`/blog/${p.slug}`} className="card card-link">
-                        <PostThumb slug={p.slug} title={p.title} coverImage={p.cover_image} category={p.category} />
-                        <div className="card-body">
-                          <div className="card-meta">
-                            <span className={`badge badge-${tone}`}>{p.category}</span>
-                          </div>
-                          <h3 className="card-title">{p.title}</h3>
-                          <p className="card-excerpt">{p.excerpt}</p>
-                          <div className="card-foot">
-                            <span>{timeAgo(p.published_at)}</span>
-                            <span className="dot" />
-                            <span>{p.reading_time}분 읽기</span>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
+                <TagLoadMore posts={posts} />
               )}
             </div>
 

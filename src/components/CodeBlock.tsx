@@ -82,7 +82,7 @@ function highlightLine(line: string, lang?: string): ReactNode {
   return line;
 }
 
-export default function CodeBlock({ code, lang }: { code: string; lang?: string }) {
+export default function CodeBlock({ code, lang, filename }: { code: string; lang?: string; filename?: string }) {
   const [copied, setCopied] = useState(false);
   const label = lang ? (LANG_LABELS[lang] ?? lang.toUpperCase()) : 'CODE';
 
@@ -112,7 +112,11 @@ export default function CodeBlock({ code, lang }: { code: string; lang?: string 
           <span className="dot-yellow" />
           <span className="dot-green" />
         </div>
-        <span className="code-lang-badge">{label}</span>
+        {filename ? (
+          <span className="code-filename">{filename}</span>
+        ) : (
+          <span className="code-lang-badge">{label}</span>
+        )}
         <button
           className={`code-copy-btn${copied ? ' copied' : ''}`}
           onClick={handleCopy}

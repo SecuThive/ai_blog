@@ -1,8 +1,7 @@
-import Link from 'next/link';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
-import { catTone } from '@/lib/utils';
+import ArchiveLoadMore from '@/components/ArchiveLoadMore';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
@@ -59,6 +58,15 @@ export default async function ArchivePage() {
   const posts = await getAllPosts();
   const grouped = groupByYearMonth(posts);
 
+  // 직렬화 가능한 형태로 변환
+  const groupedArr = Array.from(grouped.entries()).map(([year, months]) => ({
+    year,
+    months: Array.from(months.entries()).map(([month, monthPosts]) => ({
+      month,
+      posts: monthPosts,
+    })),
+  }));
+
   return (
     <div>
       <section className="page-hero">
@@ -66,55 +74,20 @@ export default async function ArchivePage() {
           <div className="page-eyebrow">ARCHIVE · 시간 축</div>
           <h1 className="page-title">아카이브</h1>
           <p className="page-lead">시간 순서로 정리된 전체 글. 연도·월 단위로 탐색하세요.</p>
+          <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-4)', letterSpacing: '0.08em', marginTop: 16 }}>
+            {posts.length} POSTS TOTAL
+          </div>
         </div>
       </section>
 
       <section className="section">
         <div className="container">
-          {Array.from(grouped.entries()).map(([year, months]) => {
-            const total = Array.from(months.values()).flat().length;
-            return (
-              <div key={year} style={{ marginBottom: 64 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginBottom: 28, paddingBottom: 16, borderBottom: '1px solid var(--line-1)' }}>
-                  <h2 style={{ margin: 0, fontSize: 40, letterSpacing: '-0.03em', fontWeight: 600 }}>{year}</h2>
-                  <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-4)', letterSpacing: '0.08em' }}>{total} POSTS</span>
-                </div>
-                {Array.from(months.entries()).map(([month, monthPosts]) => (
-                  <div key={month} style={{ marginBottom: 36 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: 32, alignItems: 'start' }}>
-                      <div style={{ position: 'sticky', top: 'calc(var(--header-h) + 32px)' }}>
-                        <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>{month}월</div>
-                        <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', letterSpacing: '0.08em', marginTop: 4 }}>{monthPosts.length} POSTS</div>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        {monthPosts.map((p, i) => {
-                          const d = new Date(p.published_at);
-                          const tone = catTone(p.category);
-                          return (
-                            <Link
-                              key={p.id}
-                              href={`/blog/${p.slug}`}
-                              style={{ display: 'grid', gridTemplateColumns: '50px 120px 1fr', gap: 20, padding: '16px 0', borderTop: i === 0 ? 'none' : '1px solid var(--line-1)', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}
-                            >
-                              <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-4)', fontVariantNumeric: 'tabular-nums' }}>
-                                {String(d.getMonth() + 1).padStart(2, '0')}.{String(d.getDate()).padStart(2, '0')}
-                              </span>
-                              <span className={`badge badge-${tone}`} style={{ width: 'fit-content' }}>{p.category}</span>
-                              <span style={{ fontSize: 14.5, color: 'var(--text-1)', letterSpacing: '-0.01em' }}>{p.title}</span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            );
-          })}
-          {posts.length === 0 && (
+          {posts.length === 0 ? (
             <div className="card" style={{ padding: 56, textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-4)' }}>아직 발행된 글이 없습니다.</div>
             </div>
+          ) : (
+            <ArchiveLoadMore grouped={groupedArr} />
           )}
         </div>
       </section>

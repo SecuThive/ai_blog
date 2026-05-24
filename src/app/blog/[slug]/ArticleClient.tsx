@@ -2,6 +2,109 @@
 
 import { useEffect, useState } from 'react';
 
+/* ── ViewTracker: 세션당 1회만 조회수 증가 ─────────────────────────── */
+export function ViewTracker({ postId, table = 'posts' }: { postId: number; table?: string }) {
+  useEffect(() => {
+    const key = `viewed_${table}_${postId}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+    fetch('/api/view', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: postId, table }),
+    }).catch(() => {});
+  }, [postId, table]);
+  return null;
+}
+
+/* ── useBookmarks hook ───────────────────────────────────────────────── */
+function useBookmarks() {
+  const [bookmarks, setBookmarks] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('bookmarks') ?? '[]');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setBookmarks(Array.isArray(stored) ? stored : []);
+    } catch { setBookmarks([]); }
+  }, []);
+
+  const toggle = (slug: string) => {
+    setBookmarks(prev => {
+      const next = prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug];
+      localStorage.setItem('bookmarks', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  return { bookmarks, toggle };
+}
+
+/* ── BookmarkBtn ─────────────────────────────────────────────────────── */
+export function BookmarkBtn({ slug, title }: { slug: string; title: string }) {
+  const { bookmarks, toggle } = useBookmarks();
+  const saved = bookmarks.includes(slug);
+  return (
+    <button
+      className={`action-btn${saved ? ' bookmark-active' : ''}`}
+      onClick={() => toggle(slug)}
+      aria-label={saved ? '북마크 해제' : '북마크 저장'}
+      title={title}
+    >
+      <svg width="13" height="13" viewBox="0 0 24 24" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+      </svg>
+      {saved ? '저장됨' : '저장'}
+    </button>
+  );
+}
+
+/* ── ReadingPositionTracker ──────────────────────────────────────────── */
+export function ReadingPositionTracker({ slug }: { slug: string }) {
+  const [showBanner, setShowBanner] = useState(false);
+  const [savedPct, setSavedPct] = useState(0);
+
+  useEffect(() => {
+    const key = `read_pos_${slug}`;
+    const saved = Number(localStorage.getItem(key) ?? 0);
+    if (saved > 5 && saved < 95) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSavedPct(saved);
+      setShowBanner(true);
+    }
+
+    // 스크롤 위치 저장 (throttled)
+    let timer: ReturnType<typeof setTimeout>;
+    const save = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const el = document.documentElement;
+        const pct = Math.round((el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100);
+        if (pct > 2) localStorage.setItem(key, String(pct));
+      }, 500);
+    };
+    window.addEventListener('scroll', save, { passive: true });
+    return () => { clearTimeout(timer); window.removeEventListener('scroll', save); };
+  }, [slug]);
+
+  const restore = () => {
+    const el = document.documentElement;
+    const target = (el.scrollHeight - el.clientHeight) * (savedPct / 100);
+    window.scrollTo({ top: target, behavior: 'smooth' });
+    setShowBanner(false);
+  };
+
+  if (!showBanner) return null;
+
+  return (
+    <div className="reading-restore-banner">
+      <span>지난번에 <strong>{savedPct}%</strong> 읽으셨습니다.</span>
+      <button className="btn btn-sm btn-ghost" onClick={restore}>이어보기</button>
+      <button className="reading-restore-close" onClick={() => setShowBanner(false)} aria-label="닫기">✕</button>
+    </div>
+  );
+}
+
 interface Heading { id: string; text: string; index: number; level: number; }
 
 export function ProgressBar() {

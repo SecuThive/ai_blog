@@ -4,6 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Analytics } from '@vercel/analytics/next';
 import JsonLd from '@/components/JsonLd';
+import ThemeProvider from '@/components/ThemeProvider';
 
 const SITE_NAME = 'Nodelog — AI 기반 IT 테크 미디어';
 const SITE_DESC = 'AI가 취재하고 분석하는 IT·개발·보안·인프라 전문 미디어. 매일 최신 기술 인사이트를 전달합니다.';
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         )}
       </head>
       <body>
+        <ThemeProvider>
         <JsonLd data={[
           {
             '@context': 'https://schema.org',
@@ -91,6 +93,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main>{children}</main>
         <Footer />
         <Analytics />
+        </ThemeProvider>
       </body>
     </html>
   );
