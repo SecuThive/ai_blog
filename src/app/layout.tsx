@@ -74,7 +74,7 @@ export const metadata: Metadata = {
 
 const GA_ID = 'G-3WP9Z4DEFH';
 
-const NAVER_CODE = process.env.NAVER_SITE_VERIFICATION ?? '';
+const NAVER_CODE = process.env.NAVER_SITE_VERIFICATION ?? '5bd307f95964d7e0787d21b5763b18401597a1b7';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID;
