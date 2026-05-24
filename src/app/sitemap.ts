@@ -60,6 +60,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.5,
   }));
 
+  const CATEGORIES = ['AI & 자동화', 'IT 트렌드', '개발', '툴 리뷰', '보안', '인프라'];
+  const categoryPages = CATEGORIES.map(cat => ({
+    url: `${base}/category/${encodeURIComponent(cat)}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.8,
+  }));
+
   const staticPages = [
     { url: base, changeFrequency: 'daily' as const, priority: 1 },
     { url: `${base}/engineer`, changeFrequency: 'daily' as const, priority: 0.9 },
@@ -74,5 +82,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/faq`, changeFrequency: 'monthly' as const, priority: 0.4 },
   ].map(p => ({ ...p, lastModified: new Date() }));
 
-  return [...staticPages, ...posts, ...guides, ...seriesPages, ...tagPages];
+  return [...staticPages, ...categoryPages, ...posts, ...guides, ...seriesPages, ...tagPages];
 }

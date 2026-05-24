@@ -23,13 +23,29 @@ export const metadata: Metadata = {
   title: { default: SITE_NAME, template: `%s | Nodelog` },
   description: SITE_DESC,
   metadataBase: new URL(SITE_URL),
+  authors: [{ name: 'Nodelog Editorial', url: SITE_URL }],
+  creator: 'Nodelog',
+  publisher: 'Nodelog',
   openGraph: {
     siteName: SITE_NAME,
     locale: 'ko_KR',
     type: 'website',
+    url: SITE_URL,
+    images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
-  twitter: { card: 'summary_large_image' },
-  robots: { index: true, follow: true },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@nodelog',
+    creator: '@nodelog',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
+  },
+  verification: {
+    // google: 'your-google-site-verification-code', // ← 구글 서치 콘솔 연동 시 추가
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

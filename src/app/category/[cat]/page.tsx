@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { unstable_noStore as noStore } from 'next/cache';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
 import LoadMore from '@/components/LoadMore';
+import JsonLd from '@/components/JsonLd';
 import type { PostSummary } from '@/lib/types';
 import type { Metadata } from 'next';
 
@@ -61,8 +62,29 @@ export default async function CategoryPage({ params }: { params: Promise<{ cat: 
     reading_time: readingTime((p.content as string) ?? ''),
   })) as unknown as PostSummary[];
 
+  const collectionSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `${cat} — Nodelog`,
+    description: `AI가 분석한 ${cat} 관련 심층 분석글 모음`,
+    url: `${SITE_URL}/category/${rawCat}`,
+    inLanguage: 'ko',
+    publisher: {
+      '@type': 'Organization',
+      name: 'Nodelog',
+      url: SITE_URL,
+    },
+    hasPart: posts.slice(0, 10).map(p => ({
+      '@type': 'Article',
+      headline: p.title,
+      url: `${SITE_URL}/blog/${p.slug}`,
+      description: p.excerpt,
+    })),
+  };
+
   return (
     <div>
+      <JsonLd data={collectionSchema} />
       {/* Page hero */}
       <div className="page-hero">
         <div className="container">

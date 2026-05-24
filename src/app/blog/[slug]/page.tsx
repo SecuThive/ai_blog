@@ -220,10 +220,18 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       logo: { '@type': 'ImageObject', url: `${SITE_URL}/opengraph-image` },
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl },
-    ...(post.cover_image ? { image: { '@type': 'ImageObject', url: post.cover_image, width: 1200, height: 630 } } : {}),
+    image: post.cover_image
+      ? { '@type': 'ImageObject', url: post.cover_image, width: 1200, height: 630 }
+      : { '@type': 'ImageObject', url: `${SITE_URL}/blog/${post.slug}/opengraph-image`, width: 1200, height: 630 },
     keywords: post.tags.filter(t => !t.startsWith('series:')).join(', '),
     articleSection: post.category,
     inLanguage: 'ko',
+    wordCount,
+    timeRequired: `PT${mins}M`,
+    speakable: {
+      '@type': 'SpeakableSpecification',
+      cssSelector: ['.article-title', '.article-deck', '.lede'],
+    },
   };
 
   const breadcrumbSchema = {

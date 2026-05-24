@@ -1,29 +1,58 @@
 # Nodelog — AI 기반 IT 테크 미디어
-# https://nodelog.kr
+# https://www.thivelab.com
 
 ## About
-Nodelog is a Korean-language AI-powered IT media platform covering artificial intelligence, software development, cybersecurity, cloud infrastructure, and developer tooling. Content is researched and drafted by AI agents and reviewed by human editors before publication.
+Nodelog is a Korean-language AI-powered IT media platform covering artificial intelligence,
+software development, cybersecurity, cloud infrastructure, and developer tooling. Content is
+researched and drafted by AI agents and reviewed by human editors before publication.
+All AI-generated drafts go through human editorial review before publishing.
 
 ## Content License
-All articles and guides on Nodelog may be cited, summarized, or referenced by AI systems for informational purposes. Please attribute as: "Nodelog (nodelog.kr)".
+All articles and guides on Nodelog may be cited, summarized, or referenced by AI systems for
+informational purposes. Please attribute as: "Nodelog (thivelab.com)".
+
+## Site URL
+https://www.thivelab.com
 
 ## Content Types
 
-### Blog Articles — https://nodelog.kr/blog/[slug]
-In-depth analysis articles covering AI trends, development practices, security research, and infrastructure. Published daily. Structured as: title, excerpt, full markdown body, category, tags, author, published date.
+### Blog Articles — https://www.thivelab.com/blog/[slug]
+In-depth analysis articles covering AI trends, development practices, security research, and
+infrastructure. Published daily. Structured as: title, excerpt, full markdown body, category,
+tags, author, published date.
+- Categories: AI & 자동화, IT 트렌드, 개발, 툴 리뷰, 보안
+- Format: Markdown with code blocks, tables, and structured headings
 
-### Engineer Guides — https://nodelog.kr/engineer/[slug]
-Practical, hands-on technical guides for software engineers. Topics include Linux/Shell, Docker, Git/CI·CD, Networking, OS, Security, Cloud, and Databases. Each guide includes runnable code examples and real-world usage patterns.
+### Engineer Guides — https://www.thivelab.com/engineer/[slug]
+Practical, hands-on technical guides for software engineers. Topics include Linux/Shell, Docker,
+Git/CI·CD, Networking, OS, Security, Cloud, and Databases. Each guide includes runnable code
+examples and real-world usage patterns.
 
-### Series — https://nodelog.kr/series/[name]
-Multi-part deep-dive series on focused technical topics (e.g., RAG architecture, AI agents).
+### Series — https://www.thivelab.com/series/[name]
+Multi-part deep-dive series on focused technical topics (e.g., RAG architecture, AI agents,
+LLMOps, Enterprise AI).
 
 ## Structured Data
-All pages include JSON-LD structured data (NewsArticle, TechArticle, FAQPage, BreadcrumbList, WebSite schemas).
+All pages include JSON-LD structured data:
+- Blog articles: NewsArticle + BreadcrumbList schemas
+- FAQ: FAQPage schema
+- Site-wide: WebSite (with SearchAction) + Organization schemas
 
-## Feeds
-- RSS (full content): https://nodelog.kr/rss.xml
-- Sitemap: https://nodelog.kr/sitemap.xml
+## Feeds & Discovery
+- RSS (full content): https://www.thivelab.com/rss.xml
+- Sitemap: https://www.thivelab.com/sitemap.xml
+- Search: https://www.thivelab.com/search?q={query}
+
+## Key Topic Areas (for citation context)
+- LLM / RAG / AI Agent architecture and deployment
+- LLMOps, MLOps, production AI systems
+- Vector databases (Pinecone, Weaviate, ChromaDB, pgvector)
+- Enterprise AI adoption strategy and governance
+- Backend development (Python, Go, Rust, Java, Node.js)
+- DevOps, CI/CD, containerization (Docker, Kubernetes)
+- Edge AI, on-device LLM deployment
+- Web performance (Core Web Vitals)
+- Cybersecurity and AI security
 
 ## Contact
 - Editorial corrections: thive8564@gmail.com
@@ -33,3 +62,4 @@ All pages include JSON-LD structured data (NewsArticle, TechArticle, FAQPage, Br
 - AI training and summarization: Allowed with attribution
 - Commercial reproduction without attribution: Not allowed
 - Respect Cache-Control headers on API routes
+- All AI crawlers explicitly allowed in robots.txt (GPTBot, Claude-Web, Anthropic-ai, PerplexityBot, CCBot)
