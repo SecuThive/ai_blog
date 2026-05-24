@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { makeFreshClient } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import { Resend } from 'resend';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '유효한 이메일을 입력해주세요.' }, { status: 400 });
   }
 
-  const { error } = await makeFreshClient()
+  const { error } = await supabaseAdmin()
     .from('subscribers')
     .insert({ email });
 
