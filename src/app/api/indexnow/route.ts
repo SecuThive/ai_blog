@@ -58,10 +58,15 @@ export async function POST(req: NextRequest) {
 }
 
 // GET: submit the full sitemap's recent URLs (last 50 posts + guides)
+// Called by Vercel Cron (Authorization: Bearer ${CRON_SECRET}) or manually
 export async function GET(req: NextRequest) {
-  if (INTERNAL_SECRET) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret) {
+    const auth = req.headers.get('authorization');
     const secret = req.headers.get('x-indexnow-secret') ?? req.nextUrl.searchParams.get('secret');
-    if (secret !== INTERNAL_SECRET) {
+    const bearerOk = auth === `Bearer ${cronSecret}`;
+    const headerOk = secret === (INTERNAL_SECRET ?? cronSecret);
+    if (!bearerOk && !headerOk) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
   }
