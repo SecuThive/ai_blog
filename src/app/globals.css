@@ -844,6 +844,7 @@ mark { background: color-mix(in oklch, var(--acc-blue) 18%, transparent); color:
 .archive-row { display: grid; grid-template-columns: 60px 100px 1fr auto; gap: 20px; padding: 16px 0; border-top: 1px solid var(--line-1); align-items: center; }
 .archive-row:first-child { border-top: 0; }
 .archive-row:hover .archive-title { color: var(--text-1); }
+.archive-row:hover { background: var(--bg-2); border-radius: var(--r-md); padding-left: 8px; transition: background 120ms; }
 .archive-title { font-size: 14.5px; color: var(--text-2); letter-spacing: -0.01em; }
 
 /* ===== Series episode list ===== */
@@ -1663,6 +1664,82 @@ mark { background: color-mix(in oklch, var(--acc-blue) 18%, transparent); color:
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 
+/* ── Engineer Card Grid ───────────────────────────────── */
+.eng-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.eng-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line-1);
+  background: var(--bg-1);
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  transition: border-color 160ms, box-shadow 160ms, transform 160ms;
+}
+.eng-card:hover {
+  border-color: var(--line-2);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  transform: translateY(-2px);
+}
+.eng-card-accent {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.eng-card-blue  .eng-card-accent { background: linear-gradient(90deg, var(--acc-blue), transparent 70%); }
+.eng-card-mint  .eng-card-accent { background: linear-gradient(90deg, var(--acc-mint), transparent 70%); }
+.eng-card-purple .eng-card-accent { background: linear-gradient(90deg, var(--acc-purple), transparent 70%); }
+.eng-card-amber .eng-card-accent { background: linear-gradient(90deg, var(--acc-amber), transparent 70%); }
+.eng-card-rose  .eng-card-accent { background: linear-gradient(90deg, var(--acc-rose), transparent 70%); }
+.eng-card-orange .eng-card-accent { background: linear-gradient(90deg, var(--acc-amber), transparent 70%); }
+.eng-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.eng-card-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--text-1);
+  margin: 0 0 8px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.eng-card:hover .eng-card-title { color: var(--acc-blue); }
+.eng-card-summary {
+  font-size: 12.5px;
+  color: var(--text-3);
+  margin: 0 0 auto;
+  line-height: 1.6;
+  padding-bottom: 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+.eng-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-1);
+  margin-top: auto;
+}
+
 /* Difficulty badge */
 .eng-diff {
   font-family: var(--ff-mono); font-size: 10.5px; letter-spacing: 0.04em;
@@ -1834,8 +1911,10 @@ mark { background: color-mix(in oklch, var(--acc-blue) 18%, transparent); color:
 /* Responsive */
 @media (max-width: 960px) {
   .eng-cat-grid { grid-template-columns: repeat(2, 1fr); }
+  .eng-card-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 600px) {
   .eng-cat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
   .eng-guide-right .eng-guide-date { display: none; }
+  .eng-card-grid { grid-template-columns: 1fr; }
 }
