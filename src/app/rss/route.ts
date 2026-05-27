@@ -42,7 +42,7 @@ export async function GET() {
     <link>${siteUrl}</link>
     <description>AI가 취재하고 분석하는 IT·개발·보안·인프라 전문 미디어.</description>
     <language>ko</language>
-    <atom:link href="${siteUrl}/rss.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="${siteUrl}/rss" rel="self" type="application/rss+xml" />
     ${items}
   </channel>
 </rss>`;
