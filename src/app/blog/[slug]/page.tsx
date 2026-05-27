@@ -50,6 +50,29 @@ async function getSeriesContext(tags: string[], currentId: number): Promise<Seri
   return { seriesName, posts, currentIndex };
 }
 
+const CAT_TO_GUIDE_CAT: Record<string, string[]> = {
+  '인프라': ['Linux / Shell', 'Docker / 컨테이너', '네트워킹 / 서버', 'OS / 시스템', '클라우드', '데이터베이스'],
+  '보안': ['보안 설정'],
+  '개발': ['Git / CI·CD', 'Docker / 컨테이너'],
+  'AI & 자동화': ['Linux / Shell', 'Docker / 컨테이너', 'Git / CI·CD', '클라우드'],
+  'IT 트렌드': ['클라우드', '데이터베이스', '네트워킹 / 서버'],
+};
+
+async function getRelatedGuides(category: string, tags: string[]): Promise<import('@/lib/types').EngineerGuide[]> {
+  noStore();
+  const guideCats = CAT_TO_GUIDE_CAT[category] ?? [];
+  if (guideCats.length === 0) return [];
+  const client = makeFreshClient();
+  const { data } = await client
+    .from('engineer_guides')
+    .select('id,title,slug,summary,category,difficulty,views')
+    .eq('status', 'published')
+    .in('category', guideCats)
+    .order('views', { ascending: false })
+    .limit(3);
+  return (data ?? []) as import('@/lib/types').EngineerGuide[];
+}
+
 async function getRelatedPosts(category: string, excludeId: number): Promise<import('@/lib/types').PostSummary[]> {
   noStore();
   const client = makeFreshClient();
@@ -220,10 +243,11 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     ? new Date(post.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
     : '';
 
-  const [relatedPosts, adjacent, seriesCtx] = await Promise.all([
+  const [relatedPosts, adjacent, seriesCtx, relatedGuides] = await Promise.all([
     getRelatedPosts(post.category, post.id),
     getAdjacentPosts(post.published_at ?? '', post.id),
     getSeriesContext(post.tags, post.id),
+    getRelatedGuides(post.category, post.tags),
   ]);
   const mdComponents = makeMdComponents();
 
@@ -469,6 +493,33 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             </div>
           </aside>
         </div>
+
+        {/* Related engineer guides */}
+        {relatedGuides.length > 0 && (
+          <div className="related" style={{ marginBottom: 24 }}>
+            <div className="related-h" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 6 }}>
+                  <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
+                </svg>
+                관련 엔지니어 가이드
+              </span>
+              <Link href="/engineer" style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', letterSpacing: '0.04em', textDecoration: 'none' }}>
+                전체 가이드 →
+              </Link>
+            </div>
+            <div className="related-grid">
+              {relatedGuides.map(g => (
+                <Link key={g.id} href={`/engineer/${g.slug}`} className="card card-link" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <span className="badge" style={{ fontSize: 10.5, alignSelf: 'flex-start' }}>{g.category}</span>
+                  <h3 className="card-title" style={{ fontSize: 14.5, margin: 0 }}>{g.title}</h3>
+                  <p style={{ margin: 0, color: 'var(--text-3)', fontSize: 12.5, lineHeight: 1.5 }}>{g.summary}</p>
+                  <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 10.5, color: 'var(--text-4)', marginTop: 4 }}>GUIDE · 실전 레퍼런스</div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Related posts */}
         {relatedPosts.length > 0 && (

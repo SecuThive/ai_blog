@@ -24,9 +24,10 @@ tags, author, published date.
 - Format: Markdown with code blocks, tables, and structured headings
 
 ### Engineer Guides — https://www.thivelab.com/engineer/[slug]
-Practical, hands-on technical guides for software engineers. Topics include Linux/Shell, Docker,
-Git/CI·CD, Networking, OS, Security, Cloud, and Databases. Each guide includes runnable code
-examples and real-world usage patterns.
+Practical, hands-on technical guides for software engineers (115+ guides, 9 categories).
+Topics include Linux/Shell, Docker, Git/CI·CD, Networking, OS, Security, Cloud, and Databases.
+Each guide includes runnable code examples, commands, and real-world usage patterns.
+Structured data: TechArticle + BreadcrumbList JSON-LD on every guide page.
 
 ### Series — https://www.thivelab.com/series/[name]
 Multi-part deep-dive series on focused technical topics (e.g., RAG architecture, AI agents,
@@ -39,7 +40,7 @@ All pages include JSON-LD structured data:
 - Site-wide: WebSite (with SearchAction) + Organization schemas
 
 ## Feeds & Discovery
-- RSS (full content): https://www.thivelab.com/rss.xml
+- RSS (full content): https://www.thivelab.com/rss
 - Sitemap: https://www.thivelab.com/sitemap.xml
 - Search: https://www.thivelab.com/search?q={query}
 

@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
-import { catTone, toneForSeries } from '@/lib/utils';
-import type { PostSummary } from '@/lib/types';
+import { catTone, toneForSeries, engCatTone } from '@/lib/utils';
+import type { PostSummary, EngineerGuide } from '@/lib/types';
 import {
   TickerBar,
   ControlPanel,
@@ -547,6 +547,71 @@ function NewsletterBand({ subscriberCount }: { subscriberCount: number }) {
   );
 }
 
+async function getRecentGuides(): Promise<EngineerGuide[]> {
+  const { data } = await makeFreshClient()
+    .from('engineer_guides')
+    .select('id,title,slug,summary,category,difficulty,views,created_at')
+    .eq('status', 'published')
+    .order('created_at', { ascending: false })
+    .limit(6);
+  return (data ?? []) as EngineerGuide[];
+}
+
+const DIFFICULTY_LABEL: Record<string, string> = {
+  beginner: '입문',
+  intermediate: '중급',
+  advanced: '고급',
+};
+
+function EngineerGuidesSection({ guides }: { guides: EngineerGuide[] }) {
+  if (guides.length === 0) return null;
+  return (
+    <section className="section" style={{ background: 'linear-gradient(180deg, transparent, rgba(20,36,24,0.3) 30%, transparent)' }}>
+      <div className="container">
+        <div className="sec-head2">
+          <div className="left">
+            <span className="num">02 / ENGINEER GUIDE</span>
+            <div>
+              <h2>실무 엔지니어 레퍼런스</h2>
+              <p className="sub">Linux·Docker·Git·네트워킹·보안·DB — 복사해서 바로 쓰는 실전 가이드 {guides.length}+ 편.</p>
+            </div>
+          </div>
+          <Link href="/engineer" className="section-link">
+            전체 가이드 <ArrowIcon size={14} />
+          </Link>
+        </div>
+        <div className="grid-3" style={{ gap: 12 }}>
+          {guides.map(g => {
+            const tone = engCatTone(g.category);
+            const diff = DIFFICULTY_LABEL[g.difficulty] ?? g.difficulty;
+            return (
+              <Link key={g.id} href={`/engineer/${g.slug}`} className="card card-link" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span className={`badge badge-${tone}`} style={{ fontSize: 10.5 }}>{g.category}</span>
+                  <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 10.5, color: 'var(--text-4)', letterSpacing: '0.04em' }}>{diff}</span>
+                </div>
+                <h3 style={{ margin: 0, fontSize: 15, lineHeight: 1.38, letterSpacing: '-0.012em' }}>{g.title}</h3>
+                <p style={{ margin: 0, color: 'var(--text-3)', fontSize: 12.5, lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{g.summary}</p>
+                <div style={{ marginTop: 'auto', paddingTop: 10, borderTop: '1px dashed var(--line-1)', fontFamily: 'var(--ff-mono)', fontSize: 10.5, color: 'var(--text-4)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>
+                  가이드 보기
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+        <div style={{ marginTop: 20, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          {['Linux / Shell', 'Docker / 컨테이너', 'Git / CI·CD', '네트워킹 / 서버', '보안 설정', '데이터베이스'].map(cat => (
+            <Link key={cat} href={`/engineer?cat=${encodeURIComponent(cat)}`} style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-3)', border: '1px solid var(--line-1)', borderRadius: 4, padding: '4px 10px', letterSpacing: '0.04em', textDecoration: 'none' }}>
+              {cat}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 const CAT_TAG: Record<string, string> = {
   'AI & 자동화': 'AI', '개발': 'DEV', 'IT 트렌드': 'IT',
   '인프라': 'INF', '보안': 'SEC', '툴 리뷰': 'TOOL',
@@ -657,7 +722,7 @@ function buildClientData(posts: PostSummary[]) {
 
 /* ===== Page ===== */
 export default async function HomePage() {
-  const [posts, series, subscriberCount] = await Promise.all([getPosts(), getSeries(), getSubscriberCount()]);
+  const [posts, series, subscriberCount, recentGuides] = await Promise.all([getPosts(), getSeries(), getSubscriberCount(), getRecentGuides()]);
 
   if (posts.length === 0) {
     return (
@@ -681,6 +746,7 @@ export default async function HomePage() {
     <HomeScrollReveal>
       <HeroV2 posts={posts} ticks={ticks} feed={feed} bars={bars} seriesCount={series.length} postCount={posts.length} subscriberCount={subscriberCount} />
       <DailyBriefing posts={posts} />
+      <EngineerGuidesSection guides={recentGuides} />
       <SignalDashboard signals={signals} heatmapDates={heatmapDates} />
       <ReadingLanes posts={posts} />
       <MagLatestSection posts={posts.slice(1) as MagPost[]} />
