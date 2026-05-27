@@ -27,6 +27,29 @@ async function getAdjacentPosts(publishedAt: string, id: number): Promise<{ prev
   };
 }
 
+interface SeriesContext {
+  seriesName: string;
+  posts: { id: number; title: string; slug: string }[];
+  currentIndex: number;
+}
+
+async function getSeriesContext(tags: string[], currentId: number): Promise<SeriesContext | null> {
+  noStore();
+  const seriesTag = tags.find(t => t.startsWith('series:'));
+  if (!seriesTag) return null;
+  const seriesName = seriesTag.replace('series:', '');
+  const { data } = await makeFreshClient()
+    .from('posts')
+    .select('id,title,slug')
+    .eq('status', 'published')
+    .contains('tags', [`series:${seriesName}`])
+    .order('published_at', { ascending: true });
+  const posts = (data ?? []) as { id: number; title: string; slug: string }[];
+  const currentIndex = posts.findIndex(p => p.id === currentId);
+  if (currentIndex === -1) return null;
+  return { seriesName, posts, currentIndex };
+}
+
 async function getRelatedPosts(category: string, excludeId: number): Promise<import('@/lib/types').PostSummary[]> {
   noStore();
   const client = makeFreshClient();
@@ -197,9 +220,10 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     ? new Date(post.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
     : '';
 
-  const [relatedPosts, adjacent] = await Promise.all([
+  const [relatedPosts, adjacent, seriesCtx] = await Promise.all([
     getRelatedPosts(post.category, post.id),
     getAdjacentPosts(post.published_at ?? '', post.id),
+    getSeriesContext(post.tags, post.id),
   ]);
   const mdComponents = makeMdComponents();
 
@@ -308,6 +332,71 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           />
         </div>
       </div>
+
+      {/* Series banner */}
+      {seriesCtx && (
+        <div style={{ borderBottom: '1px solid var(--line-1)', background: 'var(--bg-2)' }}>
+          <div className="container" style={{ paddingTop: 16, paddingBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <Link
+                href={`/series/${encodeURIComponent(seriesCtx.seriesName)}`}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}
+              >
+                <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 10, letterSpacing: '0.08em', color: 'var(--text-4)', textTransform: 'uppercase' }}>시리즈</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)' }}>{seriesCtx.seriesName}</span>
+                <span className="badge" style={{ fontFamily: 'var(--ff-mono)', fontSize: 11 }}>
+                  {seriesCtx.currentIndex + 1} / {seriesCtx.posts.length}
+                </span>
+              </Link>
+              <div style={{ flex: 1, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                {seriesCtx.currentIndex > 0 && (
+                  <Link
+                    href={`/blog/${seriesCtx.posts[seriesCtx.currentIndex - 1].slug}`}
+                    className="btn btn-sm"
+                  >
+                    ← EP {String(seriesCtx.currentIndex).padStart(2, '0')}
+                  </Link>
+                )}
+                {seriesCtx.currentIndex < seriesCtx.posts.length - 1 && (
+                  <Link
+                    href={`/blog/${seriesCtx.posts[seriesCtx.currentIndex + 1].slug}`}
+                    className="btn btn-sm"
+                  >
+                    EP {String(seriesCtx.currentIndex + 2).padStart(2, '0')} →
+                  </Link>
+                )}
+              </div>
+            </div>
+            <div style={{ marginTop: 10, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              {seriesCtx.posts.map((ep, i) => (
+                <Link
+                  key={ep.id}
+                  href={`/blog/${ep.slug}`}
+                  title={ep.title}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 28,
+                    height: 28,
+                    borderRadius: 6,
+                    fontFamily: 'var(--ff-mono)',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    border: '1px solid var(--line-2)',
+                    background: i === seriesCtx.currentIndex ? `var(--acc-${tone})` : 'var(--bg-3)',
+                    color: i === seriesCtx.currentIndex ? '#fff' : 'var(--text-3)',
+                    transition: 'background 0.15s',
+                  }}
+                >
+                  {i + 1}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 3-column article body */}
       <div className="container" style={{ paddingTop: 48, paddingBottom: 80 }}>
