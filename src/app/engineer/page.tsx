@@ -5,6 +5,7 @@ import type { EngineerGuide } from '@/lib/types';
 import { makeFreshClient } from '@/lib/supabase';
 import { engCatTone } from '@/lib/utils';
 import EngineerSearch from './EngineerSearch';
+import JsonLd from '@/components/JsonLd';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
@@ -150,8 +151,26 @@ export default async function EngineerPage({ searchParams }: { searchParams: Pro
   const [guides, counts] = await Promise.all([getGuides(activeCat), getCategoryCounts()]);
   const totalGuides = Object.values(counts).reduce((a, b) => a + b, 0);
 
+  const itemListSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: activeCat ? `${activeCat} 가이드 — Nodelog Engineer` : '엔지니어 가이드 — Nodelog',
+    description: activeCat
+      ? CATEGORIES.find(c => c.name === activeCat)?.desc
+      : 'Linux, Docker, Git, 네트워킹, 보안 설정 등 실무에서 바로 써먹는 기술 가이드 모음.',
+    url: `${SITE_URL}/engineer${activeCat ? `?cat=${encodeURIComponent(activeCat)}` : ''}`,
+    numberOfItems: guides.length,
+    itemListElement: guides.slice(0, 20).map((g, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: `${SITE_URL}/engineer/${g.slug}`,
+      name: g.title,
+    })),
+  };
+
   return (
     <div>
+      <JsonLd data={[itemListSchema]} />
       {/* Hero */}
       <section className="page-hero">
         <div className="container">

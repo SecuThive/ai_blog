@@ -34,6 +34,45 @@ async function getGuide(slug: string): Promise<EngineerGuide | null> {
   }
 }
 
+const GUIDE_TO_POST_CAT: Record<string, string[]> = {
+  'Linux / Shell':       ['인프라', '개발'],
+  'Docker / 컨테이너':   ['인프라', '개발'],
+  'Git / CI·CD':         ['개발'],
+  '네트워킹 / 서버':     ['인프라'],
+  'OS / 시스템':         ['인프라'],
+  '보안 설정':           ['보안'],
+  '클라우드':            ['인프라', 'IT 트렌드'],
+  '데이터베이스':        ['개발', '인프라'],
+  '트러블슈팅':          ['인프라', '개발'],
+};
+
+async function getRelatedBlogPosts(category: string): Promise<{ id: number; title: string; slug: string; excerpt: string; category: string }[]> {
+  noStore();
+  const cats = GUIDE_TO_POST_CAT[category] ?? [];
+  if (cats.length === 0) return [];
+  const { data } = await makeFreshClient()
+    .from('posts')
+    .select('id,title,slug,excerpt,category')
+    .eq('status', 'published')
+    .in('category', cats)
+    .order('views', { ascending: false })
+    .limit(3);
+  return (data ?? []) as { id: number; title: string; slug: string; excerpt: string; category: string }[];
+}
+
+function extractHowToSteps(md: string): { name: string }[] {
+  const regex = /^## (.+)$/gm;
+  const steps: { name: string }[] = [];
+  let m;
+  while ((m = regex.exec(md)) !== null) {
+    const name = m[1].trim();
+    if (!name.match(/^(개요|소개|정리|마무리|요약)/)) {
+      steps.push({ name });
+    }
+  }
+  return steps;
+}
+
 async function getRelated(category: string, excludeId: number): Promise<EngineerGuide[]> {
   noStore();
   const { data } = await makeFreshClient()
@@ -159,7 +198,10 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
 
   const tone = engCatTone(guide.category);
   const headings = extractHeadings(guide.content);
-  const related = await getRelated(guide.category, guide.id);
+  const [related, relatedPosts] = await Promise.all([
+    getRelated(guide.category, guide.id),
+    getRelatedBlogPosts(guide.category),
+  ]);
   const mdComponents = makeMdComponents();
 
   const dateStr = new Date(guide.created_at).toLocaleDateString('ko-KR', {
@@ -203,11 +245,26 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
     ],
   };
 
+  const howToSteps = extractHowToSteps(guide.content);
+  const howToSchema = howToSteps.length >= 2 ? {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    name: guide.title,
+    description: guide.summary,
+    url: guideUrl,
+    inLanguage: 'ko',
+    step: howToSteps.map((s, i) => ({
+      '@type': 'HowToStep',
+      position: i + 1,
+      name: s.name,
+    })),
+  } : null;
+
   return (
     <div>
       <ProgressBar />
       <ScrollToTopBtn />
-      <JsonLd data={[techArticleSchema, breadcrumbSchema]} />
+      <JsonLd data={[techArticleSchema, breadcrumbSchema, ...(howToSchema ? [howToSchema] : [])]} />
       {/* Hero */}
       <div className="article-hero">
         <div className="container">
@@ -363,6 +420,32 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
             </div>
           </aside>
         </div>
+
+        {/* Related blog posts */}
+        {relatedPosts.length > 0 && (
+          <div className="related" style={{ marginTop: 0 }}>
+            <div className="related-h" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 6 }}>
+                  <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
+                </svg>
+                이 가이드와 연관된 블로그 글
+              </span>
+              <Link href="/blog" style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', letterSpacing: '0.04em', textDecoration: 'none' }}>
+                전체 글 →
+              </Link>
+            </div>
+            <div className="related-grid">
+              {relatedPosts.map(p => (
+                <Link key={p.id} href={`/blog/${p.slug}`} className="card card-link" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <span className="badge" style={{ fontSize: 10.5, alignSelf: 'flex-start' }}>{p.category}</span>
+                  <h3 className="card-title" style={{ fontSize: 14.5, margin: 0 }}>{p.title}</h3>
+                  <p style={{ margin: 0, color: 'var(--text-3)', fontSize: 12.5, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.excerpt}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
