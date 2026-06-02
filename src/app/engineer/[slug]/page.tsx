@@ -228,6 +228,7 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
       logo: { '@type': 'ImageObject', url: `${SITE_URL}/opengraph-image` },
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': guideUrl },
+    image: { '@type': 'ImageObject', url: `${guideUrl}/opengraph-image`, width: 1200, height: 630 },
     keywords: guide.tags.join(', '),
     articleSection: guide.category,
     proficiencyLevel: guide.difficulty === 'beginner' ? 'Beginner' : guide.difficulty === 'advanced' ? 'Expert' : 'Intermediate',
@@ -252,6 +253,7 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
     name: guide.title,
     description: guide.summary,
     url: guideUrl,
+    image: { '@type': 'ImageObject', url: `${guideUrl}/opengraph-image`, width: 1200, height: 630 },
     inLanguage: 'ko',
     step: howToSteps.map((s, i) => ({
       '@type': 'HowToStep',
