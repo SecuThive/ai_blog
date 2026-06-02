@@ -101,7 +101,9 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
-html { color-scheme: dark; }
+/* 가로 overflow 가드 — 일부 PC에서 메인이 오른쪽으로 치우쳐 보이던 현상 방지.
+   clip은 스크롤 컨테이너를 만들지 않으므로 sticky 헤더/TOC가 그대로 동작한다. */
+html { color-scheme: dark; overflow-x: clip; }
 body {
   background: var(--bg-1);
   color: var(--text-1);
@@ -113,6 +115,7 @@ body {
   line-height: 1.6;
   letter-spacing: -0.005em;
   min-height: 100vh;
+  overflow-x: clip;
 }
 body::before {
   content: "";
@@ -342,17 +345,17 @@ img { max-width: 100%; display: block; }
 .hub-cell .cell-title { color: var(--text-1); font-weight: 600; margin-bottom: 3px; font-family: var(--ff-sans); font-size: 12px; letter-spacing: -0.005em; }
 
 /* ===== Grid Helpers ===== */
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
-.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
-.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
-.split { display: grid; grid-template-columns: 1fr 320px; gap: 56px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; }
+.split { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 56px; }
 
 /* ===== Footer ===== */
 .site-footer {
   border-top: 1px solid var(--line-1); padding: 64px 0 36px; margin-top: 80px;
   background: linear-gradient(180deg, transparent, rgba(10, 13, 20, 0.6));
 }
-.site-footer .container { display: grid; grid-template-columns: 1.4fr repeat(4, 1fr); gap: 40px; }
+.site-footer .container { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(4, minmax(0, 1fr)); gap: 40px; }
 .footer-col h5 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-3); margin: 0 0 14px; font-weight: 600; font-family: var(--ff-mono); }
 .footer-col ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
 .footer-col a { color: var(--text-2); font-size: 13.5px; }
@@ -544,7 +547,7 @@ img { max-width: 100%; display: block; }
   background: radial-gradient(60% 80% at 0% 0%, rgba(120, 100, 255, 0.10), transparent 60%),
               radial-gradient(40% 60% at 100% 100%, rgba(80, 200, 200, 0.06), transparent 60%),
               var(--bg-2);
-  display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; align-items: center;
+  display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 40px; align-items: center;
 }
 .subscribe h3 { font-size: 28px; letter-spacing: -0.025em; margin: 0 0 10px; line-height: 1.2; }
 .subscribe p { color: var(--text-2); margin: 0; font-size: 14.5px; max-width: 460px; line-height: 1.55; }
@@ -1219,7 +1222,7 @@ mark { background: color-mix(in oklch, var(--acc-blue) 18%, transparent); color:
 /* ---- Magazine grid (latest) ---- */
 .mag-grid {
   display: grid;
-  grid-template-columns: 1.6fr 1fr 1fr;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
   grid-template-rows: auto auto;
   gap: 22px;
 }
