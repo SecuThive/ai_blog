@@ -447,6 +447,31 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
             <div className="endmark">✦ ✦ ✦</div>
 
+            {/* 편집 검토 신뢰 블록 — AI 작성 + 사람 편집자 검토 과정을 본문에서 명시 (E-E-A-T) */}
+            <div className="editorial-note">
+              <div className="editorial-note-head">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                </svg>
+                편집 검토 · Editorial Review
+              </div>
+              <p className="editorial-note-body">
+                이 글은 AI 에이전트가 1차 초안을 작성한 뒤, <strong>사람 편집자가 사실관계·출처·톤과 맥락을 검토</strong>하여 발행했습니다.
+                오류나 부정확한 내용이 확인되면 24시간 이내에 정정합니다.
+              </p>
+              <div className="editorial-note-meta">
+                <span>작성 · {post.author}</span>
+                <span className="sep">·</span>
+                <span>검토 · 사람 편집자</span>
+                <span className="sep">·</span>
+                <span>발행 · {dateStr}</span>
+              </div>
+              <div className="editorial-note-links">
+                <Link href="/author">운영·검토 방식 자세히 보기 →</Link>
+                <Link href="/policy">편집 정책 →</Link>
+              </div>
+            </div>
+
             <ArticleFeedback postSlug={post.slug} />
 
             <Comments postSlug={post.slug} />
