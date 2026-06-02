@@ -296,7 +296,7 @@ img { max-width: 100%; display: block; }
   display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
 }
 .section-eyebrow::before { content: ""; width: 14px; height: 1px; background: var(--acc-blue); display: inline-block; }
-.section-title { font-size: 28px; line-height: 1.2; margin: 0; letter-spacing: -0.03em; font-weight: 600; }
+.section-title { font-size: 28px; line-height: 1.2; margin: 0; letter-spacing: -0.03em; font-weight: 600; word-break: keep-all; }
 .section-sub { color: var(--text-3); margin: 8px 0 0; font-size: 14.5px; max-width: 600px; }
 .section-link {
   font-size: 13px; color: var(--text-2); border: 1px solid var(--line-2);
@@ -910,6 +910,11 @@ mark { background: color-mix(in oklch, var(--acc-blue) 18%, transparent); color:
   letter-spacing: -0.04em;
   font-weight: 600;
   margin: 12px 0 24px;
+  /* 한글은 기본값(word-break: normal)에서 음절 사이 아무 데서나 줄바꿈되어
+     "분석하고 사 / 람이"처럼 깨져 보인다. keep-all로 공백(단어 경계)에서만
+     줄바꿈하도록 해 큰 히어로 제목이 자연스럽게 줄바꿈되게 한다. */
+  word-break: keep-all;
+  text-wrap: balance;
 }
 .heroX h1 .grad {
   background: linear-gradient(135deg, oklch(0.88 0.08 240), oklch(0.78 0.16 285));
@@ -1031,7 +1036,7 @@ mark { background: color-mix(in oklch, var(--acc-blue) 18%, transparent); color:
   border: 1px solid var(--line-2);
   border-radius: 4px;
 }
-.sec-head2 h2 { margin: 0; font-size: 32px; letter-spacing: -0.03em; font-weight: 600; line-height: 1.1; }
+.sec-head2 h2 { margin: 0; font-size: 32px; letter-spacing: -0.03em; font-weight: 600; line-height: 1.1; word-break: keep-all; }
 .sec-head2 .sub { color: var(--text-3); font-size: 14px; margin: 6px 0 0; max-width: 520px; line-height: 1.5; }
 
 /* ---- Briefing block (editorial digest) ---- */
@@ -1060,7 +1065,7 @@ mark { background: color-mix(in oklch, var(--acc-blue) 18%, transparent); color:
   letter-spacing: 0.10em; text-transform: uppercase;
 }
 .brief-main-body { padding: 28px 30px 30px; }
-.brief-main h3 { font-size: 28px; line-height: 1.2; letter-spacing: -0.025em; margin: 14px 0 12px; font-weight: 600; }
+.brief-main h3 { font-size: 28px; line-height: 1.2; letter-spacing: -0.025em; margin: 14px 0 12px; font-weight: 600; word-break: keep-all; }
 .brief-main p { color: var(--text-3); margin: 0 0 18px; font-size: 14.5px; line-height: 1.6; max-width: 580px; }
 
 .brief-side { display: flex; flex-direction: column; gap: 16px; }
