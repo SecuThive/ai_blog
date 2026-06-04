@@ -35,13 +35,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const seriesSet = new Set<string>();
-  const tagSet = new Set<string>();
+  const tagCount = new Map<string, number>();
   for (const row of (tagsRes.data ?? []) as { tags: string[] }[]) {
     for (const tag of row.tags ?? []) {
       if (tag.startsWith('series:')) {
         seriesSet.add(tag.replace('series:', ''));
       } else {
-        tagSet.add(tag);
+        tagCount.set(tag, (tagCount.get(tag) ?? 0) + 1);
       }
     }
   }
@@ -53,12 +53,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  const tagPages = Array.from(tagSet).map(tag => ({
-    url: `${base}/tag/${encodeURIComponent(tag)}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.5,
-  }));
+  // 얇은 태그 페이지(글 < MIN_TAG_POSTS)는 sitemap에서 제외 — low-value/doorway 페이지 방지.
+  // 태그 페이지(tag/[tag])의 noindex 임계값과 동일하게 유지할 것.
+  const MIN_TAG_POSTS = 3;
+  const tagPages = Array.from(tagCount.entries())
+    .filter(([, count]) => count >= MIN_TAG_POSTS)
+    .map(([tag]) => ({
+      url: `${base}/tag/${encodeURIComponent(tag)}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.5,
+    }));
 
   const CATEGORIES = ['AI & 자동화', 'IT 트렌드', '개발', '툴 리뷰', '보안', '인프라'];
   const categoryPages = CATEGORIES.map(cat => ({

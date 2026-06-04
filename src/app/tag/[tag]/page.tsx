@@ -8,14 +8,28 @@ export const revalidate = 60;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
+// sitemap.ts 의 MIN_TAG_POSTS 와 동일하게 유지할 것 — 얇은 태그 페이지는 색인 제외.
+const MIN_TAG_POSTS = 3;
+
 export async function generateMetadata({ params }: { params: Promise<{ tag: string }> }): Promise<Metadata> {
   const { tag } = await params;
   const decoded = decodeURIComponent(tag);
   const url = `${SITE_URL}/tag/${tag}`;
+
+  // 이 태그에 달린 발행글 수 — 3개 미만이면 thin 페이지로 보고 noindex 처리.
+  const { count } = await makeFreshClient()
+    .from('posts')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'published')
+    .contains('tags', [decoded]);
+  const isThin = (count ?? 0) < MIN_TAG_POSTS;
+
   return {
     title: `#${decoded} — Nodelog`,
     description: `"${decoded}" 태그로 분류된 글 모음`,
     alternates: { canonical: url },
+    // 얇은 태그 페이지는 색인 제외(링크는 따라가도록 follow 유지) — low-value 페이지 방지.
+    robots: isThin ? { index: false, follow: true } : undefined,
     openGraph: {
       title: `#${decoded} — Nodelog`,
       description: `"${decoded}" 태그로 분류된 글 모음`,
