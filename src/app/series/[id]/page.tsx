@@ -15,6 +15,12 @@ interface PostRow {
   excerpt: string;
   published_at: string;
   tags: string[];
+  episode: number;   // ep:N 태그에서 파싱한 에피소드 번호 (없으면 발행순 기준)
+}
+
+function parseEpisode(tags: string[]): number | null {
+  const t = (tags ?? []).find(x => /^ep:\d+$/.test(x));
+  return t ? parseInt(t.slice(3), 10) : null;
 }
 
 async function getSeriesPosts(seriesName: string): Promise<PostRow[]> {
@@ -25,7 +31,15 @@ async function getSeriesPosts(seriesName: string): Promise<PostRow[]> {
     .eq('status', 'published')
     .contains('tags', [`series:${seriesName}`])
     .order('published_at', { ascending: true });
-  return (data ?? []) as PostRow[];
+
+  const rows = (data ?? []) as Omit<PostRow, 'episode'>[];
+  // ep:N 태그 기준 정렬 (엔진이 부여한 번호 존중). 태그 없으면 발행순 fallback.
+  const withEp = rows.map((r, i) => ({
+    ...r,
+    episode: parseEpisode(r.tags) ?? i + 1,
+  }));
+  withEp.sort((a, b) => a.episode - b.episode || a.published_at.localeCompare(b.published_at));
+  return withEp;
 }
 
 async function getAllSeriesNames(): Promise<string[]> {
@@ -304,7 +318,7 @@ export default async function SeriesDetailPage({
                               : undefined,
                           }}
                         >
-                          {String(i + 1).padStart(2, '0')}
+                          {String(ep.episode).padStart(2, '0')}
                         </div>
 
                         {/* 본문 */}
@@ -326,7 +340,7 @@ export default async function SeriesDetailPage({
                                 fontWeight: isFirst ? 700 : 400,
                               }}
                             >
-                              EP · {String(i + 1).padStart(2, '0')}
+                              EP · {String(ep.episode).padStart(2, '0')}
                               {isFirst && ' · START'}
                             </span>
                             <span
