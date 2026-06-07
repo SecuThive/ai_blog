@@ -1,6 +1,10 @@
 import { makeFreshClient } from '@/lib/supabase';
 import type { MetadataRoute } from 'next';
 
+// ISR: sitemap을 1시간마다 재생성해 DB 변경(시리즈 강등/발행 등)이 반영되도록 함.
+// (이게 없으면 빌드 시점 정적 캐시로 고정되어 DB 변경이 sitemap에 안 나타남)
+export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
   const client = makeFreshClient();
