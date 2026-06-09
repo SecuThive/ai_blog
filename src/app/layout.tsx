@@ -68,7 +68,9 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
   },
   verification: {
-    // google: '', // ← 구글 서치 콘솔 연동 시 추가
+    // 구글 서치콘솔 'HTML 태그' 방법의 content 값을 환경변수 GOOGLE_SITE_VERIFICATION 에 넣으면
+    // <meta name="google-site-verification" ...> 가 자동 출력됨. (미설정 시 태그 미출력)
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
   },
 };
 
