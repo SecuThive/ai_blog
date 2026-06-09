@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
@@ -102,6 +103,8 @@ export default async function SeriesDetailPage({
   const { id } = await params;
   const seriesName = decodeURIComponent(id);
   const posts = await getSeriesPosts(seriesName);
+  // 에피소드가 없는 시리즈(강등 등)는 실제 404 반환 — Soft 404 방지
+  if (posts.length === 0) notFound();
   const tone = toneForSeries(seriesName);
   const desc = SERIES_DESC[seriesName] ?? `${seriesName} 시리즈의 심층 연재.`;
   const readingMinutes = posts.length * 5;

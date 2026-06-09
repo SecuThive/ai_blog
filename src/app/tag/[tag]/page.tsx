@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
@@ -91,6 +92,8 @@ export default async function TagDetailPage({ params }: { params: Promise<{ tag:
     getPostsByTag(tag),
     getRelatedTags(tag),
   ]);
+  // 글이 없는 태그는 실제 404 반환 — Soft 404 방지
+  if (posts.length === 0) notFound();
 
   return (
     <div>
