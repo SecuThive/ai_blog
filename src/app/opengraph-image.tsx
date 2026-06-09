@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
-export const alt = 'Nodelog — AI 기반 IT 테크 미디어';
+export const alt = 'Nodelog — IT·개발·보안 테크 미디어';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -82,7 +82,7 @@ export default function OgImage() {
             lineHeight: 1.6,
           }}
         >
-          AI가 취재하고 분석하는 IT·개발·보안·인프라 전문 미디어
+          IT·개발·보안·인프라 실무 인사이트를 전문 에디터가 검증·큐레이션하는 테크 미디어
         </div>
       </div>
     ),

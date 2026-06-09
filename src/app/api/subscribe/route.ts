@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
               <div style="width:36px;height:36px;background:linear-gradient(135deg,#7BB5FF,#5535D4);border-radius:50%;display:inline-block"></div>
               <span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:-0.5px">Nodelog</span>
             </div>
-            <p style="color:#8892a4;font-size:13px;margin:8px 0 0">AI 기반 IT 테크 미디어</p>
+            <p style="color:#8892a4;font-size:13px;margin:8px 0 0">IT·개발·보안 테크 미디어</p>
           </td>
         </tr>
         <!-- 본문 -->

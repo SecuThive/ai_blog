@@ -38,9 +38,9 @@ export async function GET() {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>Nodelog — AI 기반 IT 테크 미디어</title>
+    <title>Nodelog — IT·개발·보안 테크 미디어</title>
     <link>${siteUrl}</link>
-    <description>AI가 취재하고 분석하는 IT·개발·보안·인프라 전문 미디어.</description>
+    <description>IT·개발·보안·인프라 실무 인사이트를 전문 에디터가 검증·큐레이션하는 테크 미디어.</description>
     <language>ko</language>
     <atom:link href="${siteUrl}/rss" rel="self" type="application/rss+xml" />
     ${items}

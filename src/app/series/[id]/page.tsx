@@ -76,10 +76,14 @@ export async function generateMetadata({
   const desc =
     SERIES_DESC[seriesName] ??
     `${seriesName} 시리즈의 모든 에피소드를 순서대로 탐색하세요.`;
+  // 에피소드가 2편 미만인 시리즈(강등 등으로 빈 페이지)는 색인 제외 — low-value/빈 페이지 방지.
+  const episodeCount = (await getSeriesPosts(seriesName)).length;
+  const isThin = episodeCount < 2;
   return {
     title: `${seriesName} — Nodelog 시리즈`,
     description: desc,
     alternates: { canonical: url },
+    robots: isThin ? { index: false, follow: true } : undefined,
     openGraph: {
       title: `${seriesName} — Nodelog 시리즈`,
       description: desc,

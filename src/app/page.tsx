@@ -27,12 +27,12 @@ export const revalidate = 60;
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
-  title: 'Nodelog — AI 기반 IT 테크 미디어',
-  description: 'AI가 취재하고 분석하는 IT·개발·보안·인프라 전문 미디어. 매일 최신 기술 인사이트를 전달합니다.',
+  title: 'Nodelog — IT·개발·보안 테크 미디어',
+  description: 'IT·개발·보안·인프라 실무 인사이트를 전문 에디터가 검증·큐레이션하는 테크 미디어. 매일 업데이트됩니다.',
   alternates: { canonical: SITE_URL },
   openGraph: {
-    title: 'Nodelog — AI 기반 IT 테크 미디어',
-    description: 'AI가 취재하고 분석하는 IT·개발·보안·인프라 전문 미디어. 매일 최신 기술 인사이트를 전달합니다.',
+    title: 'Nodelog — IT·개발·보안 테크 미디어',
+    description: 'IT·개발·보안·인프라 실무 인사이트를 전문 에디터가 검증·큐레이션하는 테크 미디어. 매일 업데이트됩니다.',
     url: SITE_URL,
     type: 'website',
     images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
@@ -136,13 +136,13 @@ function HeroV2({ posts, ticks, feed, bars, seriesCount, postCount, subscriberCo
               <span>POSTS {postCount > 0 ? `${postCount}+` : '...'}</span>
             </span>
             <h1>
-              <span className="grad">AI가 분석하고 사람이 검토한,</span>
+              <span className="grad">전문 에디터가 검증한,</span>
               <br />
               <em>오늘의</em> 실전 IT 인사이트.
             </h1>
             <p className="heroX-lead">
-              자동화, 개발, 보안, 인프라, 생산성. 전 세계 {SOURCE_COUNT}개 IT 소스를 24시간 모니터링하고,
-              변화의 신호를 점수화한 뒤, 사람 편집자의 검토를 거쳐 정제된 콘텐츠로 발행합니다.
+              자동화, 개발, 보안, 인프라, 생산성. 전 세계 {SOURCE_COUNT}개 IT 소스를 모니터링해
+              핵심 신호를 추리고, 전문 에디터의 사실 확인·검수를 거쳐 실무에 바로 쓰는 콘텐츠로 발행합니다.
             </p>
             <div className="heroX-actions">
               {posts[0] && (

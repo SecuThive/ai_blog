@@ -123,7 +123,7 @@ export function ControlPanel({ feed, bars }: { feed: FeedItem[]; bars: BarItem[]
     <div className="ctrl-panel">
       <div className="ctrl-head">
         <span className="live-dot" />
-        <span>NODELOG · AI CONTROL</span>
+        <span>NODELOG · EDITORIAL DESK</span>
         <span className="id">v4.2 · job-0x{(0xa1f0 + (pulse % 256)).toString(16)}</span>
       </div>
       <div className="ctrl-body">

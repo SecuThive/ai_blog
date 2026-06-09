@@ -66,7 +66,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ cat: 
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: `${cat} — Nodelog`,
-    description: `AI가 분석한 ${cat} 관련 심층 분석글 모음`,
+    description: `${cat} 관련 심층 분석글 모음`,
     url: `${SITE_URL}/category/${rawCat}`,
     inLanguage: 'ko',
     publisher: {
@@ -90,7 +90,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ cat: 
         <div className="container">
           <div className="page-eyebrow">{cat}</div>
           <h1 className="page-title">{cat}</h1>
-          <p className="page-lead">AI가 분석한 {cat} 관련 심층 분석글 모음. 매일 업데이트됩니다.</p>
+          <p className="page-lead">{cat} 관련 심층 분석글 모음. 매일 업데이트됩니다.</p>
         </div>
       </div>
 

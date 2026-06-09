@@ -30,8 +30,8 @@ const inter = Inter({
   display: 'swap',
 });
 
-const SITE_NAME = 'Nodelog — AI 기반 IT 테크 미디어';
-const SITE_DESC = 'AI가 취재하고 분석하는 IT·개발·보안·인프라 전문 미디어. 매일 최신 기술 인사이트를 전달합니다.';
+const SITE_NAME = 'Nodelog — IT·개발·보안 테크 미디어';
+const SITE_DESC = 'IT·개발·보안·인프라 실무 인사이트를 전문 에디터가 검증·큐레이션하는 테크 미디어. 매일 업데이트됩니다.';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const viewport: Viewport = {
