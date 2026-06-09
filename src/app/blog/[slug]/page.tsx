@@ -40,11 +40,15 @@ async function getSeriesContext(tags: string[], currentId: number): Promise<Seri
   const seriesName = seriesTag.replace('series:', '');
   const { data } = await makeFreshClient()
     .from('posts')
-    .select('id,title,slug')
+    .select('id,title,slug,tags,published_at')
     .eq('status', 'published')
     .contains('tags', [`series:${seriesName}`])
     .order('published_at', { ascending: true });
-  const posts = (data ?? []) as { id: number; title: string; slug: string }[];
+  // ep:N 태그 기준 정렬 (엔진이 부여한 에피소드 번호 존중) — /series 페이지와 일관성 유지.
+  const rows = (data ?? []) as { id: number; title: string; slug: string; tags: string[]; published_at: string }[];
+  const ep = (t: string[]) => { const m = (t ?? []).find(x => /^ep:\d+$/.test(x)); return m ? parseInt(m.slice(3), 10) : null; };
+  rows.sort((a, b) => (ep(a.tags) ?? 1e9) - (ep(b.tags) ?? 1e9) || a.published_at.localeCompare(b.published_at));
+  const posts = rows.map(({ id, title, slug }) => ({ id, title, slug }));
   const currentIndex = posts.findIndex(p => p.id === currentId);
   if (currentIndex === -1) return null;
   return { seriesName, posts, currentIndex };
