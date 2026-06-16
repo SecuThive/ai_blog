@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { unstable_noStore as noStore } from 'next/cache';
+import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { EngineerGuide } from '@/lib/types';
 import { makeFreshClient } from '@/lib/supabase';
@@ -99,7 +100,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const guide = await getGuide(slug);
-  if (!guide) return { title: '가이드를 찾을 수 없습니다' };
+  if (!guide) return { title: '가이드를 찾을 수 없습니다', robots: { index: false, follow: false } };
   const url = `${SITE_URL}/engineer/${guide.slug}`;
   return {
     title: `${guide.title} — Nodelog Engineer`,
@@ -185,15 +186,8 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
   const guide = await getGuide(slug);
 
   if (!guide) {
-    return (
-      <div className="err">
-        <div>
-          <div className="err-code">404</div>
-          <p style={{ color: 'var(--text-3)', fontSize: 18, margin: '16px 0 28px' }}>가이드를 찾을 수 없습니다</p>
-          <Link href="/engineer" className="btn btn-ghost">← 엔지니어 가이드로</Link>
-        </div>
-      </div>
-    );
+    // soft 404(200) 대신 진짜 404 반환 — GSC Soft 404 / AdSense low-value 방지
+    notFound();
   }
 
   const tone = engCatTone(guide.category);

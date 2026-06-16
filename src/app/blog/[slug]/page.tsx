@@ -3,6 +3,7 @@ import { catTone } from '@/lib/utils';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import JsonLd from '@/components/JsonLd';
 import PostThumb from '@/components/PostThumb';
@@ -125,7 +126,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPost(slug);
-  if (!post) return { title: '포스트를 찾을 수 없습니다' };
+  if (!post) return { title: '포스트를 찾을 수 없습니다', robots: { index: false, follow: false } };
   const url = `${SITE_URL}/blog/${post.slug}`;
   const cleanTags = post.tags.filter(t => !t.startsWith('series:'));
   return {
@@ -227,15 +228,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const post = await getPost(slug);
 
   if (!post) {
-    return (
-      <div className="err">
-        <div>
-          <div className="err-code">404</div>
-          <p style={{ color: 'var(--text-3)', fontSize: 18, margin: '16px 0 28px' }}>포스트를 찾을 수 없습니다</p>
-          <Link href="/" className="btn btn-ghost">← 홈으로 돌아가기</Link>
-        </div>
-      </div>
-    );
+    // 발행 취소·삭제된 글: soft 404(200) 대신 진짜 404 반환 — GSC Soft 404 / AdSense low-value 방지
+    notFound();
   }
 
   const mins = readingTime(post.content);
