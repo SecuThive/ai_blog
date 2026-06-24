@@ -38,24 +38,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  const seriesSet = new Set<string>();
+  const seriesCount = new Map<string, number>();
   const tagCount = new Map<string, number>();
   for (const row of (tagsRes.data ?? []) as { tags: string[] }[]) {
     for (const tag of row.tags ?? []) {
       if (tag.startsWith('series:')) {
-        seriesSet.add(tag.replace('series:', ''));
+        const name = tag.replace('series:', '');
+        seriesCount.set(name, (seriesCount.get(name) ?? 0) + 1);
       } else {
         tagCount.set(tag, (tagCount.get(tag) ?? 0) + 1);
       }
     }
   }
 
-  const seriesPages = Array.from(seriesSet).map(name => ({
-    url: `${base}/series/${encodeURIComponent(name)}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.6,
-  }));
+  // 에피소드 2편 미만인 얇은 시리즈는 sitemap에서 제외 — series/[id] 페이지의 noindex
+  // 임계값(isThin: episodeCount < 2)과 동일하게 유지해, "noindex인데 sitemap에 제출"되는
+  // GSC 색인 오류(Submitted URL marked 'noindex')를 방지한다.
+  const MIN_SERIES_EPISODES = 2;
+  const seriesPages = Array.from(seriesCount.entries())
+    .filter(([, count]) => count >= MIN_SERIES_EPISODES)
+    .map(([name]) => ({
+      url: `${base}/series/${encodeURIComponent(name)}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.6,
+    }));
 
   // 얇은 태그 페이지(글 < MIN_TAG_POSTS)는 sitemap에서 제외 — low-value/doorway 페이지 방지.
   // 태그 페이지(tag/[tag])의 noindex 임계값과 동일하게 유지할 것.

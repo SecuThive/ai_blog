@@ -13,7 +13,10 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 export async function generateMetadata({ params }: { params: Promise<{ cat: string }> }): Promise<Metadata> {
   const { cat: rawCat } = await params;
   const cat = decodeURIComponent(rawCat);
-  const url = `${SITE_URL}/category/${rawCat}`;
+  // canonical은 sitemap과 동일하게 percent-encoding(encodeURIComponent)으로 생성한다.
+  // raw 파라미터를 그대로 쓰면 '&'·공백이 인코딩되지 않아(예: "AI & 자동화") canonical이
+  // 깨지고 sitemap URL과 불일치 → GSC가 다른 canonical로 오인한다.
+  const url = `${SITE_URL}/category/${encodeURIComponent(cat)}`;
   return {
     title: `${cat} — Nodelog`,
     description: `${cat} 카테고리의 AI 분석 포스트`,

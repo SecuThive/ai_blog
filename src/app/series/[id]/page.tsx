@@ -73,7 +73,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const seriesName = decodeURIComponent(id);
-  const url = `${SITE_URL}/series/${id}`;
+  // canonical은 sitemap(encodeURIComponent)과 동일 인코딩으로 — '&'·공백 미인코딩 깨짐 방지.
+  const url = `${SITE_URL}/series/${encodeURIComponent(seriesName)}`;
   const desc =
     SERIES_DESC[seriesName] ??
     `${seriesName} 시리즈의 모든 에피소드를 순서대로 탐색하세요.`;

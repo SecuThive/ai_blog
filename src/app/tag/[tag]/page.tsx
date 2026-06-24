@@ -15,7 +15,8 @@ const MIN_TAG_POSTS = 3;
 export async function generateMetadata({ params }: { params: Promise<{ tag: string }> }): Promise<Metadata> {
   const { tag } = await params;
   const decoded = decodeURIComponent(tag);
-  const url = `${SITE_URL}/tag/${tag}`;
+  // canonical은 sitemap(encodeURIComponent)과 동일 인코딩으로 — '&'·공백 미인코딩 깨짐 방지.
+  const url = `${SITE_URL}/tag/${encodeURIComponent(decoded)}`;
 
   // 이 태그에 달린 발행글 수 — 3개 미만이면 thin 페이지로 보고 noindex 처리.
   const { count } = await makeFreshClient()
