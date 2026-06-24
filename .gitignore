@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local debug screenshots / scratch artifacts (do not commit)
+/error_img.png
+scripts/*.png
+scripts/*-backup-*.json
+scripts/tmp-*.mjs
+scripts/_*.mjs
