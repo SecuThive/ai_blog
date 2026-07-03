@@ -3,7 +3,8 @@ import { catTone } from '@/lib/utils';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
+import { POST_REDIRECTS } from '@/lib/postRedirects';
 import Link from 'next/link';
 import JsonLd from '@/components/JsonLd';
 import PostThumb from '@/components/PostThumb';
@@ -228,6 +229,9 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const post = await getPost(slug);
 
   if (!post) {
+    // 중복 정리로 강등된 글의 구 URL은 유지된 글로 308 영구 리다이렉트 — 링크 가치 이전
+    const target = POST_REDIRECTS[decodeURIComponent(slug)];
+    if (target) permanentRedirect(`/blog/${encodeURIComponent(target)}`);
     // 발행 취소·삭제된 글: soft 404(200) 대신 진짜 404 반환 — GSC Soft 404 / AdSense low-value 방지
     notFound();
   }
