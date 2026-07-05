@@ -7,7 +7,6 @@ import Footer from '@/components/Footer';
 import { Analytics } from '@vercel/analytics/next';
 import JsonLd from '@/components/JsonLd';
 import ThemeProvider from '@/components/ThemeProvider';
-import AdSenseScript from '@/components/AdSenseScript';
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
@@ -83,10 +82,17 @@ const NAVER_CODES = [
 ];
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID;
+  const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID ?? 'ca-pub-2091277631590195';
   return (
     <html lang="ko" className={`${jetbrainsMono.variable} ${sourceSerif4.variable} ${inter.variable}`}>
       <head>
+        {/* AdSense 소유 확인 스니펫 — 확인 크롤러가 <head>의 정적 태그를 찾으므로
+            승인 완료 전까지는 조건 없이 전역 로드를 유지해야 한다. */}
+        <script
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`}
+          crossOrigin="anonymous"
+        />
         {NAVER_CODES.map(code => (
           <meta key={code} name="naver-site-verification" content={code} />
         ))}
@@ -129,8 +135,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <main>{children}</main>
         <Footer />
-        {/* 콘텐츠 페이지에서만 로드 — 검색·법적고지·문의 등 저가치 페이지 제외 */}
-        {adsenseId && <AdSenseScript adsenseId={adsenseId} />}
         <Analytics />
         </ThemeProvider>
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
