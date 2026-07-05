@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import { Analytics } from '@vercel/analytics/next';
 import JsonLd from '@/components/JsonLd';
 import ThemeProvider from '@/components/ThemeProvider';
+import AdSenseScript from '@/components/AdSenseScript';
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
@@ -99,13 +100,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           title="Nodelog RSS Feed"
           href={`${SITE_URL}/rss`}
         />
-        {adsenseId && (
-          <script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`}
-            crossOrigin="anonymous"
-          />
-        )}
       </head>
       <body>
         <ThemeProvider>
@@ -135,6 +129,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <main>{children}</main>
         <Footer />
+        {/* 콘텐츠 페이지에서만 로드 — 검색·법적고지·문의 등 저가치 페이지 제외 */}
+        {adsenseId && <AdSenseScript adsenseId={adsenseId} />}
         <Analytics />
         </ThemeProvider>
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />

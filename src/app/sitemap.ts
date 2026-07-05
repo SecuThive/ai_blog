@@ -9,18 +9,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
   const client = makeFreshClient();
 
-  const [postsRes, guidesRes, tagsRes] = await Promise.all([
+  const [postsRes, guidesRes] = await Promise.all([
     client
       .from('posts')
-      .select('slug,published_at,tags')
+      .select('slug,published_at,tags,category')
       .eq('status', 'published'),
     client
       .from('engineer_guides')
       .select('slug,updated_at')
-      .eq('status', 'published'),
-    client
-      .from('posts')
-      .select('tags')
       .eq('status', 'published'),
   ]);
 
@@ -38,18 +34,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  // lastmod는 "그 목록 페이지에 마지막으로 글이 추가된 시점"을 반영해야 한다.
+  // (매 생성 시 new Date()를 넣으면 모든 페이지가 항상 방금 수정된 것처럼 보여
+  //  크롤 예산이 낭비되고 lastmod 신뢰도가 떨어진다.)
   const seriesCount = new Map<string, number>();
+  const seriesLast = new Map<string, string>();
   const tagCount = new Map<string, number>();
-  for (const row of (tagsRes.data ?? []) as { tags: string[] }[]) {
+  const tagLast = new Map<string, string>();
+  const catLast = new Map<string, string>();
+  for (const row of (postsRes.data ?? []) as { published_at: string; tags: string[]; category?: string }[]) {
+    const when = row.published_at ?? '';
+    if (row.category && when > (catLast.get(row.category) ?? '')) catLast.set(row.category, when);
     for (const tag of row.tags ?? []) {
       if (tag.startsWith('series:')) {
         const name = tag.replace('series:', '');
         seriesCount.set(name, (seriesCount.get(name) ?? 0) + 1);
+        if (when > (seriesLast.get(name) ?? '')) seriesLast.set(name, when);
       } else {
         tagCount.set(tag, (tagCount.get(tag) ?? 0) + 1);
+        if (when > (tagLast.get(tag) ?? '')) tagLast.set(tag, when);
       }
     }
   }
+  const latestPost = [...catLast.values()].sort().pop();
+  const latestDate = latestPost ? new Date(latestPost) : new Date();
 
   // 에피소드 2편 미만인 얇은 시리즈는 sitemap에서 제외 — series/[id] 페이지의 noindex
   // 임계값(isThin: episodeCount < 2)과 동일하게 유지해, "noindex인데 sitemap에 제출"되는
@@ -59,7 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter(([, count]) => count >= MIN_SERIES_EPISODES)
     .map(([name]) => ({
       url: `${base}/series/${encodeURIComponent(name)}`,
-      lastModified: new Date(),
+      lastModified: seriesLast.get(name) ? new Date(seriesLast.get(name)!) : latestDate,
       changeFrequency: 'weekly' as const,
       priority: 0.6,
     }));
@@ -71,7 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter(([, count]) => count >= MIN_TAG_POSTS)
     .map(([tag]) => ({
       url: `${base}/tag/${encodeURIComponent(tag)}`,
-      lastModified: new Date(),
+      lastModified: tagLast.get(tag) ? new Date(tagLast.get(tag)!) : latestDate,
       changeFrequency: 'weekly' as const,
       priority: 0.5,
     }));
@@ -79,7 +87,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const CATEGORIES = ['AI & 자동화', 'IT 트렌드', '개발', '툴 리뷰', '보안', '인프라'];
   const categoryPages = CATEGORIES.map(cat => ({
     url: `${base}/category/${encodeURIComponent(cat)}`,
-    lastModified: new Date(),
+    lastModified: catLast.get(cat) ? new Date(catLast.get(cat)!) : latestDate,
     changeFrequency: 'daily' as const,
     priority: 0.8,
   }));
@@ -96,7 +104,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/about`, changeFrequency: 'monthly' as const, priority: 0.5 },
     { url: `${base}/contact`, changeFrequency: 'monthly' as const, priority: 0.4 },
     { url: `${base}/faq`, changeFrequency: 'monthly' as const, priority: 0.4 },
-  ].map(p => ({ ...p, lastModified: new Date() }));
+  ].map(p => ({ ...p, lastModified: latestDate }));
 
   return [...staticPages, ...categoryPages, ...posts, ...guides, ...seriesPages, ...tagPages];
 }
