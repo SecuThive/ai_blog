@@ -6,6 +6,7 @@ import type { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { POST_REDIRECTS } from '@/lib/postRedirects';
 import { findOfficialDocs } from '@/lib/officialDocs';
+import { NOINDEX_POST_SLUGS } from '@/lib/noindexPosts';
 import Link from 'next/link';
 import JsonLd from '@/components/JsonLd';
 import PostThumb from '@/components/PostThumb';
@@ -137,6 +138,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     keywords: cleanTags.join(', '),
     authors: [{ name: post.author }],
     alternates: { canonical: url },
+    // 품질 감사에서 보강 대상으로 분류된 글은 보강 완료까지 색인 제외
+    robots: NOINDEX_POST_SLUGS.has(post.slug) ? { index: false, follow: true } : undefined,
     openGraph: {
       title: post.title,
       description: post.excerpt,

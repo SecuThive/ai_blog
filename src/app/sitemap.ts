@@ -1,4 +1,5 @@
 import { makeFreshClient } from '@/lib/supabase';
+import { NOINDEX_POST_SLUGS } from '@/lib/noindexPosts';
 import type { MetadataRoute } from 'next';
 
 // ISR: sitemap을 1시간마다 재생성해 DB 변경(시리즈 강등/발행 등)이 반영되도록 함.
@@ -20,12 +21,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .eq('status', 'published'),
   ]);
 
-  const posts = ((postsRes.data ?? []) as { slug: string; published_at: string; tags: string[] }[]).map(p => ({
-    url: `${base}/blog/${p.slug}`,
-    lastModified: new Date(p.published_at),
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
-  }));
+  // noindex 처리된 보강 대상 글은 sitemap에서도 제외 (색인 신호 일관성)
+  const posts = ((postsRes.data ?? []) as { slug: string; published_at: string; tags: string[] }[])
+    .filter(p => !NOINDEX_POST_SLUGS.has(p.slug))
+    .map(p => ({
+      url: `${base}/blog/${p.slug}`,
+      lastModified: new Date(p.published_at),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    }));
 
   const guides = ((guidesRes.data ?? []) as { slug: string; updated_at: string }[]).map(g => ({
     url: `${base}/engineer/${g.slug}`,
