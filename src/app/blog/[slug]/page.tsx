@@ -5,6 +5,7 @@ import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { POST_REDIRECTS } from '@/lib/postRedirects';
+import { findOfficialDocs } from '@/lib/officialDocs';
 import Link from 'next/link';
 import JsonLd from '@/components/JsonLd';
 import PostThumb from '@/components/PostThumb';
@@ -174,6 +175,13 @@ function makeMdComponents() {
       paragraphCount++;
       return <p className={isFirst ? 'lede' : ''}>{children}</p>;
     },
+    // 본문 markdown의 `# 제목`은 h2로 강등 — 페이지 h1(.article-title)과의
+    // H1 중복을 방지한다(대부분의 초안이 제목을 # 로 반복 포함).
+    h1: ({ children }: { children?: React.ReactNode }) => {
+      const text = String(children);
+      const id = text.toLowerCase().replace(/[^a-z0-9가-힣]+/g, '-').replace(/^-|-$/g, '');
+      return <h2 id={id}>{children}</h2>;
+    },
     h2: ({ children }: { children?: React.ReactNode }) => {
       const text = String(children);
       const id = text.toLowerCase().replace(/[^a-z0-9가-힣]+/g, '-').replace(/^-|-$/g, '');
@@ -252,6 +260,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     getRelatedGuides(post.category, post.tags),
   ]);
   const mdComponents = makeMdComponents();
+  const officialDocs = findOfficialDocs(post.title, post.tags, post.category);
 
   const postUrl = `${SITE_URL}/blog/${post.slug}`;
   const articleSchema = {
@@ -262,7 +271,10 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     url: postUrl,
     datePublished: post.published_at,
     dateModified: post.published_at,
-    author: { '@type': 'Person', name: post.author },
+    // author를 가공의 Person으로 표기하지 않는다 — 실제 작성 주체는
+    // AI 초안 + 사람 편집 검토 파이프라인을 운영하는 Nodelog 편집팀(조직).
+    author: { '@type': 'Organization', name: 'Nodelog 편집팀', url: `${SITE_URL}/author` },
+    editor: { '@type': 'Organization', name: 'Nodelog 편집팀', url: `${SITE_URL}/author` },
     publisher: {
       '@type': 'Organization',
       name: 'Nodelog',
@@ -325,10 +337,10 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           <p className="article-deck">{post.excerpt}</p>
 
           <div className="article-byline">
-            <span className="meta-item">
+            <Link href="/author" className="meta-item" title="작성·검토 방식 보기">
               <span className="author-pip">{authorInitials}</span>
-              {post.author}
-            </span>
+              {post.author} · Nodelog 편집팀
+            </Link>
             <span className="meta-item">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
@@ -458,16 +470,25 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                 편집 검토 · Editorial Review
               </div>
               <p className="editorial-note-body">
-                이 글은 AI 에이전트가 1차 초안을 작성한 뒤, <strong>사람 편집자가 사실관계·출처·톤과 맥락을 검토</strong>하여 발행했습니다.
-                오류나 부정확한 내용이 확인되면 24시간 이내에 정정합니다.
+                이 글은 AI 에이전트가 자료 조사와 1차 초안 작성을 담당하고, <strong>사람 편집자가 사실관계·출처·톤과 맥락을 검토</strong>한 뒤 발행했습니다.
+                환경(OS·버전)에 따라 결과가 다를 수 있으니 적용 전 공식 문서를 함께 확인하세요.
+                오류를 발견하시면 <a href="mailto:thive8564@gmail.com">이메일로 제보</a>해 주세요 — 확인 후 신속히 정정합니다.
               </p>
               <div className="editorial-note-meta">
-                <span>작성 · {post.author}</span>
+                <span>초안 · AI ({post.author})</span>
                 <span className="sep">·</span>
-                <span>검토 · 사람 편집자</span>
+                <span>검토 · Nodelog 편집자</span>
                 <span className="sep">·</span>
                 <span>발행 · {dateStr}</span>
               </div>
+              {officialDocs.length > 0 && (
+                <div className="editorial-note-refs">
+                  <span className="refs-label">관련 공식 문서</span>
+                  {officialDocs.map(d => (
+                    <a key={d.url} href={d.url} target="_blank" rel="noopener noreferrer">{d.name} ↗</a>
+                  ))}
+                </div>
+              )}
               <div className="editorial-note-links">
                 <Link href="/author">운영·검토 방식 자세히 보기 →</Link>
                 <Link href="/policy">편집 정책 →</Link>

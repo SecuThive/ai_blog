@@ -165,7 +165,7 @@ export function ControlPanel({ feed, bars }: { feed: FeedItem[]; bars: BarItem[]
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <h6 style={{ margin: 0 }}>INFERENCE RATE</h6>
             <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-3)' }}>
-              4,128 sources · 96.2% nominal
+              editorial pipeline · nominal
             </span>
           </div>
           <div className="meter-row">
@@ -213,7 +213,7 @@ export function SignalDashboard({ signals, heatmapDates }: { signals: SignalData
             <div>
               <h2>오늘의 신호 분석</h2>
               <p className="sub">
-                AI가 지난 24시간 동안 추적한 4,128개 소스 중에서 의미 있게 움직인 변화들.
+                AI가 최근 추적한 주요 기술 소스 가운데 의미 있게 움직인 변화들.
                 단순한 빈도가 아닌 변화율 기준.
               </p>
             </div>

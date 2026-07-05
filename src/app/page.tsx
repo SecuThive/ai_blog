@@ -20,8 +20,6 @@ import {
 import SubscribeForm from '@/components/SubscribeForm';
 import PostThumb from '@/components/PostThumb';
 
-const SOURCE_COUNT = '4,128';
-
 export const revalidate = 60;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
@@ -131,7 +129,7 @@ function HeroV2({ posts, ticks, feed, bars, seriesCount, postCount, subscriberCo
           <div>
             <span className="hero-status">
               <span className="live-dot" />
-              <span>INDEX · 24/7 · {SOURCE_COUNT} SOURCES</span>
+              <span>AI DRAFT · HUMAN REVIEW · DAILY</span>
               <span style={{ color: 'var(--text-5)' }}>·</span>
               <span>POSTS {postCount > 0 ? `${postCount}+` : '...'}</span>
             </span>
@@ -141,8 +139,8 @@ function HeroV2({ posts, ticks, feed, bars, seriesCount, postCount, subscriberCo
               <em>오늘의</em> 실전 IT 인사이트.
             </h1>
             <p className="heroX-lead">
-              자동화, 개발, 보안, 인프라, 생산성. 전 세계 {SOURCE_COUNT}개 IT 소스를 모니터링해
-              핵심 신호를 추리고, 전문 에디터의 사실 확인·검수를 거쳐 실무에 바로 쓰는 콘텐츠로 발행합니다.
+              자동화, 개발, 보안, 인프라, 생산성. 주요 기술 소스와 공식 문서의 변화를 추적해
+              핵심 신호를 추리고, 사람 편집자의 사실 확인·검수를 거쳐 실무에 바로 쓰는 콘텐츠로 발행합니다.
             </p>
             <div className="heroX-actions">
               {posts[0] && (
@@ -179,7 +177,7 @@ function HeroV2({ posts, ticks, feed, bars, seriesCount, postCount, subscriberCo
                     AI
                   </span>
                 </div>
-                <div className="stat-sub">CURATED · 24/7</div>
+                <div className="stat-sub">AI DRAFT · HUMAN REVIEW</div>
               </div>
               <div>
                 <div className="stat-num">{subscriberCount > 0 ? (subscriberCount >= 1000 ? `${(subscriberCount / 1000).toFixed(1)}K` : String(subscriberCount)) : '—'}</div>

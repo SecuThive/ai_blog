@@ -8,21 +8,19 @@ export const metadata: Metadata = {
 
 export const revalidate = 3600;
 
-const SOURCE_COUNT = '4,128';
-
 const STAGES = [
-  { t: '소스 색인', s: `${SOURCE_COUNT} sources`, tone: 'blue',   icon: '🌐', desc: '24시간 IT 소스 모니터링' },
+  { t: '소스 추적', s: '공식 문서 · 기술 소스', tone: 'blue',   icon: '🌐', desc: '주요 기술 소스·공식 문서 변화 추적' },
   { t: '신호 점수화', s: 'AI · 변화율 분석', tone: 'purple', icon: '📊', desc: '중요도·트렌드 가중치 산출' },
-  { t: '초고 생성', s: 'AI · 출처 동시 기록', tone: 'purple', icon: '✍️', desc: '출처 인라인 기록 포함' },
+  { t: '초고 생성', s: 'AI 초안 작성', tone: 'purple', icon: '✍️', desc: '구조화된 기술 가이드 초안 생성' },
   { t: '편집자 검토', s: 'Human · 사실/톤', tone: 'mint',   icon: '🔍', desc: '사실 확인·톤·맥락 검토' },
-  { t: '발행 & 학습', s: 'AI + Human', tone: 'amber',  icon: '🚀', desc: '발행 후 피드백 반영' },
+  { t: '발행 & 개선', s: 'AI + Human', tone: 'amber',  icon: '🚀', desc: '발행 후 정정·보강 반영' },
 ];
 
 const PRINCIPLES = [
-  { icon: '🔍', t: '투명성', d: '모든 글에 AI·편집자 기여 비율을 명시합니다. 사용된 모델명과 버전도 공개합니다.' },
-  { icon: '✅', t: '사실 검증', d: '편집자가 핵심 사실을 원문 소스와 대조합니다. 오류 발견 시 24시간 내 정정합니다.' },
+  { icon: '🔍', t: '투명성', d: 'AI가 초안을 작성하고 사람이 검토한다는 사실을 모든 글에 명시합니다.' },
+  { icon: '✅', t: '사실 검증', d: '편집자가 핵심 사실을 원문 소스와 대조합니다. 오류 제보(이메일)를 받으면 확인 후 신속히 정정합니다.' },
   { icon: '🚫', t: 'AI 단독 발행 없음', d: '어떤 글도 사람 검토 없이는 발행되지 않습니다. 편집자의 최종 승인이 필수입니다.' },
-  { icon: '📚', t: '출처 공개', d: '모든 초고 작성 시 사용된 소스 링크를 기록합니다. 주요 클레임에는 원문을 연결합니다.' },
+  { icon: '📚', t: '출처 연결', d: '관련 공식 문서·1차 출처를 글과 함께 안내하는 것을 원칙으로 하며, 미비한 글은 순차적으로 보강하고 있습니다.' },
 ];
 
 async function getAuthorStats() {
@@ -63,7 +61,7 @@ export default async function AuthorPage() {
             {[
               { label: '발행 글', value: publishedCount.toLocaleString() + '편' },
               { label: '에디터 승인율', value: `${publishRate}%` },
-              { label: '모니터링 소스', value: SOURCE_COUNT },
+              { label: '검토 후 보류·반려', value: `${rejectRate}%` },
               { label: '최다 카테고리', value: topCat },
             ].map(s => (
               <div key={s.label}>
@@ -91,8 +89,8 @@ export default async function AuthorPage() {
                 </div>
               </div>
               <p style={{ color: 'var(--text-2)', fontSize: 14, lineHeight: 1.65, margin: '0 0 20px' }}>
-                Claude Sonnet 4.5와 GPT-5를 조합한 에이전트 시스템. {SOURCE_COUNT}개 소스를 24시간 모니터링하고
-                변화 신호를 점수화합니다. 초고 작성, 관련 글 매칭, 1차 사실 점검을 담당합니다.
+                복수의 LLM을 조합한 에이전트 시스템. 주요 기술 소스와 공식 문서의 변화를 추적해
+                신호를 점수화합니다. 초고 작성, 관련 글 매칭, 1차 사실 점검을 담당합니다.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: 13 }}>
                 {[
