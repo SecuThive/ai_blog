@@ -195,26 +195,42 @@ const TOPICS: Topic[] = [
 async function generateContent(topic: Topic): Promise<{ content: string; excerpt: string }> {
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 4000,
+    max_tokens: 8000,
     messages: [
       {
         role: 'user',
-        content: `당신은 IT 전문 미디어 Nodelog의 ${topic.author}입니다.
+        content: `당신은 IT 전문 미디어 Nodelog의 기술 에디터입니다. AI가 초안을 쓰고 사람이 검토하는 매체이므로, 아래 규칙을 어기면 발행이 자동 보류됩니다.
 
-아래 주제로 전문적인 블로그 글을 작성해주세요.
+아래 주제로 실무 기술 가이드를 작성해주세요.
 
 제목: ${topic.title}
 카테고리: ${topic.category}
 태그: ${topic.tags.join(', ')}
 
-작성 요구사항:
-- 마크다운 형식으로 작성 (##, ### 헤더 사용)
-- 분량: 1500~2500자
-- 한국어로 작성
-- 실용적인 내용 위주 (개념 설명 + 실전 적용 방법)
-- 구체적인 예시, 코드, 명령어, 수치 포함
-- 도입부(현황/왜 중요한지) → 본론(핵심 내용) → 결론(요약/실천 방안) 구조
-- 제목(h1)은 작성하지 말 것 (별도 필드로 관리됨)
+## 필수 구조 (docs/CONTENT_TEMPLATE.md 기준)
+1. 적용 상황 — 어떤 문제/에러일 때 이 글을 쓰는지 (에러 메시지 원문 포함)
+2. 적용 범위 — 제품·OS·버전 명시 (예: PostgreSQL 14–16, Ubuntu 22.04)
+3. 사전 확인·백업 — 작업 전 위험 요소
+4. 진단 순서 — 원인을 좁혀가는 단계별 절차
+5. 명령어/코드 — 복사해 바로 실행 가능한 코드블록 (언어 지정 필수: \`\`\`bash 등)
+6. 예상 정상 결과 — 각 명령 성공 시 출력 예
+7. 실패 시 분기 — 다른 출력이 나올 때의 다음 단계
+8. 영구 해결 + 임시 조치의 위험
+9. 재발 방지
+10. 검증 환경 — 실제 확인 환경. 미확인이면 "공식 문서 기준" 명시
+11. 공식 참고 자료 — 실제 존재하는 공식 문서 URL만 (모르면 섹션 생략, 지어내지 말 것)
+
+## 절대 금지
+- 본문에 H1(\`# \`) 사용 금지 — \`##\`부터 시작 (제목은 별도 필드)
+- 확인 불가능한 1인칭 경험 서술 금지: "제가 직접", "저희 팀에서는", "제가 겪은/본",
+  "직접 테스트한 결과", "장애의 N%" — 대신 "실무에서 가장 자주 보고되는 원인은…",
+  "공식 문서 기준으로…" 같은 객관적 표현 사용
+- 출처 없는 확정 수치(벌금·비율·기한·법적 의무) 금지
+- 존재하지 않는 URL·문서 인용 금지
+
+## 형식
+- 마크다운 (##, ### 헤더), 한국어, 3000자 이상
+- 표(비교/의사결정표) 1개 이상 포함
 - 전문적이지만 읽기 쉬운 문체
 
 글 본문만 출력하세요.`,
@@ -252,8 +268,36 @@ async function publishPost(topic: Topic, content: string, excerpt: string): Prom
     throw new Error(`API 오류 (${res.status}): ${err}`);
   }
 
-  const { post } = await res.json();
-  console.log(`  ✅ 업로드 완료 — slug: ${post.slug}`);
+  const json = await res.json();
+  // 서버 가드(중복 주제·금지 표현)에 걸리면 발행되지 않고 draft로 보류된다.
+  if (json.held_as_draft) {
+    console.log(`  ⚠️ 발행 보류(draft) — ${json.reason}`);
+    if (json.duplicate_of) console.log(`     중복 대상: ${json.duplicate_of.title}`);
+    return;
+  }
+  console.log(`  ✅ 업로드 완료 — slug: ${json.post.slug}`);
+}
+
+/** 주제 선정 전 사전 중복 체크 — 이미 다룬 주제는 생성 자체를 건너뛴다 */
+async function fetchCoveredTitles(): Promise<string[]> {
+  try {
+    const res = await fetch(`${SITE_URL}/api/posts/covered-topics`, {
+      headers: { 'x-api-key': BLOG_API_KEY },
+    });
+    if (!res.ok) return [];
+    const { topics } = await res.json();
+    return (topics ?? []).map((t: { title: string }) => t.title.toLowerCase());
+  } catch { return []; }
+}
+
+function isCovered(title: string, covered: string[]): boolean {
+  const toks = new Set(title.toLowerCase().replace(/[^a-z0-9가-힣\s]/g, ' ').split(/\s+/).filter(w => w.length > 1));
+  for (const c of covered) {
+    const ct = new Set(c.replace(/[^a-z0-9가-힣\s]/g, ' ').split(/\s+/).filter(w => w.length > 1));
+    let inter = 0; for (const x of toks) if (ct.has(x)) inter++;
+    if (inter / (toks.size + ct.size - inter || 1) >= 0.5) return true;
+  }
+  return false;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -261,8 +305,12 @@ async function publishPost(topic: Topic, content: string, excerpt: string): Prom
 // ──────────────────────────────────────────────────────────────────────────
 
 async function main() {
-  const targets = TOPICS.slice(0, LIMIT);
-  console.log(`\n📝 총 ${targets.length}편 생성 시작 (${DRY_RUN ? 'DRY RUN' : '실제 저장'})\n`);
+  // 주제 선정 전 사전 중복 체크 — 이미 발행된 주제는 생성 자체를 건너뛴다
+  const covered = await fetchCoveredTitles();
+  const skipped = TOPICS.filter(t => isCovered(t.title, covered));
+  skipped.forEach(t => console.log(`⏭  이미 다룬 주제 건너뜀: ${t.title}`));
+  const targets = TOPICS.filter(t => !isCovered(t.title, covered)).slice(0, LIMIT);
+  console.log(`\n📝 총 ${targets.length}편 생성 시작 (건너뜀 ${skipped.length}편, ${DRY_RUN ? 'DRY RUN' : '실제 저장'})\n`);
 
   let success = 0;
   let fail = 0;

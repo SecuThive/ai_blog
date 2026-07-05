@@ -87,13 +87,38 @@ export async function POST(req: NextRequest) {
 
   const sb = supabaseAdmin();
 
+  // ── 인입 정규화 (docs/CONTENT_TEMPLATE.md 강제) ──────────────────────────
+  // 1) 본문 H1 강등: 페이지가 제목을 h1로 렌더링하므로 본문 `# `는 `## `로.
+  //    (코드펜스 내부는 건드리지 않는다)
+  const normalizedContent = (content as string)
+    .split(/(```[\s\S]*?```)/g)
+    .map((seg, i) => (i % 2 === 1 ? seg : seg.replace(/^# (?!#)/gm, '## ')))
+    .join('');
+
+  // 2) 태그 정규화: '#a #b c' 한 문자열 → 개별 태그, 앞 '#' 제거, 공백 정리
+  const normalizedTags = (Array.isArray(tags) ? tags : [])
+    .flatMap((t: string) => (typeof t === 'string' && t.includes('#') ? t.split(/\s+/) : [t]))
+    .map((t: string) => String(t).replace(/^#+/, '').trim())
+    .filter(Boolean);
+
+  // 3) 확인 불가능한 1인칭 경험 서술 차단 — 발행 대신 draft 보류(사람 검토)
+  const FAKE_EXPERIENCE = /(제가 직접|저희 팀|우리 (회사|팀)에서는|제가 (겪|본|경험)|직접 테스트(한|해본) 결과|필자가 (직접|경험|겪)|장애의 \d+%)/;
+  const fakeClaim = FAKE_EXPERIENCE.exec(normalizedContent);
+
   // 중복 가드: 발행 요청인데 기존 발행글과 제목이 매우 유사하면 draft로 강제 보류.
   // (명시적으로 status='draft'로 들어온 요청은 이미 검토 대상이므로 검사 생략)
   let effectiveStatus = status;
   let heldDuplicate: { id: number; title: string; slug: string; sim: number } | null = null;
+  let heldReason: string | null = null;
   if (status === 'published') {
     heldDuplicate = await findNearDuplicate(sb, title);
-    if (heldDuplicate) effectiveStatus = 'draft';
+    if (heldDuplicate) {
+      effectiveStatus = 'draft';
+      heldReason = 'near-duplicate of an existing published post';
+    } else if (fakeClaim) {
+      effectiveStatus = 'draft';
+      heldReason = `unverifiable first-person experience claim: "${fakeClaim[0]}" — 객관적 표현으로 수정 후 발행`;
+    }
   }
 
   // Generate unique slug
@@ -101,16 +126,16 @@ export async function POST(req: NextRequest) {
   const { data: existing } = await sb.from('posts').select('slug').like('slug', `${slug}%`);
   if (existing && existing.length > 0) slug = `${slug}-${Date.now()}`;
 
-  const finalExcerpt = excerpt || content.replace(/[#*`\[\]]/g, '').slice(0, 160) + '…';
+  const finalExcerpt = excerpt || normalizedContent.replace(/[#*`\[\]]/g, '').slice(0, 160) + '…';
 
   const { data, error } = await sb.from('posts').insert({
     title: title.slice(0, 200),
     slug,
-    content,
+    content: normalizedContent,
     excerpt: finalExcerpt.slice(0, 300),
     cover_image: cover_image ?? null,
     category,
-    tags: Array.isArray(tags) ? tags : [],
+    tags: normalizedTags,
     author,
     agent_role,
     status: effectiveStatus,
@@ -120,13 +145,16 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // 중복으로 보류된 경우: 발행하지 않고 draft로 저장했음을 알린다(파이프라인 로그용).
-  if (heldDuplicate) {
+  // 보류된 경우: 발행하지 않고 draft로 저장했음을 알린다.
+  // 생성 파이프라인은 held_as_draft=true 응답을 받으면 "다른 주제로 재시도"해야
+  // 일일 발행 슬롯이 비지 않는다. (주제 선정 전 GET /api/posts/covered-topics 확인 권장)
+  if (heldReason) {
     return NextResponse.json({
       post: data,
       held_as_draft: true,
-      reason: 'near-duplicate of an existing published post',
-      duplicate_of: heldDuplicate,
+      reason: heldReason,
+      ...(heldDuplicate ? { duplicate_of: heldDuplicate } : {}),
+      retry_hint: 'pick a different topic; consult GET /api/posts/covered-topics before choosing',
     }, { status: 200 });
   }
 
