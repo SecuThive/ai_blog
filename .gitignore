@@ -46,3 +46,4 @@ scripts/*.png
 scripts/*-backup-*.json
 scripts/tmp-*.mjs
 scripts/_*.mjs
+scripts/enrich/backup-*.json
