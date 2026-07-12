@@ -2,9 +2,11 @@ import { makeFreshClient } from '@/lib/supabase';
 import { NOINDEX_POST_SLUGS } from '@/lib/noindexPosts';
 import type { MetadataRoute } from 'next';
 
-// ISR: sitemap을 1시간마다 재생성해 DB 변경(시리즈 강등/발행 등)이 반영되도록 함.
-// (이게 없으면 빌드 시점 정적 캐시로 고정되어 DB 변경이 sitemap에 안 나타남)
-export const revalidate = 3600;
+// sitemap.ts는 이 Next 버전에서 "기본 캐시되는 특수 Route Handler"라
+// revalidate ISR이 프로덕션에서 신뢰되게 동작하지 않았다(7/6 이후 신규 글 미반영 사고).
+// 매 요청 동적 생성으로 전환 — 크롤러 요청량이 적고 쿼리가 가벼워 비용이 미미하며,
+// 신규 발행·강등이 sitemap에 즉시 반영되는 것이 색인 신호 일관성에 더 중요하다.
+export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';

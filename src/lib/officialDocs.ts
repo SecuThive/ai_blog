@@ -54,7 +54,7 @@ const DOCS: { match: RegExp; docs: OfficialDoc[] }[] = [
   { match: /node\.?js|npm\b/i, docs: [
     { name: 'Node.js 공식 문서', url: 'https://nodejs.org/docs/latest/api/' },
   ]},
-  { match: /\bjava\b|jvm|spring|maven|gradle/i, docs: [
+  { match: /\bjava\b|jvm|jdk|spring|maven|gradle|outofmemory|heap space|metaspace|class file/i, docs: [
     { name: 'Oracle Java 공식 문서', url: 'https://docs.oracle.com/en/java/' },
   ]},
   { match: /spring[- ]?boot/i, docs: [
