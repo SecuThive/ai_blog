@@ -47,8 +47,7 @@ const rows=[];
 for(const p of posts){
   const s=score(p);
   let action='유지', idx='index';
-  if(s.total<45){action='noindex + 재작성 후보(보강 후 재색인)';idx='noindex';}
-  else if(s.total<58){action='순차 보강';}
+  if(s.total<58){action='noindex + 보강 후 재색인 (애드센스 저가치 대응 프루닝)';idx='noindex';}
   rows.push({url:'https://www.thivelab.com/blog/'+encodeURIComponent(p.slug),title:p.title,status:'published',score:s.total,dup:s.maxSim>=0.35?(s.maxSim*100|0)+'%':'',problems:s.problems.join('; '),action,redirect:'',index:idx,views:p.views});
 }
 rows.sort((a,b)=>a.score-b.score);
@@ -60,6 +59,6 @@ const dist={'~44':0,'45-57':0,'58-69':0,'70-84':0,'85+':0};
 rows.forEach(r=>{const s=r.score;dist[s<45?'~44':s<58?'45-57':s<70?'58-69':s<85?'70-84':'85+']++;});
 console.log('점수 분포:',JSON.stringify(dist));
 console.log('평균:',Math.round(rows.reduce((a,r)=>a+r.score,0)/rows.length));
-import('fs').then(({writeFileSync:w})=>w('scripts/noindex-slugs.json',JSON.stringify(rows.filter(r=>r.index==='noindex').map(r=>decodeURIComponent(r.url.replace('https://www.thivelab.com/blog/',''))),null,1)));
+import('fs').then(({writeFileSync:w})=>w('src/lib/noindex-slugs.json',JSON.stringify(rows.filter(r=>r.index==='noindex').map(r=>decodeURIComponent(r.url.replace('https://www.thivelab.com/blog/',''))),null,1)));
 console.log('\n최하위 12편:');
 rows.slice(0,12).forEach(r=>console.log(`  ${r.score}점 v${r.views}  ${r.title.slice(0,52)}  [${r.problems.slice(0,40)}]`));
