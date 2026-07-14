@@ -82,7 +82,7 @@ export default function OgImage() {
             lineHeight: 1.6,
           }}
         >
-          IT·개발·보안·인프라 실무 인사이트를 전문 에디터가 검증·큐레이션하는 테크 미디어
+          AI 초안과 사람의 편집 검토로 만드는 IT·개발·보안·인프라 실무 미디어
         </div>
       </div>
     ),

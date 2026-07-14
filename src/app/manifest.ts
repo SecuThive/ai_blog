@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Nodelog — IT·개발·보안 테크 미디어',
     short_name: 'Nodelog',
-    description: 'IT·개발·보안·인프라 실무 인사이트를 전문 에디터가 검증·큐레이션하는 테크 미디어',
+    description: 'AI 초안과 사람의 편집 검토를 거쳐 발행하는 IT·개발·보안·인프라 실무 미디어',
     start_url: '/',
     display: 'standalone',
     background_color: '#0A0D14',

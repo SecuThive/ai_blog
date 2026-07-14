@@ -26,11 +26,11 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
   title: 'Nodelog — IT·개발·보안 테크 미디어',
-  description: 'IT·개발·보안·인프라 실무 인사이트를 전문 에디터가 검증·큐레이션하는 테크 미디어. 매일 업데이트됩니다.',
+  description: 'AI 초안과 사람의 편집 검토를 거쳐 발행하는 IT·개발·보안·인프라 실무 미디어.',
   alternates: { canonical: SITE_URL },
   openGraph: {
     title: 'Nodelog — IT·개발·보안 테크 미디어',
-    description: 'IT·개발·보안·인프라 실무 인사이트를 전문 에디터가 검증·큐레이션하는 테크 미디어. 매일 업데이트됩니다.',
+    description: 'AI 초안과 사람의 편집 검토를 거쳐 발행하는 IT·개발·보안·인프라 실무 미디어.',
     url: SITE_URL,
     type: 'website',
     images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
@@ -66,8 +66,15 @@ async function getSeries(): Promise<SeriesInfo[]> {
 
   return Array.from(map.entries())
     .map(([name, v]) => ({ name, ...v, tone: toneForSeries(name) }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 3);
+    .sort((a, b) => b.count - a.count);
+}
+
+async function getPublishedPostCount(): Promise<number> {
+  const { count } = await makeFreshClient()
+    .from('posts')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'published');
+  return count ?? 0;
 }
 
 async function getSubscriberCount(): Promise<number> {
@@ -129,18 +136,18 @@ function HeroV2({ posts, ticks, feed, bars, seriesCount, postCount, subscriberCo
           <div>
             <span className="hero-status">
               <span className="live-dot" />
-              <span>AI DRAFT · HUMAN REVIEW · DAILY</span>
+              <span>AI DRAFT · HUMAN REVIEW · PUBLISHING</span>
               <span style={{ color: 'var(--text-5)' }}>·</span>
               <span>POSTS {postCount > 0 ? `${postCount}+` : '...'}</span>
             </span>
             <h1>
-              <span className="grad">전문 에디터가 검증한,</span>
+              <span className="grad">AI 초안에 사람의 검토를 더한,</span>
               <br />
               <em>오늘의</em> 실전 IT 인사이트.
             </h1>
             <p className="heroX-lead">
-              자동화, 개발, 보안, 인프라, 생산성. 주요 기술 소스와 공식 문서의 변화를 추적해
-              핵심 신호를 추리고, 사람 편집자의 사실 확인·검수를 거쳐 실무에 바로 쓰는 콘텐츠로 발행합니다.
+              자동화, 개발, 보안, 인프라, 생산성. 공식 문서와 기술 자료를 바탕으로 초안을 만들고,
+              편집 과정에서 핵심 사실과 문맥을 확인해 실무에 활용할 수 있는 콘텐츠로 다듬습니다.
             </p>
             <div className="heroX-actions">
               {posts[0] && (
@@ -210,7 +217,7 @@ function DailyBriefing({ posts }: { posts: PostSummary[] }) {
             <span className="num">01 / BRIEFING</span>
             <div>
               <h2>오늘의 IT 브리핑</h2>
-              <p className="sub">AI가 선정한 오늘의 주요 글. 편집자 1차 검토 완료.</p>
+              <p className="sub">최근 발행한 글 가운데 실무 활용도가 높은 주제를 골랐습니다.</p>
             </div>
           </div>
           <Link href="/" className="section-link">
@@ -415,6 +422,7 @@ function EditorQuote() {
 
 /* ===== Series Showcase ===== */
 function SeriesShowcase({ series }: { series: SeriesInfo[] }) {
+  const featuredSeries = series.slice(0, 3);
   return (
     <section className="section" style={{ background: 'linear-gradient(180deg, transparent, rgba(20,24,36,0.4) 30%, transparent)' }}>
       <div className="container">
@@ -430,13 +438,13 @@ function SeriesShowcase({ series }: { series: SeriesInfo[] }) {
             전체 시리즈 <ArrowIcon size={14} />
           </Link>
         </div>
-        {series.length === 0 ? (
+        {featuredSeries.length === 0 ? (
           <p style={{ color: 'var(--text-3)', textAlign: 'center', padding: '40px 0' }}>
             시리즈를 준비 중입니다.
           </p>
         ) : (
           <div className="grid-3">
-            {series.map((s) => (
+            {featuredSeries.map((s) => (
               <Link key={s.name} href={`/series/${encodeURIComponent(s.name)}`} className="card card-link">
                 <div className={`card-thumb thumb-${s.tone}`} style={{ aspectRatio: '16/7' }}>
                   {s.name}
@@ -467,8 +475,6 @@ function AIRecommendBlock({ posts }: { posts: PostSummary[] }) {
   const recs = posts.slice(0, 3);
   if (recs.length === 0) return null;
 
-  const maxViews = Math.max(...recs.map(r => r.views), 1);
-
   return (
     <section className="section">
       <div className="container">
@@ -483,7 +489,7 @@ function AIRecommendBlock({ posts }: { posts: PostSummary[] }) {
                 </svg>
                 오늘 AI가 추천하는 글
               </h2>
-              <p className="sub">최근 조회수·완독 패턴을 분석해, 같은 주제에 관심 있는 독자들이 선택한 글. 매시간 갱신.</p>
+              <p className="sub">최근 게시물 가운데 조회수·최신성·카테고리 다양성을 기준으로 고른 글.</p>
             </div>
           </div>
           <Link href="/recommend" className="section-link">
@@ -493,7 +499,6 @@ function AIRecommendBlock({ posts }: { posts: PostSummary[] }) {
         <div className="grid-3">
           {recs.map((p) => {
             const tone = catTone(p.category);
-            const popularity = Math.min(99, Math.max(60, Math.round((p.views / maxViews) * 35 + 62)));
             return (
               <Link key={p.id} href={`/blog/${p.slug}`} className="card card-link" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -501,7 +506,7 @@ function AIRecommendBlock({ posts }: { posts: PostSummary[] }) {
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
                     </svg>
-                    인기 {popularity}%
+                    AI PICK
                   </span>
                   <span className={`badge badge-${tone}`}>{p.category}</span>
                 </div>
@@ -720,7 +725,13 @@ function buildClientData(posts: PostSummary[]) {
 
 /* ===== Page ===== */
 export default async function HomePage() {
-  const [posts, series, subscriberCount, recentGuides] = await Promise.all([getPosts(), getSeries(), getSubscriberCount(), getRecentGuides()]);
+  const [posts, postCount, series, subscriberCount, recentGuides] = await Promise.all([
+    getPosts(),
+    getPublishedPostCount(),
+    getSeries(),
+    getSubscriberCount(),
+    getRecentGuides(),
+  ]);
 
   if (posts.length === 0) {
     return (
@@ -742,7 +753,7 @@ export default async function HomePage() {
 
   return (
     <HomeScrollReveal>
-      <HeroV2 posts={posts} ticks={ticks} feed={feed} bars={bars} seriesCount={series.length} postCount={posts.length} subscriberCount={subscriberCount} />
+      <HeroV2 posts={posts} ticks={ticks} feed={feed} bars={bars} seriesCount={series.length} postCount={postCount} subscriberCount={subscriberCount} />
       <DailyBriefing posts={posts} />
       <EngineerGuidesSection guides={recentGuides} />
       <SignalDashboard signals={signals} heatmapDates={heatmapDates} />

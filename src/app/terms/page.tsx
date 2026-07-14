@@ -55,7 +55,7 @@ export default function TermsPage() {
               <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
             <div style={{ fontSize: 13.5, color: 'var(--text-2)' }}>
-              이용 약관에 대해 궁금한 점이 있다면 <a style={{ color: 'var(--acc-blue)' }} href="mailto:hello@thivelab.com">hello@thivelab.com</a> 로 문의해주세요.
+              이용 약관에 대해 궁금한 점이 있다면 <a style={{ color: 'var(--acc-blue)' }} href="mailto:thive8564@gmail.com">thive8564@gmail.com</a> 로 문의해주세요.
             </div>
           </div>
         </div>

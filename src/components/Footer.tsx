@@ -21,7 +21,7 @@ export default function Footer() {
             </svg>
             NODELOG
           </div>
-          <p>IT·개발·보안·인프라 실무 인사이트를 전문 에디터가 검증·큐레이션하는 테크 미디어. 매일 업데이트됩니다.</p>
+          <p>AI 초안과 사람의 편집 검토를 거쳐 발행하는 IT·개발·보안·인프라 실무 미디어.</p>
           <div className="footer-social">
             <a href="https://github.com/SecuThive" target="_blank" rel="noopener noreferrer" className="icon-btn" aria-label="GitHub">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -86,9 +86,9 @@ export default function Footer() {
         <div className="footer-bottom" style={{ gridColumn: '1 / -1' }}>
           <div className="footer-status">
             <span className="live-dot" />
-            © 2026 NODELOG · EDITOR-REVIEWED · DAILY IT INSIGHTS
+            © 2026 NODELOG · AI-ASSISTED · HUMAN-REVIEWED
           </div>
-          <div>EST. 2024 · SEOUL · DAILY UPDATES</div>
+          <div>SEOUL · CONTINUOUSLY UPDATED</div>
         </div>
       </div>
     </footer>

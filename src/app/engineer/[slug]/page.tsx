@@ -9,6 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from '@/components/CodeBlock';
 import JsonLd from '@/components/JsonLd';
+import { findOfficialDocs } from '@/lib/officialDocs';
 import { TableOfContents, ProgressBar, ScrollToTopBtn, CopyLinkBtn, ShareBtn } from '@/app/blog/[slug]/ArticleClient';
 
 export const revalidate = 60;
@@ -23,13 +24,7 @@ async function getGuide(slug: string): Promise<EngineerGuide | null> {
       .eq('status', 'published')
       .single();
     if (error || !data) return null;
-    const guide = data as unknown as EngineerGuide;
-    makeFreshClient()
-      .from('engineer_guides')
-      .update({ views: (guide.views ?? 0) + 1 })
-      .eq('id', guide.id)
-      .then(() => {});
-    return guide;
+    return data as unknown as EngineerGuide;
   } catch {
     return null;
   }
@@ -197,6 +192,7 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
     getRelatedBlogPosts(guide.category),
   ]);
   const mdComponents = makeMdComponents();
+  const officialDocs = findOfficialDocs(guide.title, guide.tags, guide.category);
 
   const dateStr = new Date(guide.created_at).toLocaleDateString('ko-KR', {
     year: 'numeric', month: 'long', day: 'numeric',
@@ -343,6 +339,32 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
                 ))}
               </div>
             )}
+
+            <div className="editorial-note">
+              <div className="editorial-note-head">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                </svg>
+                편집 안내 · Editorial Note
+              </div>
+              <p className="editorial-note-body">
+                이 가이드는 AI 도구를 활용해 초안을 구성하고 사람이 명령어·문맥을 검토해 발행했습니다.
+                운영체제와 도구 버전에 따라 결과가 달라질 수 있으므로 적용 전 공식 문서를 함께 확인하세요.
+                오류를 발견하시면 <a href="mailto:thive8564@gmail.com">이메일로 제보</a>해 주세요.
+              </p>
+              {officialDocs.length > 0 && (
+                <div className="editorial-note-refs">
+                  <span className="refs-label">관련 공식 문서</span>
+                  {officialDocs.map(doc => (
+                    <a key={doc.url} href={doc.url} target="_blank" rel="noopener noreferrer">{doc.name} ↗</a>
+                  ))}
+                </div>
+              )}
+              <div className="editorial-note-links">
+                <Link href="/author">운영·검토 방식 →</Link>
+                <Link href="/policy">편집 정책 →</Link>
+              </div>
+            </div>
           </article>
 
           {/* Sidebar */}

@@ -139,7 +139,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ cat: 
         <div className="container">
           <div className="page-eyebrow">{cat}</div>
           <h1 className="page-title">{cat}</h1>
-          <p className="page-lead">{intro?.desc ?? `${cat} 관련 심층 분석글 모음. 매일 업데이트됩니다.`}</p>
+          <p className="page-lead">{intro?.desc ?? `${cat} 관련 심층 분석글을 모았습니다.`}</p>
           {intro && (
             <div style={{ display: 'grid', gap: 10, marginTop: 20, maxWidth: 720 }}>
               <div style={{ fontSize: 13.5, color: 'var(--text-3)', lineHeight: 1.6 }}>

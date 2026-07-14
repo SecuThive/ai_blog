@@ -40,7 +40,7 @@ export async function GET() {
   <channel>
     <title>Nodelog — IT·개발·보안 테크 미디어</title>
     <link>${siteUrl}</link>
-    <description>IT·개발·보안·인프라 실무 인사이트를 전문 에디터가 검증·큐레이션하는 테크 미디어.</description>
+    <description>AI 초안과 사람의 편집 검토를 거쳐 발행하는 IT·개발·보안·인프라 실무 미디어.</description>
     <language>ko</language>
     <atom:link href="${siteUrl}/rss" rel="self" type="application/rss+xml" />
     ${items}

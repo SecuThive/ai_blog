@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import { Analytics } from '@vercel/analytics/next';
 import JsonLd from '@/components/JsonLd';
 import ThemeProvider from '@/components/ThemeProvider';
+import AdSenseScript from '@/components/AdSenseScript';
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
@@ -31,7 +32,7 @@ const inter = Inter({
 });
 
 const SITE_NAME = 'Nodelog — IT·개발·보안 테크 미디어';
-const SITE_DESC = 'IT·개발·보안·인프라 실무 인사이트를 전문 에디터가 검증·큐레이션하는 테크 미디어. 매일 업데이트됩니다.';
+const SITE_DESC = 'AI 초안과 사람의 편집 검토를 거쳐 발행하는 IT·개발·보안·인프라 실무 미디어.';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const viewport: Viewport = {
@@ -59,8 +60,6 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    site: '@nodelog',
-    creator: '@nodelog',
   },
   robots: {
     index: true,
@@ -83,16 +82,20 @@ const NAVER_CODES = [
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID ?? 'ca-pub-2091277631590195';
+  const adsenseApproved = process.env.NEXT_PUBLIC_ADSENSE_APPROVED === 'true';
   return (
     <html lang="ko" className={`${jetbrainsMono.variable} ${sourceSerif4.variable} ${inter.variable}`}>
       <head>
-        {/* AdSense 소유 확인 스니펫 — 확인 크롤러가 <head>의 정적 태그를 찾으므로
-            승인 완료 전까지는 조건 없이 전역 로드를 유지해야 한다. */}
-        <script
-          async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`}
-          crossOrigin="anonymous"
-        />
+        {/* 신청 중에는 소유 확인을 위해 정적 스니펫을 유지한다. 승인 후 Vercel에서
+            NEXT_PUBLIC_ADSENSE_APPROVED=true로 전환하면 아래 AdSenseScript가
+            고유 콘텐츠가 충분한 경로에서만 광고를 요청한다. */}
+        {!adsenseApproved && (
+          <script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`}
+            crossOrigin="anonymous"
+          />
+        )}
         {NAVER_CODES.map(code => (
           <meta key={code} name="naver-site-verification" content={code} />
         ))}
@@ -135,6 +138,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <main>{children}</main>
         <Footer />
+        {adsenseApproved && <AdSenseScript adsenseId={adsenseId} />}
         <Analytics />
         </ThemeProvider>
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />

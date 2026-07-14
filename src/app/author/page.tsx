@@ -17,22 +17,21 @@ const STAGES = [
 ];
 
 const PRINCIPLES = [
-  { icon: '🔍', t: '투명성', d: 'AI가 초안을 작성하고 사람이 검토한다는 사실을 모든 글에 명시합니다.' },
-  { icon: '✅', t: '사실 검증', d: '편집자가 핵심 사실을 원문 소스와 대조합니다. 오류 제보(이메일)를 받으면 확인 후 신속히 정정합니다.' },
-  { icon: '🚫', t: 'AI 단독 발행 없음', d: '어떤 글도 사람 검토 없이는 발행되지 않습니다. 편집자의 최종 승인이 필수입니다.' },
+  { icon: '🔍', t: '투명성', d: 'AI 도구가 초안 작성에 사용되고 사람이 편집 검토한다는 운영 방식을 공개합니다.' },
+  { icon: '✅', t: '사실 확인', d: '핵심 사실과 명령어를 관련 문서와 대조하고, 오류 제보를 받으면 확인 후 정정합니다.' },
+  { icon: '🚫', t: '사람의 발행 판단', d: 'AI가 만든 초안을 그대로 자동 발행하지 않고, 공개 여부와 수정 범위를 사람이 결정합니다.' },
   { icon: '📚', t: '출처 연결', d: '관련 공식 문서·1차 출처를 글과 함께 안내하는 것을 원칙으로 하며, 미비한 글은 순차적으로 보강하고 있습니다.' },
 ];
 
 async function getAuthorStats() {
-  const [{ count: publishedCount }, { count: totalCount }, { data: categories }] = await Promise.all([
+  const [{ count: publishedCount }, { count: heldCount }, { count: guideCount }, { data: categories }] = await Promise.all([
     supabaseAdmin().from('posts').select('id', { count: 'exact', head: true }).eq('status', 'published'),
-    supabaseAdmin().from('posts').select('id', { count: 'exact', head: true }),
+    supabaseAdmin().from('posts').select('id', { count: 'exact', head: true }).neq('status', 'published'),
+    supabaseAdmin().from('engineer_guides').select('id', { count: 'exact', head: true }).eq('status', 'published'),
     supabaseAdmin().from('posts').select('category').eq('status', 'published'),
   ]);
 
   const published = publishedCount ?? 0;
-  const total = totalCount ?? 0;
-  const publishRate = total > 0 ? Math.round((published / total) * 100) : 68;
 
   const catCounts: Record<string, number> = {};
   (categories ?? []).forEach((p: { category: string }) => {
@@ -40,11 +39,17 @@ async function getAuthorStats() {
   });
   const topCat = Object.entries(catCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—';
 
-  return { publishRate, rejectRate: 100 - publishRate, publishedCount: published, topCat };
+  return {
+    publishedCount: published,
+    heldCount: heldCount ?? 0,
+    guideCount: guideCount ?? 0,
+    categoryCount: Object.keys(catCounts).length,
+    topCat,
+  };
 }
 
 export default async function AuthorPage() {
-  const { publishRate, rejectRate, publishedCount, topCat } = await getAuthorStats();
+  const { publishedCount, heldCount, guideCount, categoryCount, topCat } = await getAuthorStats();
 
   return (
     <div>
@@ -60,9 +65,9 @@ export default async function AuthorPage() {
           <div style={{ display: 'flex', gap: 32, marginTop: 32, flexWrap: 'wrap' }}>
             {[
               { label: '발행 글', value: publishedCount.toLocaleString() + '편' },
-              { label: '에디터 승인율', value: `${publishRate}%` },
-              { label: '검토 후 보류·반려', value: `${rejectRate}%` },
-              { label: '최다 카테고리', value: topCat },
+              { label: '엔지니어 가이드', value: guideCount.toLocaleString() + '편' },
+              { label: '비공개·보류 글', value: heldCount.toLocaleString() + '편' },
+              { label: `${categoryCount}개 카테고리 중 최다`, value: topCat },
             ].map(s => (
               <div key={s.label}>
                 <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text-1)' }}>{s.value}</div>
@@ -89,14 +94,14 @@ export default async function AuthorPage() {
                 </div>
               </div>
               <p style={{ color: 'var(--text-2)', fontSize: 14, lineHeight: 1.65, margin: '0 0 20px' }}>
-                복수의 LLM을 조합한 에이전트 시스템. 주요 기술 소스와 공식 문서의 변화를 추적해
-                신호를 점수화합니다. 초고 작성, 관련 글 매칭, 1차 사실 점검을 담당합니다.
+                주제 조사와 글의 구조화, 초고 작성, 관련 글 매칭을 돕는 AI 도구입니다.
+                최종 공개 여부와 수정 범위는 사람이 판단합니다.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: 13 }}>
                 {[
-                  { k: '1차 초고 작성 비율', v: '100%' },
-                  { k: '최종 발행 반영 비율', v: `~ ${publishRate}%` },
-                  { k: '사용 모델', v: 'claude-4.5 / gpt-5', mono: true },
+                  { k: '주요 역할', v: '조사 보조 · 구조화 · 초안' },
+                  { k: '공개 결정', v: '사람 편집 검토 후' },
+                  { k: '모델', v: '작업에 따라 변경', mono: true },
                 ].map(row => (
                   <div key={row.k} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, color: 'var(--text-3)' }}>
                     <span>{row.k}</span>
@@ -116,14 +121,14 @@ export default async function AuthorPage() {
                 </div>
               </div>
               <p style={{ color: 'var(--text-2)', fontSize: 14, lineHeight: 1.65, margin: '0 0 20px' }}>
-                10년 차 IT 미디어 편집자가 모든 글을 발행 전 검토합니다. 사실 확인, 톤 점검,
-                맥락의 적절성 판단, 그리고 새 시리즈 기획을 맡습니다.
+                운영자가 발행 전 초안을 읽고 사실관계, 명령어, 문맥과 표현을 점검합니다.
+                오류 제보와 공식 문서 변경 사항도 확인해 기존 글을 보강합니다.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: 13 }}>
                 {[
-                  { k: '검토 소요', v: '편당 25 ~ 60분' },
-                  { k: '리젝트 비율', v: `~ ${rejectRate}%` },
-                  { k: '경력', v: '10y · 시니어 에디터' },
+                  { k: '주요 역할', v: '자료 확인 · 편집 · 발행 판단' },
+                  { k: '보류 콘텐츠', v: `${heldCount.toLocaleString()}편` },
+                  { k: '정정 문의', v: 'thive8564@gmail.com' },
                 ].map(row => (
                   <div key={row.k} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, color: 'var(--text-3)' }}>
                     <span>{row.k}</span>

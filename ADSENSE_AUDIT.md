@@ -18,7 +18,7 @@
 | 8 | 공식 1차 출처 링크가 5/540편에만 존재 | **Medium** | ①글 하단 "관련 공식 문서" 자동 연결(주제→공식 문서 매핑, `src/lib/officialDocs.ts`) ②신규 글 템플릿에 1차 출처 의무화 | ✅ 부분해결 + 지속과제 |
 | 9 | JSON-LD author가 가공 인명(Person "Content Reviewer") | **Medium** | author/editor를 Organization "Nodelog 편집팀"(→/author)으로 정정 | ✅ 수정 |
 | 10 | ads.txt 하드코딩 | **Medium** | 환경변수 기반 동적 생성 (`ADSENSE_PUBLISHER_ID` → `NEXT_PUBLIC_ADSENSE_ID` 폴백, 미설정 시 404) | ✅ 수정 |
-| 11 | 저가치 페이지(검색·법적고지·문의 등) 광고 로드 | **Medium** | 경로 제외 컴포넌트(`AdSenseScript.tsx`) 구현. **단, 승인 완료까지는 소유 확인을 위해 전역 로드 유지**(운영자 결정) — 승인 후 활성화 | ⏸ 승인 후 적용 |
+| 11 | 저가치 페이지(검색·법적고지·문의 등) 광고 로드 | **Medium** | 신청 중에는 소유 확인용 스크립트를 전역 유지. 승인 후 `NEXT_PUBLIC_ADSENSE_APPROVED=true`로 전환하면 홈·색인 블로그 글·엔지니어 상세에만 스크립트 로드. 자동 광고는 끄고 수동 광고 단위로 운영 | ✅ 전환 구조 구현 |
 | 12 | 브랜드 표기 혼용 (Nodelog vs Thivelab) | **Low** | privacy/policy 페이지 Nodelog로 통일 (운영 도메인 표기는 "Nodelog(thivelab.com)") | ✅ 수정 |
 | 13 | 카테고리 페이지가 단순 글 목록 | **Low** | 소개·대상 독자·읽기 순서·많이 읽은 글(실데이터) 추가 | ✅ 수정 |
 | 14 | 존재 확인 안 되는 privacy@thivelab.com 안내 | **Low** | 실제 운영 메일(thive8564@gmail.com)로 교체 | ✅ 수정 |
@@ -59,7 +59,7 @@
 1. **외부 글 생성 파이프라인 프롬프트 갱신** — `docs/CONTENT_TEMPLATE.md`의 13단계 템플릿·금지 표현·태그 규칙 반영 (특히 본문 `#` H1 금지, 1차 출처 필수)
 2. **45–57점 186편 순차 보강** — CSV 하위 순으로 공식 출처·재현 절차 추가. 13편 noindex 글은 보강 후 `src/lib/noindexPosts.ts`에서 제거해 재색인
 3. **EEA/UK/스위스 광고** — 승인 후 AdSense "Privacy & messaging"에서 CMP 활성화하거나 해당 지역 광고 미게재 선택
-4. **승인 완료 후** — `AdSenseScript` 경로 게이팅으로 전환(레이아웃 head의 전역 스크립트 → 컴포넌트), 저가치 페이지 광고 제외 적용
+4. **승인 완료 후** — Vercel에 `NEXT_PUBLIC_ADSENSE_APPROVED=true` 설정 후 재배포. AdSense 자동 광고는 끄고 수동 광고 단위만 사용해 검색·목록·법적 고지·문의·구독·저장·noindex 페이지에 광고가 노출되지 않도록 유지
 5. **Vercel 환경변수** — `ADSENSE_PUBLISHER_ID`(pub-…) 추가 권장 (현재는 `NEXT_PUBLIC_ADSENSE_ID` 폴백으로 동작)
 6. **제휴 링크** — 현재 콘텐츠에 제휴 링크 없음. 도입 시 `rel="sponsored nofollow"` + 본문 상단 고지 필수
 7. **정정 이력** — 오류 제보로 정정한 글은 본문 상단에 정정 사실·일자 표기 (현재 케이스 0)
@@ -78,7 +78,7 @@
 - [x] 홈·About·Author 통계 = DB 실데이터 자동 계산
 - [x] 구조화 데이터: WebSite·Organization·NewsArticle·BreadcrumbList·CollectionPage — 허위 평점/조회수 없음
 - [x] 프로덕션 빌드 정상 (757페이지, exit 0)
-- [ ] (승인 후) 저가치 페이지 광고 게이팅 활성화
+- [ ] (승인 후) `NEXT_PUBLIC_ADSENSE_APPROVED=true` 설정 + 자동 광고 비활성화
 - [ ] (승인 후) EEA CMP 결정
 
 > 주의: 본 감사는 정책 요건 충족을 확인한 것이며, 애드센스 승인은 Google의 재량 심사로 보장되지 않습니다.
