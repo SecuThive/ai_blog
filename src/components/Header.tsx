@@ -238,7 +238,6 @@ export default function Header() {
           <Link href="/" className="brand">
             <span className="brand-mark"><BrandMark /></span>
             NODELOG
-            <span className="brand-tag">BETA</span>
           </Link>
 
           <nav className="nav-primary">
