@@ -59,6 +59,9 @@ const dist={'~44':0,'45-57':0,'58-69':0,'70-84':0,'85+':0};
 rows.forEach(r=>{const s=r.score;dist[s<45?'~44':s<58?'45-57':s<70?'58-69':s<85?'70-84':'85+']++;});
 console.log('점수 분포:',JSON.stringify(dist));
 console.log('평균:',Math.round(rows.reduce((a,r)=>a+r.score,0)/rows.length));
-import('fs').then(({writeFileSync:w})=>w('src/lib/noindex-slugs.json',JSON.stringify(rows.filter(r=>r.index==='noindex').map(r=>decodeURIComponent(r.url.replace('https://www.thivelab.com/blog/',''))),null,1)));
+// GSC 실적상 실수요가 확인된 글은 점수와 무관하게 색인 유지(noindex 목록에서 제외)
+let gscProtected=new Set();
+try{gscProtected=new Set(JSON.parse(readFileSync('src/lib/gsc-protected-slugs.json','utf8')));}catch{}
+import('fs').then(({writeFileSync:w})=>w('src/lib/noindex-slugs.json',JSON.stringify(rows.filter(r=>r.index==='noindex').map(r=>decodeURIComponent(r.url.replace('https://www.thivelab.com/blog/',''))).filter(s=>!gscProtected.has(s)),null,1)));
 console.log('\n최하위 12편:');
 rows.slice(0,12).forEach(r=>console.log(`  ${r.score}점 v${r.views}  ${r.title.slice(0,52)}  [${r.problems.slice(0,40)}]`));
