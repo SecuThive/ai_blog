@@ -1,0 +1,20 @@
+{
+  "AI 에이전트": "AI에이전트",
+  "프롬프트 엔지니어링": "프롬프트엔지니어링",
+  "AI 자동화": "AI자동화",
+  "networkpolicy": "NetworkPolicy",
+  "AI 배포": "AI배포",
+  "VectorDB": "벡터DB",
+  "벡터 DB": "벡터DB",
+  "AI 아키텍처": "AI아키텍처",
+  "LLM Agent": "LLMAgent",
+  "AI 거버넌스": "AI거버넌스",
+  "devops": "DevOps",
+  "kubernetes": "Kubernetes",
+  "k8s": "Kubernetes",
+  "엔터프라이즈 AI": "엔터프라이즈AI",
+  "ServiceMesh": "Service Mesh",
+  "ResponsibleAI": "Responsible AI",
+  "LLM 배포": "LLM배포",
+  "모델 경량화": "모델경량화"
+}

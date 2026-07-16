@@ -1,8 +1,9 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
+import { TAG_REDIRECTS } from '@/lib/tagRedirects';
 import TagLoadMore from '@/components/TagLoadMore';
 
 export const revalidate = 60;
@@ -15,6 +16,15 @@ const MIN_TAG_POSTS = 3;
 export async function generateMetadata({ params }: { params: Promise<{ tag: string }> }): Promise<Metadata> {
   const { tag } = await params;
   const decoded = decodeURIComponent(tag);
+  // 통합으로 흡수된 변형 태그: canonical 태그로 색인 이전(noindex + canonical 지정).
+  const redirectTarget = TAG_REDIRECTS[decoded];
+  if (redirectTarget) {
+    return {
+      title: `#${redirectTarget} — Nodelog`,
+      alternates: { canonical: `${SITE_URL}/tag/${encodeURIComponent(redirectTarget)}` },
+      robots: { index: false, follow: true },
+    };
+  }
   // canonical은 sitemap(encodeURIComponent)과 동일 인코딩으로 — '&'·공백 미인코딩 깨짐 방지.
   const url = `${SITE_URL}/tag/${encodeURIComponent(decoded)}`;
 
@@ -88,6 +98,10 @@ async function getRelatedTags(tag: string): Promise<string[]> {
 export default async function TagDetailPage({ params }: { params: Promise<{ tag: string }> }) {
   const { tag: tagParam } = await params;
   const tag = decodeURIComponent(tagParam);
+
+  // 통합으로 흡수된 변형 태그 → 대표 태그로 308 영구 리다이렉트 (링크 가치 이전)
+  const redirectTarget = TAG_REDIRECTS[tag];
+  if (redirectTarget) permanentRedirect(`/tag/${encodeURIComponent(redirectTarget)}`);
 
   const [posts, relatedTags] = await Promise.all([
     getPostsByTag(tag),
