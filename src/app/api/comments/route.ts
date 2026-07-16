@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await makeFreshClient()
     .from('comments')
-    .select('id,name,content,created_at')
+    .select('id,name,content,created_at,parent_id,likes')
     .eq('post_slug', slug)
     .eq('status', 'approved')
     .order('created_at', { ascending: true });
@@ -21,6 +21,8 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const content = typeof body?.content === 'string' ? body.content.trim().slice(0, 1000) : '';
   const post_slug = typeof body?.post_slug === 'string' ? body.post_slug.trim() : '';
+  const rawParent = body?.parent_id;
+  const parentId = typeof rawParent === 'number' && Number.isInteger(rawParent) ? rawParent : null;
 
   if (!content || !post_slug) {
     return NextResponse.json({ error: '필수 항목 누락' }, { status: 400 });
@@ -45,11 +47,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '잠시 후 다시 시도해주세요. (5분에 3개 제한)' }, { status: 429 });
   }
 
+  // 답글이면 부모 검증: 같은 글의 승인된 댓글이어야 하고, 스레드는 1단계로 평탄화
+  // (대댓글의 대댓글은 최상위 조상에 붙여 깊이 폭주를 막는다).
+  let resolvedParent: number | null = null;
+  if (parentId !== null) {
+    const { data: parent } = await supabaseAdmin()
+      .from('comments')
+      .select('id,post_slug,parent_id,status')
+      .eq('id', parentId)
+      .single();
+    if (!parent || parent.post_slug !== post_slug || parent.status !== 'approved') {
+      return NextResponse.json({ error: '답글 대상을 찾을 수 없습니다.' }, { status: 400 });
+    }
+    resolvedParent = parent.parent_id ?? parent.id;
+  }
+
   const name = (typeof body?.name === 'string' ? body.name.trim() : '') || '익명';
 
   const { error } = await supabaseAdmin()
     .from('comments')
-    .insert({ post_slug, name: name.slice(0, 50), content, ip_hash: ipHash });
+    .insert({ post_slug, name: name.slice(0, 50), content, ip_hash: ipHash, parent_id: resolvedParent });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });

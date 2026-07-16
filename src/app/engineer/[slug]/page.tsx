@@ -11,8 +11,27 @@ import CodeBlock from '@/components/CodeBlock';
 import JsonLd from '@/components/JsonLd';
 import { findOfficialDocs } from '@/lib/officialDocs';
 import { TableOfContents, ProgressBar, ScrollToTopBtn, CopyLinkBtn, ShareBtn } from '@/app/blog/[slug]/ArticleClient';
+import Comments, { type CommentRow } from '@/components/Comments';
+import InlineSubscribeCTA from '@/components/InlineSubscribeCTA';
 
 export const revalidate = 60;
+
+// 가이드 Q&A는 comments 테이블을 재사용하되 post_slug를 'guide:'로 네임스페이스해
+// 블로그 글 slug와 충돌하지 않게 한다.
+function qaKey(slug: string): string {
+  return `guide:${slug}`;
+}
+
+async function getGuideQa(slug: string): Promise<CommentRow[]> {
+  noStore();
+  const { data } = await makeFreshClient()
+    .from('comments')
+    .select('id,name,content,created_at,parent_id,likes')
+    .eq('post_slug', qaKey(slug))
+    .eq('status', 'approved')
+    .order('created_at', { ascending: true });
+  return (data ?? []) as CommentRow[];
+}
 
 async function getGuide(slug: string): Promise<EngineerGuide | null> {
   noStore();
@@ -187,9 +206,10 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
 
   const tone = engCatTone(guide.category);
   const headings = extractHeadings(guide.content);
-  const [related, relatedPosts] = await Promise.all([
+  const [related, relatedPosts, qa] = await Promise.all([
     getRelated(guide.category, guide.id),
     getRelatedBlogPosts(guide.category),
+    getGuideQa(guide.slug),
   ]);
   const mdComponents = makeMdComponents();
   const officialDocs = findOfficialDocs(guide.title, guide.tags, guide.category);
@@ -223,6 +243,16 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
     articleSection: guide.category,
     proficiencyLevel: guide.difficulty === 'beginner' ? 'Beginner' : guide.difficulty === 'advanced' ? 'Expert' : 'Intermediate',
     inLanguage: 'ko',
+    // 독자 Q&A를 구조화 데이터로 노출 — AI/검색이 실제 질문·답변을 인용 가능(GEO)
+    ...(qa.length > 0 ? {
+      commentCount: qa.length,
+      comment: qa.filter(c => c.parent_id == null).slice(0, 20).map(c => ({
+        '@type': 'Comment',
+        author: { '@type': 'Person', name: c.name },
+        datePublished: c.created_at,
+        text: c.content,
+      })),
+    } : {}),
   };
 
   const breadcrumbSchema = {
@@ -365,6 +395,10 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
                 <Link href="/policy">편집 정책 →</Link>
               </div>
             </div>
+
+            <InlineSubscribeCTA variant="guide" />
+
+            <Comments slugKey={qaKey(guide.slug)} variant="qa" initialComments={qa} />
           </article>
 
           {/* Sidebar */}

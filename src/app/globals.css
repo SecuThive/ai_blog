@@ -812,6 +812,44 @@ img { max-width: 100%; display: block; }
 .comment-textarea { resize: vertical; min-height: 80px; }
 .comment-submit { align-self: flex-start; }
 
+/* 댓글 액션 (좋아요 / 답글) */
+.comment-actions { display: flex; gap: 6px; margin-top: 10px; }
+.comment-action-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 9px; border-radius: 999px;
+  border: 1px solid var(--line-2); background: transparent;
+  color: var(--text-4); font-size: 12px; font-weight: 500;
+  font-family: var(--ff-sans); cursor: pointer; transition: 140ms;
+}
+.comment-action-btn:hover:not(:disabled) { color: var(--text-2); border-color: var(--line-3, var(--text-5)); background: var(--bg-3); }
+.comment-action-btn.is-liked { color: var(--acc-blue); border-color: var(--acc-blue); cursor: default; }
+.comment-action-btn.is-active { color: var(--acc-blue); border-color: var(--acc-blue); }
+.comment-action-btn svg { flex-shrink: 0; }
+
+/* 답글 스레드 (1단계 들여쓰기) */
+.comment-replies { list-style: none; margin: 12px 0 0; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 10px; border-left: 2px solid var(--line-2); }
+.comment-reply { background: var(--bg-3); }
+.comment-reply-form { margin-top: 12px; padding: 14px; background: var(--bg-3); border: 1px solid var(--line-1); border-radius: var(--r-md); }
+
+/* ===== Inline newsletter CTA (글·가이드 본문 하단) ===== */
+.inline-cta {
+  margin: 40px 0 8px; padding: 26px 28px;
+  border: 1px solid var(--line-2); border-radius: var(--r-lg);
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(123,181,255,0.10), transparent 55%),
+    var(--bg-2);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 20px 28px;
+}
+.inline-cta-body { flex: 1 1 260px; min-width: 0; }
+.inline-cta-badge { font-family: var(--ff-mono); font-size: 10.5px; letter-spacing: 0.12em; color: var(--acc-blue); font-weight: 600; margin-bottom: 8px; }
+.inline-cta-title { font-size: 18px; font-weight: 650; letter-spacing: -0.02em; color: var(--text-1); margin: 0 0 6px; line-height: 1.3; word-break: keep-all; }
+.inline-cta-desc { font-size: 13.5px; color: var(--text-3); line-height: 1.6; margin: 0; word-break: keep-all; }
+.inline-cta-form { flex: 1 1 280px; }
+@media (max-width: 640px) {
+  .inline-cta { padding: 22px 20px; }
+  .inline-cta-form .subscribe-form { flex-direction: column; gap: 8px; }
+}
+
 /* ===== FAQ accordion ===== */
 .faq-item { border: 1px solid var(--line-1); border-radius: var(--r-md); background: var(--bg-2); overflow: hidden; }
 .faq-q { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 22px; font-size: 15.5px; color: var(--text-1); text-align: left; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; }

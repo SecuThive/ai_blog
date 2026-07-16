@@ -14,9 +14,21 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from '@/components/CodeBlock';
 import { ProgressBar, TableOfContents, CopyLinkBtn, ScrollToTopBtn, ShareBtn, MobileActionBar, ArticleFeedback, ViewTracker, BookmarkBtn, ReadingPositionTracker } from './ArticleClient';
-import Comments from '@/components/Comments';
+import Comments, { type CommentRow } from '@/components/Comments';
+import InlineSubscribeCTA from '@/components/InlineSubscribeCTA';
 
 export const revalidate = 60;
+
+async function getComments(slugKey: string): Promise<CommentRow[]> {
+  noStore();
+  const { data } = await makeFreshClient()
+    .from('comments')
+    .select('id,name,content,created_at,parent_id,likes')
+    .eq('post_slug', slugKey)
+    .eq('status', 'approved')
+    .order('created_at', { ascending: true });
+  return (data ?? []) as CommentRow[];
+}
 
 async function getAdjacentPosts(publishedAt: string, id: number): Promise<{ prev: { title: string; slug: string } | null; next: { title: string; slug: string } | null }> {
   noStore();
@@ -256,11 +268,12 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     ? new Date(post.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
     : '';
 
-  const [relatedPosts, adjacent, seriesCtx, relatedGuides] = await Promise.all([
+  const [relatedPosts, adjacent, seriesCtx, relatedGuides, comments] = await Promise.all([
     getRelatedPosts(post.category, post.id),
     getAdjacentPosts(post.published_at ?? '', post.id),
     getSeriesContext(post.tags, post.id),
     getRelatedGuides(post.category, post.tags),
+    getComments(post.slug),
   ]);
   const mdComponents = makeMdComponents();
   const officialDocs = findOfficialDocs(post.title, post.tags, post.category);
@@ -297,6 +310,16 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       '@type': 'SpeakableSpecification',
       cssSelector: ['.article-title', '.article-deck', '.lede'],
     },
+    // 독자 댓글을 구조화 데이터로 노출 — AI/검색이 실제 반응·Q&A를 인용 가능(GEO)
+    ...(comments.length > 0 ? {
+      commentCount: comments.length,
+      comment: comments.filter(c => c.parent_id == null).slice(0, 20).map(c => ({
+        '@type': 'Comment',
+        author: { '@type': 'Person', name: c.name },
+        datePublished: c.created_at,
+        text: c.content,
+      })),
+    } : {}),
   };
 
   const breadcrumbSchema = {
@@ -500,7 +523,9 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
             <ArticleFeedback postSlug={post.slug} />
 
-            <Comments postSlug={post.slug} />
+            <InlineSubscribeCTA variant="post" />
+
+            <Comments slugKey={post.slug} initialComments={comments} />
 
             {(adjacent.prev || adjacent.next) && (
               <nav className="article-nav">
