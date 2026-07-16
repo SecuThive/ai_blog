@@ -279,9 +279,12 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const officialDocs = findOfficialDocs(post.title, post.tags, post.category);
 
   const postUrl = `${SITE_URL}/blog/${post.slug}`;
+  // 콘텐츠 성격에 맞는 스키마 타입 — 이 글들은 뉴스가 아니라 상시 참고용 기술/분석 글이므로
+  // NewsArticle을 쓰지 않는다. 기술 카테고리는 TechArticle, 그 외는 일반 Article.
+  const articleType = ['인프라', '개발', '보안'].includes(post.category) ? 'TechArticle' : 'Article';
   const articleSchema = {
     '@context': 'https://schema.org',
-    '@type': 'NewsArticle',
+    '@type': articleType,
     headline: post.title,
     description: post.excerpt,
     url: postUrl,
@@ -371,7 +374,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
               </svg>
-              {dateStr}
+              <time dateTime={post.published_at ?? undefined}>{dateStr}</time>
             </span>
             <span className="meta-item">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -505,7 +508,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                 <span className="sep">·</span>
                 <span>검토 · Nodelog 편집자</span>
                 <span className="sep">·</span>
-                <span>발행 · {dateStr}</span>
+                <span>발행 · <time dateTime={post.published_at ?? undefined}>{dateStr}</time></span>
               </div>
               {officialDocs.length > 0 && (
                 <div className="editorial-note-refs">

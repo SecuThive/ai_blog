@@ -1,5 +1,9 @@
 import type { Metadata } from 'next';
 import { supabaseAdmin } from '@/lib/supabase';
+import { EDITORS, editorInitials } from '@/lib/editors';
+import JsonLd from '@/components/JsonLd';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
   title: '편집자 · AI 운영 모델 — Nodelog',
@@ -51,8 +55,22 @@ async function getAuthorStats() {
 export default async function AuthorPage() {
   const { publishedCount, heldCount, guideCount, categoryCount, topCat } = await getAuthorStats();
 
+  // 실제 편집자가 등록된 경우에만 Person 스키마 노출 (E-E-A-T)
+  const personSchemas = EDITORS.map(e => ({
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: e.name,
+    jobTitle: e.title,
+    knowsAbout: e.expertise,
+    description: e.bio,
+    url: `${SITE_URL}/author`,
+    worksFor: { '@type': 'Organization', name: 'Nodelog', url: SITE_URL },
+    ...(e.links && e.links.length > 0 ? { sameAs: e.links.map(l => l.url) } : {}),
+  }));
+
   return (
     <div>
+      {personSchemas.length > 0 && <JsonLd data={personSchemas} />}
       <section className="page-hero">
         <div className="container">
           <div className="page-eyebrow">EDITORIAL · 운영</div>
@@ -138,6 +156,55 @@ export default async function AuthorPage() {
               </div>
             </div>
           </div>
+
+          {/* 편집자 소개 — EDITORS(src/lib/editors.ts)에 실제 항목이 있을 때만 노출 */}
+          {EDITORS.length > 0 && (
+            <div style={{ marginBottom: 56 }}>
+              <div className="section-eyebrow" style={{ marginBottom: 20 }}>EDITORIAL TEAM · 편집진</div>
+              <div className="grid-2">
+                {EDITORS.map(e => (
+                  <div key={e.name} className="card" style={{ padding: 28 }}>
+                    <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 16 }}>
+                      <div style={{ width: 56, height: 56, borderRadius: 14, background: 'var(--bg-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, color: 'var(--text-1)', fontSize: 19, border: '1px solid var(--line-2)', flexShrink: 0 }}>{editorInitials(e)}</div>
+                      <div>
+                        <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: 8 }}>
+                          {e.name}
+                          {e.penName && <span style={{ fontSize: 10.5, fontFamily: 'var(--ff-mono)', color: 'var(--text-4)', border: '1px solid var(--line-2)', borderRadius: 5, padding: '1px 6px' }}>필명</span>}
+                        </div>
+                        <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginTop: 2 }}>{e.title}</div>
+                      </div>
+                    </div>
+                    <p style={{ color: 'var(--text-2)', fontSize: 14, lineHeight: 1.65, margin: '0 0 16px' }}>{e.bio}</p>
+                    {e.expertise.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+                        {e.expertise.map(x => (
+                          <span key={x} className="badge" style={{ fontSize: 11 }}>{x}</span>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: 'var(--text-3)' }}>
+                      {e.reviews.length > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                          <span>주로 검토</span>
+                          <strong style={{ color: 'var(--text-1)' }}>{e.reviews.join(' · ')}</strong>
+                        </div>
+                      )}
+                      {e.links && e.links.length > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+                          <span>프로필</span>
+                          <span style={{ display: 'flex', gap: 12 }}>
+                            {e.links.map(l => (
+                              <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer me" style={{ color: 'var(--acc-blue)', fontWeight: 500 }}>{l.label} ↗</a>
+                            ))}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Pipeline diagram */}
           <h3 style={{ margin: '0 0 20px', fontSize: 20, letterSpacing: '-0.02em' }}>협업 파이프라인</h3>
