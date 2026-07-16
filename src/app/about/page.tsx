@@ -97,13 +97,16 @@ const PRINCIPLES = [
 export default async function AboutPage() {
   const stats = await getStats();
 
+  // 허영 지표(누적 조회수·미달 구독자)는 노출하지 않는다 — 자동생성 인상 완화(#8).
   const STATS = [
     { num: `${stats.postCount}+`, label: 'PUBLISHED POSTS', sub: stats.firstPostDate },
     { num: `${stats.guideCount}+`, label: 'ENGINEER GUIDES', sub: 'Linux · Docker · Git · 보안' },
     { num: String(stats.seriesCount), label: 'ACTIVE SERIES', sub: '학습 경로형 콘텐츠' },
-    { num: stats.totalViews > 0 ? `${stats.totalViews.toLocaleString()}+` : '—', label: 'TOTAL VIEWS', sub: '누적 조회수' },
-    { num: stats.subscriberCount > 0 ? formatNum(stats.subscriberCount) : '—', label: 'SUBSCRIBERS', sub: '주간 뉴스레터' },
     { num: `${stats.avgReadingTime}분`, label: 'AVG READ TIME', sub: '글당 평균 읽기 시간' },
+    // 구독자는 유의미해지기 전까지 숨김(미완성 지표 '—' 제거)
+    ...(stats.subscriberCount >= 50
+      ? [{ num: formatNum(stats.subscriberCount), label: 'SUBSCRIBERS', sub: '주간 뉴스레터' }]
+      : []),
   ];
 
   return (

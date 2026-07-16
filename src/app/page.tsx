@@ -4,17 +4,8 @@ import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { catTone, toneForSeries, engCatTone } from '@/lib/utils';
 import type { PostSummary, EngineerGuide } from '@/lib/types';
 import {
-  TickerBar,
-  ControlPanel,
-  SignalDashboard,
-  TopicCloud,
   MagLatestSection,
   HomeScrollReveal,
-  type TickItem,
-  type FeedItem,
-  type BarItem,
-  type TopicItem,
-  type SignalData,
   type MagPost,
 } from '@/components/HomeClient';
 import SubscribeForm from '@/components/SubscribeForm';
@@ -69,9 +60,9 @@ async function getSeries(): Promise<SeriesInfo[]> {
     .sort((a, b) => b.count - a.count);
 }
 
-async function getPublishedPostCount(): Promise<number> {
+async function getGuideCount(): Promise<number> {
   const { count } = await makeFreshClient()
-    .from('posts')
+    .from('engineer_guides')
     .select('id', { count: 'exact', head: true })
     .eq('status', 'published');
   return count ?? 0;
@@ -119,26 +110,31 @@ function ArrowIcon({ size = 14 }: { size?: number }) {
 }
 
 /* ===== Hero v2 ===== */
-function HeroV2({ posts, ticks, feed, bars, seriesCount, postCount, subscriberCount }: {
+function HeroV2({ posts, seriesCount, guideCount, subscriberCount }: {
   posts: PostSummary[];
-  ticks: TickItem[];
-  feed: FeedItem[];
-  bars: BarItem[];
   seriesCount: number;
-  postCount: number;
+  guideCount: number;
   subscriberCount: number;
 }) {
+  // 허영 지표(누적 발행 수·조회수·미달 구독자)는 노출하지 않는다 — 자동생성 인상 완화(#8).
+  // 대신 실질 신호(시리즈·큐레이션 가이드·검토 방식)만 남긴다.
+  const stats = [
+    { num: String(seriesCount), sub: 'ACTIVE SERIES' },
+    { num: `${guideCount}+`, sub: 'ENGINEER GUIDES' },
+    { badge: true, sub: 'AI DRAFT · HUMAN REVIEW' },
+    // 구독자는 유의미해지기 전까지 숨김(미완성 지표처럼 보이는 '—' 제거)
+    ...(subscriberCount >= 50
+      ? [{ num: subscriberCount >= 1000 ? `${(subscriberCount / 1000).toFixed(1)}K` : String(subscriberCount), sub: 'SUBSCRIBERS' }]
+      : []),
+  ];
   return (
     <section className="heroX">
       <div className="container">
-        <TickerBar ticks={ticks} />
-        <div className="heroX-grid">
+        <div className="heroX-grid heroX-grid--solo">
           <div>
             <span className="hero-status">
               <span className="live-dot" />
               <span>AI DRAFT · HUMAN REVIEW · PUBLISHING</span>
-              <span style={{ color: 'var(--text-5)' }}>·</span>
-              <span>POSTS {postCount > 0 ? `${postCount}+` : '...'}</span>
             </span>
             <h1>
               <span className="grad">AI 초안에 사람의 검토를 더한,</span>
@@ -155,44 +151,36 @@ function HeroV2({ posts, ticks, feed, bars, seriesCount, postCount, subscriberCo
                   최신 글 보기 <ArrowIcon />
                 </Link>
               )}
-              <Link href="/series" className="btn btn-lg">
+              <Link href="/engineer" className="btn btn-lg">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                  <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
                 </svg>
-                시리즈 바로가기
+                엔지니어 가이드
               </Link>
               <Link href="/about" className="btn btn-lg btn-ghost">
                 운영 방식 알아보기
               </Link>
             </div>
-            <div className="heroX-meta">
-              <div>
-                <div className="stat-num">{postCount > 0 ? `${postCount}+` : '—'}</div>
-                <div className="stat-sub">PUBLISHED · 누적</div>
-              </div>
-              <div>
-                <div className="stat-num">{seriesCount}</div>
-                <div className="stat-sub">ACTIVE SERIES</div>
-              </div>
-              <div>
-                <div style={{ marginBottom: 6 }}>
-                  <span className="ai-tag" style={{ fontSize: 11 }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
-                    </svg>
-                    AI
-                  </span>
+            <div className="heroX-meta" style={{ gridTemplateColumns: `repeat(${stats.length}, 1fr)` }}>
+              {stats.map((s, i) => (
+                <div key={i}>
+                  {s.badge ? (
+                    <div style={{ marginBottom: 6 }}>
+                      <span className="ai-tag" style={{ fontSize: 11 }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
+                        </svg>
+                        AI
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="stat-num">{s.num}</div>
+                  )}
+                  <div className="stat-sub">{s.sub}</div>
                 </div>
-                <div className="stat-sub">AI DRAFT · HUMAN REVIEW</div>
-              </div>
-              <div>
-                <div className="stat-num">{subscriberCount > 0 ? (subscriberCount >= 1000 ? `${(subscriberCount / 1000).toFixed(1)}K` : String(subscriberCount)) : '—'}</div>
-                <div className="stat-sub">SUBSCRIBERS</div>
-              </div>
+              ))}
             </div>
           </div>
-          <ControlPanel feed={feed} bars={bars} />
         </div>
       </div>
     </section>
@@ -428,7 +416,7 @@ function SeriesShowcase({ series }: { series: SeriesInfo[] }) {
       <div className="container">
         <div className="sec-head2">
           <div className="left">
-            <span className="num">06 / SERIES</span>
+            <span className="num">05 / SERIES</span>
             <div>
               <h2>시리즈로 깊게 파보기</h2>
               <p className="sub">하나의 주제를 끝까지 따라가도록 단계별로 구성된 학습 경로형 콘텐츠.</p>
@@ -465,60 +453,6 @@ function SeriesShowcase({ series }: { series: SeriesInfo[] }) {
             ))}
           </div>
         )}
-      </div>
-    </section>
-  );
-}
-
-/* ===== AI Recommendation Block ===== */
-function AIRecommendBlock({ posts }: { posts: PostSummary[] }) {
-  const recs = posts.slice(0, 3);
-  if (recs.length === 0) return null;
-
-  return (
-    <section className="section">
-      <div className="container">
-        <div className="sec-head2">
-          <div className="left">
-            <span className="num">07 / AI RECOMMEND</span>
-            <div>
-              <h2>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 8 }}>
-                  <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
-                  <path d="M5 3l.5 1.5L7 5l-1.5.5L5 7l-.5-1.5L3 5l1.5-.5z" />
-                </svg>
-                오늘 AI가 추천하는 글
-              </h2>
-              <p className="sub">최근 게시물 가운데 조회수·최신성·카테고리 다양성을 기준으로 고른 글.</p>
-            </div>
-          </div>
-          <Link href="/recommend" className="section-link">
-            추천 페이지 <ArrowIcon size={14} />
-          </Link>
-        </div>
-        <div className="grid-3">
-          {recs.map((p) => {
-            const tone = catTone(p.category);
-            return (
-              <Link key={p.id} href={`/blog/${p.slug}`} className="card card-link" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span className="ai-tag">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
-                    </svg>
-                    AI PICK
-                  </span>
-                  <span className={`badge badge-${tone}`}>{p.category}</span>
-                </div>
-                <h3 style={{ margin: 0, fontSize: 16.5, lineHeight: 1.35, letterSpacing: '-0.015em' }}>{p.title}</h3>
-                <p style={{ margin: 0, color: 'var(--text-3)', fontSize: 13, lineHeight: 1.55 }}>{p.excerpt}</p>
-                <div style={{ marginTop: 'auto', paddingTop: 14, borderTop: '1px dashed var(--line-1)', fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', letterSpacing: '0.04em' }}>
-                  {p.category} · {p.reading_time}분 읽기 · 조회 {p.views.toLocaleString()}
-                </div>
-              </Link>
-            );
-          })}
-        </div>
       </div>
     </section>
   );
@@ -615,119 +549,11 @@ function EngineerGuidesSection({ guides }: { guides: EngineerGuide[] }) {
   );
 }
 
-const CAT_TAG: Record<string, string> = {
-  'AI & 자동화': 'AI', '개발': 'DEV', 'IT 트렌드': 'IT',
-  '인프라': 'INF', '보안': 'SEC', '툴 리뷰': 'TOOL',
-};
-const CAT_TONE: Record<string, string> = {
-  'AI & 자동화': '', '개발': 't-mint', 'IT 트렌드': 't-purple',
-  '보안': 't-rose', '툴 리뷰': 't-amber', '인프라': 't-amber',
-};
-
-function buildClientData(posts: PostSummary[]) {
-  const ticks: TickItem[] = posts.slice(0, 5).map(p => ({
-    tag: CAT_TAG[p.category] ?? p.category.slice(0, 3).toUpperCase(),
-    title: p.title,
-  }));
-
-  const feed: FeedItem[] = posts.slice(0, 5).map(p => {
-    const d = new Date(p.published_at);
-    const time = d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
-    return {
-      time,
-      tag: CAT_TAG[p.category] ?? p.category.slice(0, 3).toUpperCase(),
-      label: p.title.length > 22 ? p.title.slice(0, 22) + '…' : p.title,
-      slug: p.slug,
-    };
-  });
-
-  const catCounts = new Map<string, number>();
-  for (const p of posts) {
-    catCounts.set(p.category, (catCounts.get(p.category) ?? 0) + 1);
-  }
-  const maxCat = Math.max(...Array.from(catCounts.values()), 1);
-  const bars: BarItem[] = Array.from(catCounts.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 4)
-    .map(([name, count]) => ({
-      name,
-      barW: Math.round((count / maxCat) * 100) + '%',
-      tone: CAT_TONE[name] ?? '',
-    }));
-
-  const tagCounts = new Map<string, number>();
-  for (const p of posts) {
-    for (const t of p.tags) {
-      if (!t.startsWith('series:')) {
-        tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1);
-      }
-    }
-  }
-  const maxTag = Math.max(...Array.from(tagCounts.values()), 1);
-  const topics: TopicItem[] = Array.from(tagCounts.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 24)
-    .map(([tag, count]) => ({
-      tag,
-      count,
-      size: count >= maxTag * 0.75 ? 5 : count >= maxTag * 0.5 ? 4 : count >= maxTag * 0.25 ? 3 : count > 1 ? 2 : 1,
-    }));
-
-  const dateMap = new Map<string, PostSummary[]>();
-  for (const p of posts) {
-    const d = (p.published_at ?? '').slice(0, 10);
-    if (d) {
-      if (!dateMap.has(d)) dateMap.set(d, []);
-      dateMap.get(d)!.push(p);
-    }
-  }
-  const sortedDates = [...dateMap.keys()].sort().slice(-14);
-  const half = Math.ceil(posts.length / 2);
-  const SIG_COLORS: Array<'blue' | 'mint' | 'purple'> = ['blue', 'mint', 'purple'];
-  const SIG_PERIODS = ['TOP MOVER', 'RISING', 'SLOW BURN'];
-
-  const signals: SignalData[] = Array.from(tagCounts.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([tag, totalCount], i) => {
-      const raw = sortedDates.map(d =>
-        (dateMap.get(d) ?? []).filter(p => (p.tags ?? []).includes(tag)).length
-      );
-      const maxV = Math.max(...raw, 1);
-      const spark = raw.map(v => Math.round((v / maxV) * 100));
-      while (spark.length < 14) spark.unshift(0);
-      const recent = posts.slice(0, half).filter(p => (p.tags ?? []).includes(tag)).length;
-      const older = posts.slice(half).filter(p => (p.tags ?? []).includes(tag)).length;
-      const delta = older === 0 ? (recent > 0 ? 100 : 0) : Math.round(((recent - older) / older) * 100);
-      return {
-        ticker: tag.replace(/\s+/g, '').toUpperCase().slice(0, 6),
-        label: tag,
-        delta,
-        deltaLabel: delta >= 0 ? `↑ +${delta}%` : `↓ ${delta}%`,
-        periodLabel: `${SIG_PERIODS[i]} · 7D`,
-        spark,
-        desc: `최근 게시글 ${totalCount}건에서 언급된 키워드.`,
-        color: SIG_COLORS[i],
-      };
-    });
-
-  const now = new Date();
-  const heatmapDates: string[] = Array.from({ length: 14 }, (_, idx) => {
-    const d = new Date(now);
-    d.setDate(d.getDate() - (13 - idx));
-    return (13 - idx) % 3 === 0
-      ? `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-      : '';
-  });
-
-  return { ticks, feed, bars, topics, signals, heatmapDates };
-}
-
 /* ===== Page ===== */
 export default async function HomePage() {
-  const [posts, postCount, series, subscriberCount, recentGuides] = await Promise.all([
+  const [posts, guideCount, series, subscriberCount, recentGuides] = await Promise.all([
     getPosts(),
-    getPublishedPostCount(),
+    getGuideCount(),
     getSeries(),
     getSubscriberCount(),
     getRecentGuides(),
@@ -749,20 +575,15 @@ export default async function HomePage() {
     );
   }
 
-  const { ticks, feed, bars, topics, signals, heatmapDates } = buildClientData(posts);
-
   return (
     <HomeScrollReveal>
-      <HeroV2 posts={posts} ticks={ticks} feed={feed} bars={bars} seriesCount={series.length} postCount={postCount} subscriberCount={subscriberCount} />
+      <HeroV2 posts={posts} seriesCount={series.length} guideCount={guideCount} subscriberCount={subscriberCount} />
       <DailyBriefing posts={posts} />
       <EngineerGuidesSection guides={recentGuides} />
-      <SignalDashboard signals={signals} heatmapDates={heatmapDates} />
       <ReadingLanes posts={posts} />
       <MagLatestSection posts={posts.slice(1) as MagPost[]} />
-      <TopicCloud topics={topics} />
-      <EditorQuote />
       <SeriesShowcase series={series} />
-      <AIRecommendBlock posts={posts.slice(5, 8)} />
+      <EditorQuote />
       <NewsletterBand subscriberCount={subscriberCount} />
     </HomeScrollReveal>
   );

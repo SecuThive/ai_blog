@@ -957,6 +957,9 @@ mark { background: color-mix(in oklch, var(--acc-blue) 18%, transparent); color:
   gap: 64px;
   align-items: start;
 }
+/* 내부 시스템 느낌의 사이드 패널(ControlPanel) 제거 후 단일 컬럼 히어로 */
+.heroX-grid--solo { grid-template-columns: 1fr; }
+.heroX-grid--solo .heroX-lead { max-width: 640px; }
 .heroX h1 {
   font-size: 68px;
   line-height: 1.02;
