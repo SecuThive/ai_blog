@@ -16,6 +16,10 @@ const MIN_TAG_POSTS = 3;
 export async function generateMetadata({ params }: { params: Promise<{ tag: string }> }): Promise<Metadata> {
   const { tag } = await params;
   const decoded = decodeURIComponent(tag);
+  // series:/ep:N 은 내부용 유사태그 — 색인 대상 아님.
+  if (decoded.startsWith('series:') || /^ep:\d+$/.test(decoded)) {
+    return { title: '태그를 찾을 수 없습니다', robots: { index: false, follow: false } };
+  }
   // 통합으로 흡수된 변형 태그: canonical 태그로 색인 이전(noindex + canonical 지정).
   const redirectTarget = TAG_REDIRECTS[decoded];
   if (redirectTarget) {
@@ -98,6 +102,9 @@ async function getRelatedTags(tag: string): Promise<string[]> {
 export default async function TagDetailPage({ params }: { params: Promise<{ tag: string }> }) {
   const { tag: tagParam } = await params;
   const tag = decodeURIComponent(tagParam);
+
+  // series:/ep:N 은 내부용 유사태그 — 실제 태그 페이지가 아니므로 404.
+  if (tag.startsWith('series:') || /^ep:\d+$/.test(tag)) notFound();
 
   // 통합으로 흡수된 변형 태그 → 대표 태그로 308 영구 리다이렉트 (링크 가치 이전)
   const redirectTarget = TAG_REDIRECTS[tag];

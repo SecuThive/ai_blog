@@ -56,6 +56,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const name = tag.replace('series:', '');
         seriesCount.set(name, (seriesCount.get(name) ?? 0) + 1);
         if (when > (seriesLast.get(name) ?? '')) seriesLast.set(name, when);
+      } else if (/^ep:\d+$/.test(tag)) {
+        // ep:N은 시리즈 에피소드 순서용 내부 태그 — /tag/ep:1 같은 무의미한
+        // 페이지가 sitemap에 들어가지 않도록 제외한다(색인 대상 아님).
+        continue;
       } else {
         tagCount.set(tag, (tagCount.get(tag) ?? 0) + 1);
         if (when > (tagLast.get(tag) ?? '')) tagLast.set(tag, when);
