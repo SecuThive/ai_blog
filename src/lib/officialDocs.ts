@@ -84,6 +84,69 @@ const DOCS: { match: RegExp; docs: OfficialDoc[] }[] = [
   { match: /kafka/i, docs: [
     { name: 'Apache Kafka 공식 문서', url: 'https://kafka.apache.org/documentation/' },
   ]},
+  // ── AI/ML 운영·프레임워크 (2026-07-16 보강: 출처 부족 B급 글 커버) ──
+  { match: /mlflow|mlops|llmops|모델\s?레지스트리|모델\s?서빙|experiment tracking/i, docs: [
+    { name: 'MLflow 공식 문서', url: 'https://mlflow.org/docs/latest/index.html' },
+  ]},
+  { match: /wandb|weights\s?&?\s?biases/i, docs: [
+    { name: 'Weights & Biases 공식 문서', url: 'https://docs.wandb.ai/' },
+  ]},
+  { match: /pinecone/i, docs: [
+    { name: 'Pinecone 공식 문서', url: 'https://docs.pinecone.io/' },
+  ]},
+  { match: /weaviate/i, docs: [
+    { name: 'Weaviate 공식 문서', url: 'https://weaviate.io/developers/weaviate' },
+  ]},
+  { match: /faiss/i, docs: [
+    { name: 'FAISS 공식 문서', url: 'https://faiss.ai/' },
+  ]},
+  { match: /hugging\s?face|transformers|파인[- ]?튜닝|fine[- ]?tuning/i, docs: [
+    { name: 'Hugging Face 공식 문서', url: 'https://huggingface.co/docs' },
+  ]},
+  { match: /\bpytorch\b|파이토치/i, docs: [
+    { name: 'PyTorch 공식 문서', url: 'https://pytorch.org/docs/stable/index.html' },
+  ]},
+  { match: /tensorflow|텐서플로|\btflite\b|litert|엣지\s?ai|edge\s?ai|온디바이스/i, docs: [
+    { name: 'Google AI Edge (LiteRT) 문서', url: 'https://ai.google.dev/edge/litert' },
+  ]},
+  { match: /\bonnx\b|onnx\s?runtime/i, docs: [
+    { name: 'ONNX Runtime 공식 문서', url: 'https://onnxruntime.ai/docs/' },
+  ]},
+  { match: /fastapi/i, docs: [
+    { name: 'FastAPI 공식 문서', url: 'https://fastapi.tiangolo.com/' },
+  ]},
+  // ── 인프라·관측성·데이터 ──
+  { match: /elasticsearch|elastic\s?search|kibana|\belk\b/i, docs: [
+    { name: 'Elasticsearch 공식 가이드', url: 'https://www.elastic.co/guide/index.html' },
+  ]},
+  { match: /istio|service\s?mesh|서비스\s?메시/i, docs: [
+    { name: 'Istio 공식 문서', url: 'https://istio.io/latest/docs/' },
+  ]},
+  { match: /linkerd/i, docs: [
+    { name: 'Linkerd 공식 문서', url: 'https://linkerd.io/docs/' },
+  ]},
+  { match: /prometheus|프로메테우스/i, docs: [
+    { name: 'Prometheus 공식 문서', url: 'https://prometheus.io/docs/introduction/overview/' },
+  ]},
+  { match: /grafana|그라파나/i, docs: [
+    { name: 'Grafana 공식 문서', url: 'https://grafana.com/docs/' },
+  ]},
+  { match: /ansible|앤서블|플레이북|playbook/i, docs: [
+    { name: 'Ansible 공식 문서', url: 'https://docs.ansible.com/' },
+  ]},
+  { match: /\bvault\b|시크릿\s?관리|secrets?\s?관리/i, docs: [
+    { name: 'HashiCorp Vault 공식 문서', url: 'https://developer.hashicorp.com/vault/docs' },
+  ]},
+  { match: /apache\s?spark|\bspark\b/i, docs: [
+    { name: 'Apache Spark 공식 문서', url: 'https://spark.apache.org/docs/latest/' },
+  ]},
+  { match: /airflow|에어플로/i, docs: [
+    { name: 'Apache Airflow 공식 문서', url: 'https://airflow.apache.org/docs/' },
+  ]},
+  // ── 인증서·암호화 (PKIX·SSL/TLS 계열 출처 보강) ──
+  { match: /openssl|인증서|certificate|\bssl\b|\btls\b|pkix|x509|keytool|cacerts|suncertpath/i, docs: [
+    { name: 'OpenSSL 공식 문서', url: 'https://docs.openssl.org/master/' },
+  ]},
 ];
 
 /** 제목·태그·카테고리에서 매칭되는 공식 문서 목록(최대 4개, 중복 제거) */
