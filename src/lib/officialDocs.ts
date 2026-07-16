@@ -147,6 +147,31 @@ const DOCS: { match: RegExp; docs: OfficialDoc[] }[] = [
   { match: /openssl|인증서|certificate|\bssl\b|\btls\b|pkix|x509|keytool|cacerts|suncertpath/i, docs: [
     { name: 'OpenSSL 공식 문서', url: 'https://docs.openssl.org/master/' },
   ]},
+  // ── 컴플라이언스·보안·법령 1차출처 (정부·기관 원문, 2026-07-16 보강) ──
+  { match: /ai act|eu ai|글로벌 ai 규제|인공지능.{0,4}규제|ai\s?규제/i, docs: [
+    { name: 'EU AI Act (유럽집행위 공식)', url: 'https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai' },
+  ]},
+  { match: /\bgdpr\b/i, docs: [
+    { name: 'EU 데이터보호(GDPR) 공식', url: 'https://commission.europa.eu/law/law-topic/data-protection_en' },
+  ]},
+  { match: /ai rmf|모델 거버넌스|ai 거버넌스|ai 신뢰성|responsible ai|ai 편향|모델 드리프트|감사 추적/i, docs: [
+    { name: 'NIST AI Risk Management Framework', url: 'https://www.nist.gov/itl/ai-risk-management-framework' },
+  ]},
+  { match: /sbom|공급망 보안|supply chain security/i, docs: [
+    { name: 'CISA SBOM (미 사이버보안청)', url: 'https://www.cisa.gov/sbom' },
+  ]},
+  { match: /개인정보|가명정보|프라이버시|privacy/i, docs: [
+    { name: '개인정보보호위원회', url: 'https://www.pipc.go.kr/' },
+  ]},
+  { match: /랜섬웨어|침해대응|취약점 관리|악성코드|보안 위협|사이버 위협/i, docs: [
+    { name: 'KISA 보호나라', url: 'https://www.boho.or.kr/' },
+  ]},
+  { match: /법령|규정|법률|전자금융|감독규정|컴플라이언스|규제 준수|망분리|csap/i, docs: [
+    { name: '국가법령정보센터', url: 'https://www.law.go.kr/' },
+  ]},
+  { match: /보안 통제|보안 표준|보안 프레임워크|nist|보안 감사|취약점 진단/i, docs: [
+    { name: 'NIST CSRC (보안 표준)', url: 'https://csrc.nist.gov/' },
+  ]},
 ];
 
 /** 제목·태그·카테고리에서 매칭되는 공식 문서 목록(최대 4개, 중복 제거) */
