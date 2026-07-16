@@ -7,10 +7,17 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
   title: '편집자 · AI 운영 모델 — Nodelog',
-  description: 'Nodelog의 AI 에이전트와 사람 편집자의 협업 방식을 투명하게 공개합니다.',
+  description: 'Nodelog의 AI 에이전트와 사람 편집자의 협업 방식, 편집 검토 범위와 기준을 투명하게 공개합니다.',
+  alternates: { canonical: `${SITE_URL}/author` },
 };
 
 export const revalidate = 3600;
+
+// 편집 검토 범위·기준 — 실제 콘텐츠 커버리지에 부합하는 프로세스 설명(가공 인물 아님).
+const REVIEW_SCOPE = {
+  areas: ['Linux · 서버', '네트워크', '데이터베이스', '보안 · 인증', '컨테이너 · 클라우드', 'AI · 자동화'],
+  checks: ['공식 문서 대조', '명령어 · 설정 검증', '버전 · 환경 조건', '적용 조건 · 주의점', '보안 위험'],
+};
 
 const STAGES = [
   { t: '소스 추적', s: '공식 문서 · 기술 소스', tone: 'blue',   icon: '🌐', desc: '주요 기술 소스·공식 문서 변화 추적' },
@@ -28,14 +35,11 @@ const PRINCIPLES = [
 ];
 
 async function getAuthorStats() {
-  const [{ count: publishedCount }, { count: heldCount }, { count: guideCount }, { data: categories }] = await Promise.all([
-    supabaseAdmin().from('posts').select('id', { count: 'exact', head: true }).eq('status', 'published'),
-    supabaseAdmin().from('posts').select('id', { count: 'exact', head: true }).neq('status', 'published'),
+  // 발행 수·보류 수 같은 원시 카운트는 노출하지 않는다 — 자동생성 인상 완화(#8).
+  const [{ count: guideCount }, { data: categories }] = await Promise.all([
     supabaseAdmin().from('engineer_guides').select('id', { count: 'exact', head: true }).eq('status', 'published'),
     supabaseAdmin().from('posts').select('category').eq('status', 'published'),
   ]);
-
-  const published = publishedCount ?? 0;
 
   const catCounts: Record<string, number> = {};
   (categories ?? []).forEach((p: { category: string }) => {
@@ -44,8 +48,6 @@ async function getAuthorStats() {
   const topCat = Object.entries(catCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—';
 
   return {
-    publishedCount: published,
-    heldCount: heldCount ?? 0,
     guideCount: guideCount ?? 0,
     categoryCount: Object.keys(catCounts).length,
     topCat,
@@ -53,9 +55,24 @@ async function getAuthorStats() {
 }
 
 export default async function AuthorPage() {
-  const { publishedCount, heldCount, guideCount, categoryCount, topCat } = await getAuthorStats();
+  const { guideCount, categoryCount, topCat } = await getAuthorStats();
 
-  // 실제 편집자가 등록된 경우에만 Person 스키마 노출 (E-E-A-T)
+  // 편집 조직(편집팀)을 주체로 한 ProfilePage 스키마 — 실제 검토 범위를 knowsAbout에 노출.
+  const profileSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    url: `${SITE_URL}/author`,
+    mainEntity: {
+      '@type': 'Organization',
+      name: 'Nodelog 편집팀',
+      url: `${SITE_URL}/author`,
+      description: 'AI 초안 작성과 사람 편집 검토를 결합해 IT·개발·보안·인프라 기술 콘텐츠를 검증·발행하는 편집 조직.',
+      knowsAbout: REVIEW_SCOPE.areas,
+      parentOrganization: { '@type': 'Organization', name: 'Nodelog', url: SITE_URL },
+    },
+  };
+
+  // 실제 편집자가 등록된 경우에만 Person 스키마도 함께 노출 (E-E-A-T)
   const personSchemas = EDITORS.map(e => ({
     '@context': 'https://schema.org',
     '@type': 'Person',
@@ -70,7 +87,7 @@ export default async function AuthorPage() {
 
   return (
     <div>
-      {personSchemas.length > 0 && <JsonLd data={personSchemas} />}
+      <JsonLd data={[profileSchema, ...personSchemas]} />
       <section className="page-hero">
         <div className="container">
           <div className="page-eyebrow">EDITORIAL · 운영</div>
@@ -79,12 +96,11 @@ export default async function AuthorPage() {
             Nodelog는 AI가 초고를 작성하고, 사람이 검증합니다. 두 주체가 어떤 방식으로 협업하는지 투명하게 공개합니다.
           </p>
 
-          {/* Stats bar */}
+          {/* Stats bar — 원시 발행/보류 수는 노출하지 않음(#8). 큐레이션 자산·범위만. */}
           <div style={{ display: 'flex', gap: 32, marginTop: 32, flexWrap: 'wrap' }}>
             {[
-              { label: '발행 글', value: publishedCount.toLocaleString() + '편' },
               { label: '엔지니어 가이드', value: guideCount.toLocaleString() + '편' },
-              { label: '비공개·보류 글', value: heldCount.toLocaleString() + '편' },
+              { label: '검토 분야', value: `${REVIEW_SCOPE.areas.length}개 영역` },
               { label: `${categoryCount}개 카테고리 중 최다`, value: topCat },
             ].map(s => (
               <div key={s.label}>
@@ -144,8 +160,8 @@ export default async function AuthorPage() {
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: 13 }}>
                 {[
+                  { k: '역할', v: 'Nodelog Technical Editor' },
                   { k: '주요 역할', v: '자료 확인 · 편집 · 발행 판단' },
-                  { k: '보류 콘텐츠', v: `${heldCount.toLocaleString()}편` },
                   { k: '정정 문의', v: 'thive8564@gmail.com' },
                 ].map(row => (
                   <div key={row.k} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, color: 'var(--text-3)' }}>
@@ -154,6 +170,35 @@ export default async function AuthorPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+
+          {/* 편집 검토 범위·기준 — 실제 콘텐츠 커버리지에 부합하는 프로세스 공개(E-E-A-T) */}
+          <div className="card" style={{ padding: 28, marginBottom: 56 }}>
+            <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em', marginBottom: 6 }}>Nodelog Technical Editor</div>
+            <p style={{ color: 'var(--text-3)', fontSize: 13.5, lineHeight: 1.6, margin: '0 0 22px' }}>
+              특정 개인의 이력이 아니라, Nodelog의 기술 편집 검토가 어떤 범위와 기준으로 이뤄지는지 공개합니다.
+            </p>
+            <div className="grid-2" style={{ gap: 24 }}>
+              <div>
+                <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--acc-blue)', letterSpacing: '0.06em', marginBottom: 10 }}>검토 분야</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {REVIEW_SCOPE.areas.map(a => <span key={a} className="badge" style={{ fontSize: 11.5 }}>{a}</span>)}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--acc-blue)', letterSpacing: '0.06em', marginBottom: 10 }}>검토 항목</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {REVIEW_SCOPE.checks.map(c => <span key={c} className="badge" style={{ fontSize: 11.5 }}>{c}</span>)}
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid var(--line-1)' }}>
+              <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--acc-blue)', letterSpacing: '0.06em', marginBottom: 8 }}>콘텐츠 운영</div>
+              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: 'var(--text-2)' }}>
+                AI가 자료 조사와 초안 작성을 보조하고, <strong style={{ color: 'var(--text-1)' }}>최종 공개 여부와 수정 범위는 사람 편집자가 결정</strong>합니다.
+                각 글 하단에 편집 검토 표기와 관련 공식 문서를 함께 제공합니다.
+              </p>
             </div>
           </div>
 
