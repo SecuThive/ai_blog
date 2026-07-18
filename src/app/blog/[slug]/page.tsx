@@ -1,6 +1,5 @@
 import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { catTone } from '@/lib/utils';
-import { unstable_noStore as noStore } from 'next/cache';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
@@ -20,7 +19,6 @@ import InlineSubscribeCTA from '@/components/InlineSubscribeCTA';
 export const revalidate = 60;
 
 async function getComments(slugKey: string): Promise<CommentRow[]> {
-  noStore();
   const { data } = await makeFreshClient()
     .from('comments')
     .select('id,name,content,created_at,parent_id,likes')
@@ -31,7 +29,6 @@ async function getComments(slugKey: string): Promise<CommentRow[]> {
 }
 
 async function getAdjacentPosts(publishedAt: string, id: number): Promise<{ prev: { title: string; slug: string } | null; next: { title: string; slug: string } | null }> {
-  noStore();
   const client = makeFreshClient();
   const [prevResult, nextResult] = await Promise.all([
     client.from('posts').select('title,slug').eq('status', 'published').lt('published_at', publishedAt).neq('id', id).order('published_at', { ascending: false }).limit(1),
@@ -50,7 +47,6 @@ interface SeriesContext {
 }
 
 async function getSeriesContext(tags: string[], currentId: number): Promise<SeriesContext | null> {
-  noStore();
   const seriesTag = tags.find(t => t.startsWith('series:'));
   if (!seriesTag) return null;
   const seriesName = seriesTag.replace('series:', '');
@@ -79,7 +75,6 @@ const CAT_TO_GUIDE_CAT: Record<string, string[]> = {
 };
 
 async function getRelatedGuides(category: string, tags: string[]): Promise<import('@/lib/types').EngineerGuide[]> {
-  noStore();
   const guideCats = CAT_TO_GUIDE_CAT[category] ?? [];
   if (guideCats.length === 0) return [];
   const client = makeFreshClient();
@@ -94,7 +89,6 @@ async function getRelatedGuides(category: string, tags: string[]): Promise<impor
 }
 
 async function getRelatedPosts(category: string, excludeId: number): Promise<import('@/lib/types').PostSummary[]> {
-  noStore();
   const client = makeFreshClient();
   const { data } = await client
     .from('posts')
@@ -112,7 +106,6 @@ async function getRelatedPosts(category: string, excludeId: number): Promise<imp
 }
 
 async function getPost(slug: string): Promise<Post | null> {
-  noStore();
   try {
     const decoded = decodeURIComponent(slug);
     const client = makeFreshClient();

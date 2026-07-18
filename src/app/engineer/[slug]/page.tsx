@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { unstable_noStore as noStore } from 'next/cache';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { EngineerGuide } from '@/lib/types';
@@ -23,7 +22,6 @@ function qaKey(slug: string): string {
 }
 
 async function getGuideQa(slug: string): Promise<CommentRow[]> {
-  noStore();
   const { data } = await makeFreshClient()
     .from('comments')
     .select('id,name,content,created_at,parent_id,likes')
@@ -34,7 +32,6 @@ async function getGuideQa(slug: string): Promise<CommentRow[]> {
 }
 
 async function getGuide(slug: string): Promise<EngineerGuide | null> {
-  noStore();
   try {
     const { data, error } = await makeFreshClient()
       .from('engineer_guides')
@@ -62,7 +59,6 @@ const GUIDE_TO_POST_CAT: Record<string, string[]> = {
 };
 
 async function getRelatedBlogPosts(category: string): Promise<{ id: number; title: string; slug: string; excerpt: string; category: string }[]> {
-  noStore();
   const cats = GUIDE_TO_POST_CAT[category] ?? [];
   if (cats.length === 0) return [];
   const { data } = await makeFreshClient()
@@ -89,7 +85,6 @@ function extractHowToSteps(md: string): { name: string }[] {
 }
 
 async function getRelated(category: string, excludeId: number): Promise<EngineerGuide[]> {
-  noStore();
   const { data } = await makeFreshClient()
     .from('engineer_guides')
     .select('id,title,slug,summary,category,difficulty,tags')
