@@ -303,7 +303,7 @@ const LANE_DEFS = [
   },
 ];
 
-function ReadingLanes({ posts }: { posts: PostSummary[] }) {
+function ReadingLanes({ lanePosts }: { lanePosts: Record<string, PostSummary[]> }) {
   return (
     <section className="section">
       <div className="container">
@@ -324,7 +324,7 @@ function ReadingLanes({ posts }: { posts: PostSummary[] }) {
 
         <div className="lanes">
           {LANE_DEFS.map((lane, i) => {
-            const lanePosts = posts.filter(p => p.category === lane.category).slice(0, 3);
+            const items = lanePosts[lane.category] ?? [];
             return (
               <div key={i} className="lane">
                 <div className="lane-head">
@@ -338,7 +338,7 @@ function ReadingLanes({ posts }: { posts: PostSummary[] }) {
                 </div>
                 <p className="lane-sub">{lane.sub}</p>
                 <div className="lane-steps">
-                  {lanePosts.length > 0 ? lanePosts.map((p, j) => (
+                  {items.length > 0 ? items.map((p, j) => (
                     <Link key={p.id} className="lane-step" href={`/blog/${p.slug}`}>
                       <span className="num">{String(j + 1).padStart(2, '0')}</span>
                       <div>
@@ -357,7 +357,7 @@ function ReadingLanes({ posts }: { posts: PostSummary[] }) {
                   )}
                 </div>
                 <div className="lane-foot">
-                  <span>{lanePosts.length} STEPS</span>
+                  <span>{items.length} STEPS</span>
                   <Link href={`/category/${lane.category}`}>전체 보기 →</Link>
                 </div>
               </div>
@@ -484,6 +484,31 @@ function NewsletterBand({ subscriberCount }: { subscriberCount: number }) {
   );
 }
 
+// 리딩 레인은 카테고리별 최신 3편을 각각 조회한다. 홈 상단 "최근 20편"만
+// 슬라이스하면 최근 발행이 특정 카테고리(인프라·개발 등)에 몰릴 때 AI·PRO
+// 레인이 비므로, 레인별 카테고리 쿼리로 항상 채운다.
+async function getLanePosts(): Promise<Record<string, PostSummary[]>> {
+  const client = makeFreshClient();
+  const entries = await Promise.all(
+    LANE_DEFS.map(async (lane) => {
+      const { data } = await client
+        .from('posts')
+        .select('id,title,slug,category,content,published_at')
+        .eq('status', 'published')
+        .eq('category', lane.category)
+        .order('published_at', { ascending: false })
+        .limit(3);
+      const items = (data ?? []).map((p: Record<string, unknown>) => ({
+        ...p,
+        content: undefined,
+        reading_time: readingTime((p.content as string) ?? ''),
+      })) as unknown as PostSummary[];
+      return [lane.category, items] as const;
+    }),
+  );
+  return Object.fromEntries(entries);
+}
+
 async function getRecentGuides(): Promise<EngineerGuide[]> {
   const { data } = await makeFreshClient()
     .from('engineer_guides')
@@ -500,7 +525,7 @@ const DIFFICULTY_LABEL: Record<string, string> = {
   advanced: '고급',
 };
 
-function EngineerGuidesSection({ guides }: { guides: EngineerGuide[] }) {
+function EngineerGuidesSection({ guides, total }: { guides: EngineerGuide[]; total: number }) {
   if (guides.length === 0) return null;
   return (
     <section className="section" style={{ background: 'linear-gradient(180deg, transparent, rgba(20,36,24,0.3) 30%, transparent)' }}>
@@ -510,7 +535,7 @@ function EngineerGuidesSection({ guides }: { guides: EngineerGuide[] }) {
             <span className="num">02 / ENGINEER GUIDE</span>
             <div>
               <h2>실무 엔지니어 레퍼런스</h2>
-              <p className="sub">Linux·Docker·Git·네트워킹·보안·DB — 복사해서 바로 쓰는 실전 가이드 {guides.length}+ 편.</p>
+              <p className="sub">Linux·Docker·Git·네트워킹·보안·DB — 복사해서 바로 쓰는 실전 가이드 {total}+ 편.</p>
             </div>
           </div>
           <Link href="/engineer" className="section-link">
@@ -551,13 +576,18 @@ function EngineerGuidesSection({ guides }: { guides: EngineerGuide[] }) {
 
 /* ===== Page ===== */
 export default async function HomePage() {
-  const [posts, guideCount, series, subscriberCount, recentGuides] = await Promise.all([
+  const [posts, guideCount, series, subscriberCount, recentGuides, lanePosts] = await Promise.all([
     getPosts(),
     getGuideCount(),
     getSeries(),
     getSubscriberCount(),
     getRecentGuides(),
+    getLanePosts(),
   ]);
+
+  // "ACTIVE SERIES"는 실제로 탐색 가능한 시리즈만 센다 — 1편짜리 얇은 시리즈는
+  // series/[id]가 noindex이고 sitemap에서도 제외되므로(2편 이상) 동일 기준(>=2)을 적용.
+  const activeSeriesCount = series.filter(s => s.count >= 2).length;
 
   if (posts.length === 0) {
     return (
@@ -577,10 +607,10 @@ export default async function HomePage() {
 
   return (
     <HomeScrollReveal>
-      <HeroV2 posts={posts} seriesCount={series.length} guideCount={guideCount} subscriberCount={subscriberCount} />
+      <HeroV2 posts={posts} seriesCount={activeSeriesCount} guideCount={guideCount} subscriberCount={subscriberCount} />
       <DailyBriefing posts={posts} />
-      <EngineerGuidesSection guides={recentGuides} />
-      <ReadingLanes posts={posts} />
+      <EngineerGuidesSection guides={recentGuides} total={guideCount} />
+      <ReadingLanes lanePosts={lanePosts} />
       <MagLatestSection posts={posts.slice(1) as MagPost[]} />
       <SeriesShowcase series={series} />
       <EditorQuote />
