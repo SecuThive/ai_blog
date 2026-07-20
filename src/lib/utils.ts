@@ -59,6 +59,10 @@ export const DEFAULT_ROBOTS: Metadata['robots'] = {
   googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
 };
 
+// 조회수가 이 값 미만이면 UI에 노출하지 않는다 — '1 조회'처럼 빈약해 보이는
+// 수치를 숨겨 체감 품질 저하를 막는다. (실제 카운트는 계속 누적됨)
+export const MIN_DISPLAY_VIEWS = 100;
+
 // series:/ep: 는 시리즈 회차 관리용 내부 태그 — 노출용(표시·keywords·JSON-LD)에서 제외한다.
 export function publicTags(tags: string[]): string[] {
   return (tags ?? []).filter(t => !t.startsWith('series:') && !t.startsWith('ep:'));

@@ -1,5 +1,5 @@
 import { readingTime, makeFreshClient } from '@/lib/supabase';
-import { catTone, publicTags, DEFAULT_ROBOTS } from '@/lib/utils';
+import { catTone, publicTags, DEFAULT_ROBOTS, MIN_DISPLAY_VIEWS } from '@/lib/utils';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
@@ -375,12 +375,14 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               </svg>
               {mins}분 읽기
             </span>
-            <span className="meta-item">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-              </svg>
-              {post.views.toLocaleString()} 조회
-            </span>
+            {post.views >= MIN_DISPLAY_VIEWS && (
+              <span className="meta-item">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+                </svg>
+                {post.views.toLocaleString()} 조회
+              </span>
+            )}
           </div>
 
           {/* Cover image — real image or auto-generated OG image as cover */}

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Cover, { categoryHue } from './Cover';
 import type { PostSummary } from '@/lib/types';
+import { MIN_DISPLAY_VIEWS } from '@/lib/utils';
 
 function slugMark(slug: string): string {
   const clean = slug.replace(/-/g, '').replace(/[^a-zA-Z가-힣]/g, '');
@@ -37,7 +38,7 @@ export default function PostCard({ post, featured = false }: Props) {
           <span className="ai-mini">AI · 작성</span>
           <span>{post.reading_time}분</span>
           <span>{timeAgo(post.published_at)}</span>
-          <span>{post.views.toLocaleString()} views</span>
+          {post.views >= MIN_DISPLAY_VIEWS && <span>{post.views.toLocaleString()} views</span>}
         </div>
       </Link>
     );
