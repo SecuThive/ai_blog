@@ -7,11 +7,11 @@ import { catTone } from '@/lib/utils';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
-  title: '태그 — Nodelog',
+  title: '태그',
   description: '키워드 단위로 콘텐츠를 탐색하세요.',
   alternates: { canonical: `${SITE_URL}/tags` },
   openGraph: {
-    title: '태그 — Nodelog',
+    title: '태그',
     description: '키워드 단위로 콘텐츠를 탐색하세요.',
     url: `${SITE_URL}/tags`,
     type: 'website',

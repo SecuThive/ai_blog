@@ -1,6 +1,5 @@
 import { readingTime, makeFreshClient } from '@/lib/supabase';
-import { catTone } from '@/lib/utils';
-import { unstable_noStore as noStore } from 'next/cache';
+import { catTone, publicTags, DEFAULT_ROBOTS } from '@/lib/utils';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
@@ -20,7 +19,6 @@ import InlineSubscribeCTA from '@/components/InlineSubscribeCTA';
 export const revalidate = 60;
 
 async function getComments(slugKey: string): Promise<CommentRow[]> {
-  noStore();
   const { data } = await makeFreshClient()
     .from('comments')
     .select('id,name,content,created_at,parent_id,likes')
@@ -31,7 +29,6 @@ async function getComments(slugKey: string): Promise<CommentRow[]> {
 }
 
 async function getAdjacentPosts(publishedAt: string, id: number): Promise<{ prev: { title: string; slug: string } | null; next: { title: string; slug: string } | null }> {
-  noStore();
   const client = makeFreshClient();
   const [prevResult, nextResult] = await Promise.all([
     client.from('posts').select('title,slug').eq('status', 'published').lt('published_at', publishedAt).neq('id', id).order('published_at', { ascending: false }).limit(1),
@@ -50,7 +47,6 @@ interface SeriesContext {
 }
 
 async function getSeriesContext(tags: string[], currentId: number): Promise<SeriesContext | null> {
-  noStore();
   const seriesTag = tags.find(t => t.startsWith('series:'));
   if (!seriesTag) return null;
   const seriesName = seriesTag.replace('series:', '');
@@ -79,7 +75,6 @@ const CAT_TO_GUIDE_CAT: Record<string, string[]> = {
 };
 
 async function getRelatedGuides(category: string, tags: string[]): Promise<import('@/lib/types').EngineerGuide[]> {
-  noStore();
   const guideCats = CAT_TO_GUIDE_CAT[category] ?? [];
   if (guideCats.length === 0) return [];
   const client = makeFreshClient();
@@ -94,7 +89,6 @@ async function getRelatedGuides(category: string, tags: string[]): Promise<impor
 }
 
 async function getRelatedPosts(category: string, excludeId: number): Promise<import('@/lib/types').PostSummary[]> {
-  noStore();
   const client = makeFreshClient();
   const { data } = await client
     .from('posts')
@@ -112,7 +106,6 @@ async function getRelatedPosts(category: string, excludeId: number): Promise<imp
 }
 
 async function getPost(slug: string): Promise<Post | null> {
-  noStore();
   try {
     const decoded = decodeURIComponent(slug);
     const client = makeFreshClient();
@@ -143,7 +136,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = await getPost(slug);
   if (!post) return { title: '포스트를 찾을 수 없습니다', robots: { index: false, follow: false } };
   const url = `${SITE_URL}/blog/${post.slug}`;
-  const cleanTags = post.tags.filter(t => !t.startsWith('series:'));
+  const cleanTags = publicTags(post.tags);
   return {
     title: post.title,
     description: post.excerpt,
@@ -151,7 +144,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     authors: [{ name: post.author }],
     alternates: { canonical: url },
     // 품질 감사에서 보강 대상으로 분류된 글은 보강 완료까지 색인 제외
-    robots: NOINDEX_POST_SLUGS.has(post.slug) ? { index: false, follow: true } : undefined,
+    robots: NOINDEX_POST_SLUGS.has(post.slug) ? { index: false, follow: true } : DEFAULT_ROBOTS,
     openGraph: {
       title: post.title,
       description: post.excerpt,
@@ -304,7 +297,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     image: post.cover_image
       ? { '@type': 'ImageObject', url: post.cover_image, width: 1200, height: 630 }
       : { '@type': 'ImageObject', url: `${SITE_URL}/blog/${post.slug}/opengraph-image`, width: 1200, height: 630 },
-    keywords: post.tags.filter(t => !t.startsWith('series:')).join(', '),
+    keywords: publicTags(post.tags).join(', '),
     articleSection: post.category,
     inLanguage: 'ko',
     wordCount,
@@ -357,7 +350,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
           <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
             <span className={`badge badge-${tone}`}>{post.category}</span>
-            {post.tags.filter(t => !t.startsWith('series:')).slice(0, 2).map(tag => (
+            {publicTags(post.tags).slice(0, 2).map(tag => (
               <span key={tag} className="badge">{tag}</span>
             ))}
           </div>
@@ -480,9 +473,9 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               {post.content}
             </ReactMarkdown>
 
-            {post.tags.filter(t => !t.startsWith('series:')).length > 0 && (
+            {publicTags(post.tags).length > 0 && (
               <div className="end-tags">
-                {post.tags.filter(t => !t.startsWith('series:')).map(tag => (
+                {publicTags(post.tags).map(tag => (
                   <Link key={tag} href={`/tag/${encodeURIComponent(tag)}`} className="end-tag">#{tag}</Link>
                 ))}
               </div>

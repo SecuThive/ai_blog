@@ -10,12 +10,12 @@ import JsonLd from '@/components/JsonLd';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
-  title: '엔지니어 가이드 — Nodelog',
+  title: '엔지니어 가이드',
   description: 'Linux, Docker, Git, 네트워킹, 보안 등 실무 엔지니어를 위한 기술 레퍼런스 모음.',
   keywords: 'Linux, Docker, Git, 네트워킹, 보안, 클라우드, 데이터베이스, 엔지니어 가이드',
   alternates: { canonical: `${SITE_URL}/engineer` },
   openGraph: {
-    title: '엔지니어 가이드 — Nodelog',
+    title: '엔지니어 가이드',
     description: 'Linux, Docker, Git, 네트워킹, 보안 등 실무 엔지니어를 위한 기술 레퍼런스 모음.',
     url: `${SITE_URL}/engineer`,
     type: 'website',
