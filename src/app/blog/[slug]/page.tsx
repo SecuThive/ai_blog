@@ -1,5 +1,5 @@
 import { readingTime, makeFreshClient } from '@/lib/supabase';
-import { catTone } from '@/lib/utils';
+import { catTone, publicTags, DEFAULT_ROBOTS } from '@/lib/utils';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
@@ -136,7 +136,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = await getPost(slug);
   if (!post) return { title: '포스트를 찾을 수 없습니다', robots: { index: false, follow: false } };
   const url = `${SITE_URL}/blog/${post.slug}`;
-  const cleanTags = post.tags.filter(t => !t.startsWith('series:'));
+  const cleanTags = publicTags(post.tags);
   return {
     title: post.title,
     description: post.excerpt,
@@ -144,7 +144,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     authors: [{ name: post.author }],
     alternates: { canonical: url },
     // 품질 감사에서 보강 대상으로 분류된 글은 보강 완료까지 색인 제외
-    robots: NOINDEX_POST_SLUGS.has(post.slug) ? { index: false, follow: true } : undefined,
+    robots: NOINDEX_POST_SLUGS.has(post.slug) ? { index: false, follow: true } : DEFAULT_ROBOTS,
     openGraph: {
       title: post.title,
       description: post.excerpt,
@@ -297,7 +297,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     image: post.cover_image
       ? { '@type': 'ImageObject', url: post.cover_image, width: 1200, height: 630 }
       : { '@type': 'ImageObject', url: `${SITE_URL}/blog/${post.slug}/opengraph-image`, width: 1200, height: 630 },
-    keywords: post.tags.filter(t => !t.startsWith('series:')).join(', '),
+    keywords: publicTags(post.tags).join(', '),
     articleSection: post.category,
     inLanguage: 'ko',
     wordCount,
@@ -350,7 +350,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
           <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
             <span className={`badge badge-${tone}`}>{post.category}</span>
-            {post.tags.filter(t => !t.startsWith('series:')).slice(0, 2).map(tag => (
+            {publicTags(post.tags).slice(0, 2).map(tag => (
               <span key={tag} className="badge">{tag}</span>
             ))}
           </div>
@@ -473,9 +473,9 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               {post.content}
             </ReactMarkdown>
 
-            {post.tags.filter(t => !t.startsWith('series:')).length > 0 && (
+            {publicTags(post.tags).length > 0 && (
               <div className="end-tags">
-                {post.tags.filter(t => !t.startsWith('series:')).map(tag => (
+                {publicTags(post.tags).map(tag => (
                   <Link key={tag} href={`/tag/${encodeURIComponent(tag)}`} className="end-tag">#{tag}</Link>
                 ))}
               </div>

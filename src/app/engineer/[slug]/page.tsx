@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { EngineerGuide } from '@/lib/types';
 import { makeFreshClient } from '@/lib/supabase';
-import { engCatTone, diffLabel } from '@/lib/utils';
+import { engCatTone, diffLabel, publicTags, DEFAULT_ROBOTS } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from '@/components/CodeBlock';
@@ -112,11 +112,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!guide) return { title: '가이드를 찾을 수 없습니다', robots: { index: false, follow: false } };
   const url = `${SITE_URL}/engineer/${guide.slug}`;
   return {
-    title: `${guide.title} — Nodelog Engineer`,
+    // absolute: 루트 template('%s | Nodelog') 적용을 막아 "… — Nodelog Engineer | Nodelog"
+    // 이중 브랜드를 방지한다. (섹션 서브브랜드 "Nodelog Engineer"는 유지)
+    title: { absolute: `${guide.title} — Nodelog Engineer` },
     description: guide.summary,
-    keywords: guide.tags.join(', '),
+    keywords: publicTags(guide.tags).join(', '),
     authors: [{ name: guide.author }],
     alternates: { canonical: url },
+    robots: DEFAULT_ROBOTS,
     openGraph: {
       title: `${guide.title} — Nodelog Engineer`,
       description: guide.summary,
@@ -234,7 +237,7 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': guideUrl },
     image: { '@type': 'ImageObject', url: `${guideUrl}/opengraph-image`, width: 1200, height: 630 },
-    keywords: guide.tags.join(', '),
+    keywords: publicTags(guide.tags).join(', '),
     articleSection: guide.category,
     proficiencyLevel: guide.difficulty === 'beginner' ? 'Beginner' : guide.difficulty === 'advanced' ? 'Expert' : 'Intermediate',
     inLanguage: 'ko',

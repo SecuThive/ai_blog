@@ -6,11 +6,11 @@ import ArchiveLoadMore from '@/components/ArchiveLoadMore';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
-  title: '아카이브 — Nodelog',
+  title: '아카이브',
   description: '시간 순서로 정리된 전체 글.',
   alternates: { canonical: `${SITE_URL}/archive` },
   openGraph: {
-    title: '아카이브 — Nodelog',
+    title: '아카이브',
     description: '시간 순서로 정리된 전체 글.',
     url: `${SITE_URL}/archive`,
     type: 'website',

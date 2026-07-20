@@ -1,3 +1,5 @@
+import type { Metadata } from 'next';
+
 export function catTone(cat: string): string {
   if (cat.includes('AI') || cat.includes('자동화')) return 'blue';
   if (cat.includes('트렌드') || cat.includes('IT')) return 'purple';
@@ -48,3 +50,16 @@ export const SERIES_DESC: Record<string, string> = {
   'LLM 프롬프트 엔지니어링 마스터': 'CoT·ToT·ReAct 고급 패턴, A/B 테스트, 버전 관리까지. 프롬프트를 엔지니어링으로 다루는 완전 가이드.',
   'AI 데이터 아키텍처 마스터 가이드': '데이터 제품화, Data Mesh 아키텍처, 데이터 품질 자동화. AI를 위한 데이터 인프라 설계.',
 };
+
+// 기사(상세) 페이지가 generateMetadata로 루트 metadata를 덮어쓸 때 robots가
+// 유실되지 않도록 명시적으로 부여하는 기본값 — 큰 썸네일·긴 스니펫 허용.
+export const DEFAULT_ROBOTS: Metadata['robots'] = {
+  index: true,
+  follow: true,
+  googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
+};
+
+// series:/ep: 는 시리즈 회차 관리용 내부 태그 — 노출용(표시·keywords·JSON-LD)에서 제외한다.
+export function publicTags(tags: string[]): string[] {
+  return (tags ?? []).filter(t => !t.startsWith('series:') && !t.startsWith('ep:'));
+}

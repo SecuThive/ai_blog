@@ -8,11 +8,11 @@ import JsonLd from '@/components/JsonLd';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
-  title: '시리즈 — Nodelog',
+  title: '시리즈',
   description: '14개 시리즈, 100편 이상의 심층 연재. RAG부터 엔터프라이즈 AI까지 단계별로 완전 정복.',
   alternates: { canonical: `${SITE_URL}/series` },
   openGraph: {
-    title: '시리즈 — Nodelog',
+    title: '시리즈',
     description: '14개 시리즈, 100편 이상의 심층 연재. RAG부터 엔터프라이즈 AI까지 단계별로 완전 정복.',
     url: `${SITE_URL}/series`,
     type: 'website',
