@@ -7,8 +7,14 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
   title: '편집팀과 운영 원칙',
-  description: 'Nodelog 편집팀의 담당 범위와 자료 조사, 검토, 정정 및 발행 기준을 투명하게 공개합니다.',
+  description: 'Nodelog 기술 편집팀의 담당 범위와 AI 보조 도구 활용, 검토, 정정 및 발행 기준을 공개합니다.',
   alternates: { canonical: `${SITE_URL}/author` },
+  openGraph: {
+    title: '편집팀과 운영 원칙 | Nodelog',
+    description: 'Nodelog 기술 편집팀의 담당 범위와 AI 보조 도구 활용, 검토, 정정 및 발행 기준을 공개합니다.',
+    url: `${SITE_URL}/author`,
+    type: 'profile',
+  },
 };
 
 export const revalidate = 3600;
@@ -21,16 +27,16 @@ const REVIEW_SCOPE = {
 
 const STAGES = [
   { t: '소스 추적', s: '공식 문서 · 기술 소스', tone: 'blue',   icon: '🌐', desc: '주요 기술 소스·공식 문서 변화 추적' },
-  { t: '신호 점수화', s: 'AI · 변화율 분석', tone: 'purple', icon: '📊', desc: '중요도·트렌드 가중치 산출' },
-  { t: '초고 생성', s: 'AI 초안 작성', tone: 'purple', icon: '✍️', desc: '구조화된 기술 가이드 초안 생성' },
+  { t: '자료 정리', s: 'AI-assisted', tone: 'purple', icon: '📊', desc: '자료 조사와 콘텐츠 구조화 보조' },
+  { t: '초안 준비', s: 'Draft assistance', tone: 'purple', icon: '✍️', desc: '편집을 위한 기술 콘텐츠 초안 준비' },
   { t: '편집자 검토', s: 'Human · 사실/톤', tone: 'mint',   icon: '🔍', desc: '사실 확인·톤·맥락 검토' },
-  { t: '발행 & 개선', s: 'AI + Human', tone: 'amber',  icon: '🚀', desc: '발행 후 정정·보강 반영' },
+  { t: '발행 & 개선', s: 'Editorial review', tone: 'amber',  icon: '🚀', desc: '사람의 발행 판단과 발행 후 정정·보강' },
 ];
 
 const PRINCIPLES = [
-  { icon: '🔍', t: '투명성', d: 'AI 도구가 초안 작성에 사용되고 사람이 편집 검토한다는 운영 방식을 공개합니다.' },
+  { icon: '🔍', t: '투명성', d: 'AI 도구를 조사·구조화·초안 작성의 보조 수단으로 활용하고 사람이 편집 검토한다는 운영 방식을 공개합니다.' },
   { icon: '✅', t: '사실 확인', d: '핵심 사실과 명령어를 관련 문서와 대조하고, 오류 제보를 받으면 확인 후 정정합니다.' },
-  { icon: '🚫', t: '사람의 발행 판단', d: 'AI가 만든 초안을 그대로 자동 발행하지 않고, 공개 여부와 수정 범위를 사람이 결정합니다.' },
+  { icon: '🚫', t: '사람의 발행 판단', d: 'AI 도구의 결과물을 그대로 공개하지 않고, 공개 여부와 수정 범위를 사람이 결정합니다.' },
   { icon: '📚', t: '출처 연결', d: '관련 공식 문서·1차 출처를 글과 함께 안내하는 것을 원칙으로 하며, 미비한 글은 순차적으로 보강하고 있습니다.' },
 ];
 
@@ -64,9 +70,9 @@ export default async function AuthorPage() {
     url: `${SITE_URL}/author`,
     mainEntity: {
       '@type': 'Organization',
-      name: 'Nodelog 편집팀',
+      name: 'Nodelog 기술 편집팀',
       url: `${SITE_URL}/author`,
-      description: 'AI 초안 작성과 사람 편집 검토를 결합해 IT·개발·보안·인프라 기술 콘텐츠를 검증·발행하는 편집 조직.',
+      description: 'AI 보조 도구를 자료 조사와 초안 준비에 활용하고, 사람이 IT·개발·보안·인프라 콘텐츠의 공개 여부와 수정 범위를 결정하는 편집 조직.',
       knowsAbout: REVIEW_SCOPE.areas,
       parentOrganization: { '@type': 'Organization', name: 'Nodelog', url: SITE_URL },
     },
@@ -124,8 +130,8 @@ export default async function AuthorPage() {
               <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 18 }}>
                 <div style={{ width: 56, height: 56, borderRadius: 14, background: 'linear-gradient(135deg, oklch(0.65 0.16 245), oklch(0.55 0.18 290))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--ff-mono)', fontWeight: 600, color: 'white', fontSize: 22, border: '1px solid rgba(255,255,255,0.15)', flexShrink: 0 }}>N</div>
                 <div>
-                  <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>Nodelog AI</div>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-3)', fontFamily: 'var(--ff-mono)', letterSpacing: '0.04em' }}>CURATION · DRAFTING</div>
+                  <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>AI 보조 도구</div>
+                  <div style={{ fontSize: 11.5, color: 'var(--text-3)', fontFamily: 'var(--ff-mono)', letterSpacing: '0.04em' }}>RESEARCH · STRUCTURING · DRAFT ASSISTANCE</div>
                 </div>
               </div>
               <p style={{ color: 'var(--text-2)', fontSize: 14, lineHeight: 1.65, margin: '0 0 20px' }}>
@@ -161,7 +167,7 @@ export default async function AuthorPage() {
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: 13 }}>
                 {[
-                  { k: '역할', v: 'Nodelog Technical Editor' },
+                  { k: '역할', v: 'Nodelog 기술 편집팀' },
                   { k: '주요 역할', v: '자료 확인 · 편집 · 발행 판단' },
                   { k: '정정 문의', v: 'thive8564@gmail.com' },
                 ].map(row => (
@@ -176,7 +182,7 @@ export default async function AuthorPage() {
 
           {/* 편집 검토 범위·기준 — 실제 콘텐츠 커버리지에 부합하는 프로세스 공개(E-E-A-T) */}
           <div className="card" style={{ padding: 28, marginBottom: 56 }}>
-            <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em', marginBottom: 6 }}>Nodelog Technical Editor</div>
+            <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em', marginBottom: 6 }}>Nodelog 기술 편집팀</div>
             <p style={{ color: 'var(--text-3)', fontSize: 13.5, lineHeight: 1.6, margin: '0 0 22px' }}>
               특정 개인의 이력이 아니라, Nodelog의 기술 편집 검토가 어떤 범위와 기준으로 이뤄지는지 공개합니다.
             </p>
