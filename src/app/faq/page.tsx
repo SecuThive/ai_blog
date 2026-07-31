@@ -6,12 +6,12 @@ import { FAQ_ITEMS } from './data';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
-  title: 'FAQ — Nodelog',
-  description: 'Nodelog 운영 방식, AI 콘텐츠 생성 프로세스, 뉴스레터 구독, 제휴 문의에 대해 자주 묻는 질문을 정리했습니다.',
+  title: 'FAQ',
+  description: 'Nodelog의 AI 보조 도구 활용, 사람의 편집 검토, 콘텐츠 업데이트, 뉴스레터와 문의 방법을 안내합니다.',
   alternates: { canonical: `${SITE_URL}/faq` },
   openGraph: {
-    title: 'FAQ — Nodelog',
-    description: 'Nodelog 운영 방식과 사용법에 대해 가장 많이 받는 질문들을 정리했습니다.',
+    title: 'FAQ | Nodelog',
+    description: 'Nodelog의 AI 보조 도구 활용, 사람의 편집 검토, 콘텐츠 업데이트와 이용 방법을 안내합니다.',
     url: `${SITE_URL}/faq`,
     type: 'website',
   },
