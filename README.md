@@ -1,27 +1,46 @@
 <div align="center">
 
-# Nodelog
+<a href="https://www.thivelab.com">
+  <img src="./docs/readme-hero.svg" width="100%" alt="Nodelog — AI Draft, Human Review">
+</a>
 
-### AI 초안에 사람의 검토를 더한 실전 IT 테크 미디어
+<br>
 
-개발 · 인프라 · 보안 · AI 자동화의 복잡한 기술 정보를<br>
-공식 문서와 실무 관점으로 정리해 전달합니다.
+[![Production](https://img.shields.io/website?down_color=E85D75&down_message=offline&label=production&style=flat-square&up_color=42D392&up_message=online&url=https%3A%2F%2Fwww.thivelab.com)](https://www.thivelab.com)
+[![Next.js](https://img.shields.io/badge/Next.js-16.2-111827?style=flat-square&logo=nextdotjs&logoColor=white)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-19.2-149ECA?style=flat-square&logo=react&logoColor=white)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com)
+[![Vercel](https://img.shields.io/badge/Deployed_on-Vercel-111827?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com)
 
-[![Website](https://img.shields.io/badge/Website-thivelab.com-5535D4?style=for-the-badge&logo=vercel&logoColor=white)](https://www.thivelab.com)
-[![Next.js](https://img.shields.io/badge/Next.js-16.2-000000?style=for-the-badge&logo=nextdotjs)](https://nextjs.org)
-[![React](https://img.shields.io/badge/React-19.2-149ECA?style=for-the-badge&logo=react&logoColor=white)](https://react.dev)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
-[![Vercel](https://img.shields.io/badge/Deploy-Vercel-000000?style=for-the-badge&logo=vercel)](https://vercel.com)
+**공식 문서와 1차 자료를 추적하고, AI의 속도에 사람의 판단을 더합니다.**
 
-[사이트 방문](https://www.thivelab.com) ·
-[전체 글](https://www.thivelab.com/blog) ·
-[엔지니어 가이드](https://www.thivelab.com/engineer) ·
-[시리즈](https://www.thivelab.com/series) ·
+[**사이트 열기 ↗**](https://www.thivelab.com)　·　
+[전체 글](https://www.thivelab.com/blog)　·　
+[엔지니어 가이드](https://www.thivelab.com/engineer)　·　
+[시리즈](https://www.thivelab.com/series)　·　
 [RSS](https://www.thivelab.com/rss)
 
 </div>
 
 ---
+
+<table>
+  <tr>
+    <td width="33%" valign="top">
+      <strong>01 · SIGNAL</strong><br><br>
+      공식 문서와 기술 생태계의 변화를 추적해 지금 중요한 신호를 찾습니다.
+    </td>
+    <td width="33%" valign="top">
+      <strong>02 · REVIEW</strong><br><br>
+      AI 초안을 사람이 사실성, 재현성, 실무 적용성 기준으로 검토합니다.
+    </td>
+    <td width="33%" valign="top">
+      <strong>03 · SHIP</strong><br><br>
+      검색 가능한 글, 런북, 엔지니어 가이드와 시리즈로 발행합니다.
+    </td>
+  </tr>
+</table>
 
 ## 프로젝트 소개
 
@@ -29,31 +48,39 @@ Nodelog는 IT·개발·보안 실무자를 위한 한국어 기술 미디어입�
 
 이 저장소에는 [thivelab.com](https://www.thivelab.com)의 프론트엔드, 콘텐츠 API, 검색, 댓글, 뉴스레터, SEO 및 운영 자동화 코드가 들어 있습니다.
 
+<details>
+<summary><strong>README 빠른 탐색</strong></summary>
+
+<br>
+
+- [주요 기능](#주요-기능)
+- [시스템 구성](#시스템-구성)
+- [시작하기](#시작하기)
+- [프로젝트 구조](#프로젝트-구조)
+- [데이터 모델](#데이터-모델)
+- [API 개요](#api-개요)
+- [콘텐츠 발행 흐름](#콘텐츠-발행-흐름)
+- [SEO와 품질 관리](#seo와-품질-관리)
+- [배포](#배포)
+
+</details>
+
 ### 다루는 영역
 
-| 영역 | 주요 주제 |
-| --- | --- |
-| AI·자동화 | LLM, RAG, 에이전트, 프롬프트, AI 거버넌스 |
-| 개발 | JavaScript·TypeScript, Python, Java, Git, CI/CD |
-| 인프라·DevOps | Linux, Docker, Kubernetes, Cloud, systemd |
-| 보안 | 서버 보안, 취약점 진단, 네트워크, 컴플라이언스 |
-| 데이터·네트워크 | PostgreSQL, MySQL, 연결 풀링, 장애 진단 |
-| 도구·리뷰 | 개발 도구 비교, 도입 기준, 운영 비용 분석 |
+| `AI · AUTOMATION` | `DEV · CODE` | `INFRA · OPS` |
+| :--- | :--- | :--- |
+| LLM, RAG, 에이전트, 프롬프트, AI 거버넌스 | JavaScript, TypeScript, Python, Java, Git, CI/CD | Linux, Docker, Kubernetes, Cloud, systemd |
+| `SECURITY` | `DATA · NETWORK` | `TOOLS · REVIEW` |
+| 서버 보안, 취약점 진단, 네트워크, 컴플라이언스 | PostgreSQL, MySQL, 연결 풀링, 장애 진단 | 개발 도구 비교, 도입 기준, 운영 비용 분석 |
 
 ## 주요 기능
 
-- **콘텐츠 허브** — 블로그, 엔지니어 가이드, 시리즈, 카테고리와 태그 탐색
-- **실시간 검색** — 글과 엔지니어 가이드를 통합 검색하고 관련도순 정렬
-- **개인화 탐색** — 트렌딩, 추천, 북마크와 읽던 위치 저장
-- **읽기 경험** — 목차, 진행률, 코드 블록 복사, 관련 글과 이전·다음 글
-- **커뮤니티** — 익명 댓글·답글, 댓글 좋아요, 글 도움 여부 피드백
-- **뉴스레터** — 구독·해지, 환영 메일과 뉴스레터 발송
-- **콘텐츠 API** — 인증된 AI 에이전트의 초안 생성·수정·발행
-- **중복 방지** — 제목 유사도 검사로 검색 카니벌라이제이션 위험 글 보류
-- **SEO 자동화** — Metadata, canonical, JSON-LD, sitemap, robots, RSS, IndexNow
-- **ISR** — 주요 목록과 상세 페이지를 주기적으로 재생성하고 발행 시 즉시 무효화
-- **동적 OG 이미지** — 글과 가이드별 Open Graph 이미지 자동 생성
-- **품질 운영 도구** — 콘텐츠 품질, 출처, 중복, 내부 링크와 전체 URL 크롤 감사
+| Experience | Publishing | Discovery | Operations |
+| :--- | :--- | :--- | :--- |
+| 목차·읽기 진행률 | AI 콘텐츠 API | 통합 검색 | ISR 재검증 |
+| 코드 블록 복사 | 사람 승인 흐름 | 태그·카테고리 | 동적 OG 이미지 |
+| 북마크·읽던 위치 | 중복 발행 방지 | 시리즈·추천 | Sitemap·RSS |
+| 댓글·답글·피드백 | 뉴스레터·문의 | 관련 글·트렌딩 | IndexNow·품질 감사 |
 
 ## 시스템 구성
 
@@ -74,37 +101,41 @@ flowchart LR
 
 ### 기술 스택
 
-| 구분 | 기술 | 역할 |
+<p>
+  <img src="https://skillicons.dev/icons?i=nextjs,react,ts,tailwind,supabase,vercel&theme=dark" alt="Next.js, React, TypeScript, Tailwind CSS, Supabase, Vercel">
+</p>
+
+| Layer | Technology | Responsibility |
 | --- | --- | --- |
-| Framework | Next.js 16 App Router | 페이지, Route Handler, ISR, Metadata |
-| UI | React 19, TypeScript | 서버·클라이언트 컴포넌트 |
-| Styling | CSS, Tailwind CSS 4 toolchain | 반응형 UI와 디자인 토큰 |
-| Content | React Markdown, remark-gfm | Markdown 본문과 GFM 렌더링 |
-| Database | Supabase PostgreSQL | 글, 가이드, 댓글, 구독자, 문의 |
-| Email | Resend | 구독 환영 메일, 뉴스레터, 문의 알림 |
-| Hosting | Vercel | 빌드, 배포, Cron, Analytics |
-| Search/SEO | Supabase Search, IndexNow | 사이트 검색과 검색엔진 갱신 |
+| Web | Next.js 16 · React 19 · TypeScript | App Router, RSC, Route Handler, Metadata |
+| Content | React Markdown · remark-gfm | Markdown 및 GFM 본문 렌더링 |
+| Data | Supabase · PostgreSQL | 콘텐츠, 댓글, 구독자, 문의와 RLS |
+| Delivery | Vercel · ISR · Cron | 배포, 캐시 재검증, 예약 작업, Analytics |
+| Messaging | Resend | 구독, 뉴스레터, 문의 알림 |
+| Discovery | IndexNow · JSON-LD · RSS | 검색엔진 갱신과 콘텐츠 배포 |
 
 ## 시작하기
 
-### 요구 사항
-
-- Node.js 20 이상
-- npm
-- Supabase 프로젝트
-- 선택 사항: Resend API 키
-
-### 설치 및 실행
+> [!IMPORTANT]
+> 이 프로젝트는 **Next.js 16.2**를 사용합니다. 코드 변경 전 저장소의 `AGENTS.md`와 설치된 Next.js 문서를 먼저 확인하세요. 이전 버전의 관례가 그대로 적용되지 않을 수 있습니다.
 
 ```bash
+# 1. Clone
 git clone git@github.com:SecuThive/ai_blog.git
 cd ai_blog
+
+# 2. Install
 npm install
-# 아래 환경 변수 표를 참고해 .env.local 구성
+
+# 3. Configure
+# 아래 표를 참고해 .env.local 구성
+
+# 4. Run
 npm run dev
 ```
 
-개발 서버는 기본적으로 [http://localhost:3000](http://localhost:3000)에서 실행됩니다.
+**Requirements**　Node.js 20+ · npm · Supabase project<br>
+**Local URL**　[http://localhost:3000](http://localhost:3000)
 
 아래 환경 변수 표를 참고해 `.env.local`을 구성하세요. 실제 키는 Git에 커밋하지 않습니다.
 
@@ -348,8 +379,12 @@ GitHub main
 
 <div align="center">
 
-**NODELOG · AI DRAFT, HUMAN REVIEW**
+<sub>BUILT WITH NEXT.JS · SUPABASE · VERCEL</sub>
+
+### NODELOG · AI DRAFT, HUMAN REVIEW
 
 정보의 양보다 맥락의 밀도를 높입니다.
+
+[thivelab.com](https://www.thivelab.com)
 
 </div>

@@ -1,0 +1,63 @@
+<svg width="1200" height="420" viewBox="0 0 1200 420" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Nodelog</title>
+  <desc id="desc">AI draft, human review. Practical intelligence for builders.</desc>
+  <defs>
+    <linearGradient id="bg" x1="64" y1="18" x2="1130" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#080B13"/>
+      <stop offset="0.52" stop-color="#101426"/>
+      <stop offset="1" stop-color="#090B12"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="367" y1="134" x2="853" y2="268" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#80BDFF"/>
+      <stop offset="0.48" stop-color="#9B8AFF"/>
+      <stop offset="1" stop-color="#D886FF"/>
+    </linearGradient>
+    <linearGradient id="line" x1="142" y1="0" x2="1075" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#75B9FF" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#9E89FF"/>
+      <stop offset="1" stop-color="#D583FF" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientTransform="translate(330 98) rotate(41) scale(315 220)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#377DFF" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#377DFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientTransform="translate(902 324) rotate(-145) scale(328 230)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B653F1" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#B653F1" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="28" flood-color="#000" flood-opacity="0.38"/>
+    </filter>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" stroke="#A8B5D3" stroke-opacity="0.055"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="420" rx="28" fill="url(#bg)"/>
+  <rect width="1200" height="420" rx="28" fill="url(#grid)"/>
+  <rect width="1200" height="420" rx="28" fill="url(#glowA)"/>
+  <rect width="1200" height="420" rx="28" fill="url(#glowB)"/>
+  <rect x="0.75" y="0.75" width="1198.5" height="418.5" rx="27.25" stroke="#C9D3F2" stroke-opacity="0.12" stroke-width="1.5"/>
+
+  <circle cx="74" cy="68" r="4" fill="#72B9FF"/>
+  <circle cx="94" cy="68" r="4" fill="#9A88FF"/>
+  <circle cx="114" cy="68" r="4" fill="#D47FFF"/>
+  <text x="1066" y="73" text-anchor="end" fill="#8692AE" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" letter-spacing="2">EDITORIAL SYSTEM / 04</text>
+
+  <g filter="url(#shadow)">
+    <circle cx="600" cy="118" r="34" fill="#11172A" stroke="url(#brand)" stroke-width="1.5"/>
+    <circle cx="600" cy="118" r="21" fill="url(#brand)"/>
+    <circle cx="594" cy="111" r="7" fill="#E1F1FF" fill-opacity="0.62"/>
+    <path d="M600 76V65M642 118H653M600 160V171M558 118H547" stroke="#A992FF" stroke-opacity="0.42" stroke-linecap="round"/>
+  </g>
+
+  <text x="600" y="224" text-anchor="middle" fill="url(#brand)" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="80" font-weight="760" letter-spacing="-4">NODELOG</text>
+  <text x="600" y="265" text-anchor="middle" fill="#DCE3F4" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="500" letter-spacing="4">AI DRAFT · HUMAN REVIEW</text>
+  <rect x="142" y="296" width="916" height="1" fill="url(#line)"/>
+  <text x="600" y="337" text-anchor="middle" fill="#8F9AB3" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="16" letter-spacing="1.2">PRACTICAL INTELLIGENCE FOR BUILDERS</text>
+
+  <g fill="#8793AE" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" letter-spacing="1.5">
+    <text x="72" y="382">DEV / INFRA / SECURITY / AI</text>
+    <text x="1128" y="382" text-anchor="end">THIVELAB.COM</text>
+  </g>
+</svg>
