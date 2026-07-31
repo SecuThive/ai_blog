@@ -1,8 +1,18 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
+
 export const metadata: Metadata = {
-  title: '개인정보처리방침 — Nodelog',
+  title: '개인정보처리방침',
+  description: 'Nodelog의 개인정보 수집 범위, 쿠키와 광고 서비스, 처리 목적 및 이용자 권리를 안내합니다.',
+  alternates: { canonical: `${SITE_URL}/privacy` },
+  openGraph: {
+    title: '개인정보처리방침 | Nodelog',
+    description: 'Nodelog의 개인정보 수집 범위, 쿠키와 광고 서비스, 처리 목적 및 이용자 권리를 안내합니다.',
+    url: `${SITE_URL}/privacy`,
+    type: 'website',
+  },
 };
 
 const SECTIONS = [
@@ -29,7 +39,7 @@ export default function PrivacyPage() {
           <h1 className="page-title" style={{ marginBottom: 16 }}>개인정보처리방침</h1>
           <p className="page-lead">Nodelog(thivelab.com)가 수집하는 정보의 범위, 사용 방식, 그리고 사용자의 권리를 명확하게 안내합니다.</p>
           <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11.5, color: 'var(--text-4)', letterSpacing: '0.06em', marginTop: 18 }}>
-            최종 업데이트 · 2026.07.13 (분석·광고 데이터 및 보관 기준 보완) · 최초 적용일 2026.06.02
+            최종 업데이트 · 2026.07.31 (메타데이터 및 안내 표현 보완) · 최초 적용일 2026.06.02
           </div>
         </div>
       </section>

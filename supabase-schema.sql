@@ -9,12 +9,16 @@ create table if not exists posts (
   cover_image   text,
   category      text        not null default 'AI & 자동화',
   tags          text[]      not null default '{}',
-  status        text        not null default 'published' check (status in ('draft','published')),
+  status        text        not null default 'draft' check (status in ('draft','published')),
   author        text        not null default 'Content Director',
   agent_role    text        not null default 'content_director',
   views         bigint      not null default 0,
   created_at    timestamptz not null default now(),
-  published_at  timestamptz
+  published_at  timestamptz,
+  updated_at    timestamptz,
+  reviewed_at   timestamptz,
+  reviewed_by   text,
+  content_evidence jsonb
 );
 
 -- 인덱스

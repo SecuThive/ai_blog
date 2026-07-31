@@ -18,7 +18,7 @@ https://www.thivelab.com
 
 ### Blog Articles — https://www.thivelab.com/blog/[slug]
 In-depth analysis articles covering AI trends, development practices, security research, and
-infrastructure. Published daily. Structured as: title, excerpt, full markdown body, category,
+infrastructure. Reviewed and updated as needed. Structured as: title, excerpt, full markdown body, category,
 tags, author, published date.
 - Categories: AI & 자동화, IT 트렌드, 개발, 툴 리뷰, 보안
 - Format: Markdown with code blocks, tables, and structured headings

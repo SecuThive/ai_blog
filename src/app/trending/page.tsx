@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
-import { catTone } from '@/lib/utils';
+import { catTone, publicTags } from '@/lib/utils';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
@@ -88,8 +88,8 @@ async function getTrending(): Promise<{
   /* 태그별 총 조회수 집계 */
   const tagMap = new Map<string, number>();
   for (const p of posts) {
-    for (const t of (p.tags ?? [])) {
-      if (!t.startsWith('series:') && t.length > 1) {
+    for (const t of publicTags(p.tags ?? [])) {
+      if (t.length > 1) {
         tagMap.set(t, (tagMap.get(t) ?? 0) + p.views);
       }
     }

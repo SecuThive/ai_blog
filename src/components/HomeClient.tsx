@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import PostThumb from '@/components/PostThumb';
-import { catTone } from '@/lib/utils';
+import { catTone, publicTags } from '@/lib/utils';
 
 /* ===== Types ===== */
 export interface TickItem  { tag: string; title: string }
@@ -357,7 +357,7 @@ export function MagLatestSection({ posts }: { posts: MagPost[] }) {
               <div className="card-foot">
                 <span>{magTimeAgo(big.published_at)}</span>
                 <span className="dot" />
-                <span>AI · EDITED BY HUMAN</span>
+                <span>REVIEWED · UPDATED</span>
               </div>
             </div>
           </Link>
@@ -410,7 +410,7 @@ export function TopicCloud({ topics }: { topics: TopicItem[] }) {
         </div>
         <div className="cloud-band">
           <div className="cloud-row">
-            {topics.map(({ tag, count, size }, i) => (
+            {topics.filter(({ tag }) => publicTags([tag]).length > 0).map(({ tag, count, size }, i) => (
               <Link
                 key={tag}
                 href={`/tag/${encodeURIComponent(tag)}`}

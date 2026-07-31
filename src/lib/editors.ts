@@ -7,9 +7,6 @@
 // 배열이 비어 있으면 /author 의 "편집자 소개" 섹션과 Person 스키마는 렌더되지 않습니다.
 // 실제 항목을 추가하면 프로필 카드 + JSON-LD(Person)가 자동으로 노출됩니다.
 //
-// ── 채우는 방법 ──────────────────────────────────────────────
-// 아래 EXAMPLE_EDITOR 형태를 참고해 EDITORS 배열에 실제 항목을 추가하세요.
-
 export interface Editor {
   /** 실명 또는 고정 필명 */
   name: string;
@@ -28,21 +25,6 @@ export interface Editor {
   /** 외부 프로필 (선택) — Person 스키마 sameAs 로도 쓰임 */
   links?: { label: string; url: string }[];
 }
-
-// 참고용 예시 (실제 데이터로 교체하세요 — 이 상수는 사용되지 않습니다):
-export const EXAMPLE_EDITOR: Editor = {
-  name: '이동하',
-  penName: false,
-  title: '인프라·인증·보안 편집자',
-  expertise: ['Linux 서버', 'OTP/FIDO 인증', 'IAM', '네트워크 장애 분석'],
-  bio: 'Linux 서버 운영과 인증·보안 솔루션 실무 경험을 바탕으로 관련 기술 콘텐츠의 사실관계와 명령어를 검토합니다.',
-  reviews: ['인프라', '보안'],
-  initials: '이동',
-  links: [
-    { label: 'GitHub', url: 'https://github.com/여기수정' },
-    { label: 'LinkedIn', url: 'https://linkedin.com/in/여기수정' },
-  ],
-};
 
 // 실제 편집자를 여기에 추가하세요. 비어 있으면 섹션이 노출되지 않습니다.
 export const EDITORS: Editor[] = [];

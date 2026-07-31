@@ -14,7 +14,30 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const sb = supabaseAdmin();
 
   const update: Record<string, unknown> = { ...body };
-  if (body.status === 'published') update.published_at = new Date().toISOString();
+  const { data: existing, error: existingError } = await sb
+    .from('posts')
+    .select('status,published_at')
+    .eq('id', id)
+    .single();
+  if (existingError || !existing) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  if (body.status === 'published' && existing.status !== 'published') {
+    if (
+      body.approval_confirmed !== true
+      || typeof body.reviewed_by !== 'string'
+      || body.reviewed_by.trim().length === 0
+    ) {
+      return NextResponse.json({
+        error: 'Publishing requires approval_confirmed=true and a real reviewed_by value',
+      }, { status: 400 });
+    }
+    update.published_at = existing.published_at ?? new Date().toISOString();
+    update.reviewed_at = new Date().toISOString();
+    update.reviewed_by = body.reviewed_by.trim();
+  }
+  delete update.approval_confirmed;
   delete update.id;
 
   const { data, error } = await sb.from('posts').update(update).eq('id', id).select().single();

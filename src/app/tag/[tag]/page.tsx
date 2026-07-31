@@ -5,6 +5,7 @@ import type { Metadata } from 'next';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { TAG_REDIRECTS } from '@/lib/tagRedirects';
 import TagLoadMore from '@/components/TagLoadMore';
+import { publicTags } from '@/lib/utils';
 
 export const revalidate = 60;
 
@@ -88,7 +89,7 @@ async function getRelatedTags(tag: string): Promise<string[]> {
 
   const tagCount = new Map<string, number>();
   for (const p of (data ?? [])) {
-    for (const t of (p.tags as string[] ?? [])) {
+    for (const t of publicTags(p.tags as string[] ?? [])) {
       if (t !== tag) tagCount.set(t, (tagCount.get(t) ?? 0) + 1);
     }
   }

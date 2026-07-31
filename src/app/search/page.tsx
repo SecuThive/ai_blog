@@ -180,9 +180,13 @@ function SearchContent() {
 export default function SearchPage() {
   return (
     <Suspense fallback={
-      <div style={{ padding: '80px 0', textAlign: 'center', color: 'var(--text-3)', fontFamily: 'var(--ff-mono)', fontSize: 12, letterSpacing: '0.10em' }}>
-        LOADING…
-      </div>
+      <section className="page-hero">
+        <div className="container">
+          <div className="page-eyebrow">SEARCH</div>
+          <h1 className="page-title">검색</h1>
+          <p className="page-lead">검색 화면을 불러오고 있습니다.</p>
+        </div>
+      </section>
     }>
       <SearchContent />
     </Suspense>

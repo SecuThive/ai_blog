@@ -17,11 +17,11 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
   title: 'Nodelog — IT·개발·보안 테크 미디어',
-  description: 'AI 초안과 사람의 편집 검토를 거쳐 발행하는 IT·개발·보안·인프라 실무 미디어.',
+  description: '공식 문서와 기술 자료를 확인하고, 검토·정정·업데이트를 이어가는 IT 실무 미디어.',
   alternates: { canonical: SITE_URL },
   openGraph: {
     title: 'Nodelog — IT·개발·보안 테크 미디어',
-    description: 'AI 초안과 사람의 편집 검토를 거쳐 발행하는 IT·개발·보안·인프라 실무 미디어.',
+    description: '공식 문서와 기술 자료를 확인하고, 검토·정정·업데이트를 이어가는 IT 실무 미디어.',
     url: SITE_URL,
     type: 'website',
     images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
@@ -121,7 +121,7 @@ function HeroV2({ posts, seriesCount, guideCount, subscriberCount }: {
   const stats = [
     { num: String(seriesCount), sub: 'ACTIVE SERIES' },
     { num: `${guideCount}+`, sub: 'ENGINEER GUIDES' },
-    { badge: true, sub: 'AI DRAFT · HUMAN REVIEW' },
+    { badge: true, sub: 'REVIEWED · UPDATED' },
     // 구독자는 유의미해지기 전까지 숨김(미완성 지표처럼 보이는 '—' 제거)
     ...(subscriberCount >= 50
       ? [{ num: subscriberCount >= 1000 ? `${(subscriberCount / 1000).toFixed(1)}K` : String(subscriberCount), sub: 'SUBSCRIBERS' }]
@@ -134,10 +134,10 @@ function HeroV2({ posts, seriesCount, guideCount, subscriberCount }: {
           <div>
             <span className="hero-status">
               <span className="live-dot" />
-              <span>AI DRAFT · HUMAN REVIEW · PUBLISHING</span>
+              <span>REVIEWED · CURATED · UPDATED</span>
             </span>
             <h1>
-              <span className="grad">AI 초안에 사람의 검토를 더한,</span>
+              <span className="grad">자료를 확인하고 맥락을 검토한,</span>
               <br />
               <em>오늘의</em> 실전 IT 인사이트.
             </h1>
@@ -170,7 +170,7 @@ function HeroV2({ posts, seriesCount, guideCount, subscriberCount }: {
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
                         </svg>
-                        AI
+                        CHECK
                       </span>
                     </div>
                   ) : (
@@ -226,7 +226,7 @@ function DailyBriefing({ posts }: { posts: PostSummary[] }) {
               <h3>{lead.title}</h3>
               <p>{lead.excerpt}</p>
               <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', letterSpacing: '0.04em', display: 'flex', gap: 8 }}>
-                <span>AI · EDITED BY HUMAN</span>
+                <span>REVIEWED · UPDATED</span>
               </div>
             </div>
           </Link>
@@ -593,13 +593,13 @@ export default async function HomePage() {
     return (
       <div className="container" style={{ paddingTop: 80, paddingBottom: 80, textAlign: 'center' }}>
         <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, letterSpacing: '.16em', color: 'var(--text-3)', marginBottom: 24, textTransform: 'uppercase' }}>
-          NODELOG · AI IT MEDIA
+          NODELOG · PRACTICAL IT MEDIA
         </div>
         <h1 style={{ fontSize: 'clamp(36px,5vw,60px)', fontWeight: 600, letterSpacing: '-.035em', marginBottom: 20 }}>
           첫 번째 글을 준비 중입니다.
         </h1>
         <p style={{ fontSize: 17, color: 'var(--text-3)', lineHeight: 1.6, maxWidth: 480, margin: '0 auto' }}>
-          AI 에이전트가 최신 IT 트렌드를 분석하고 글을 작성 중입니다.
+          공식 문서와 기술 자료를 확인하며 첫 번째 글을 준비하고 있습니다.
         </p>
       </div>
     );

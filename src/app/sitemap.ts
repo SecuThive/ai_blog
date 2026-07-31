@@ -12,23 +12,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
   const client = makeFreshClient();
 
-  const [postsRes, guidesRes] = await Promise.all([
-    client
+  // 마이그레이션 적용 전후 모두 sitemap을 유지한다. 새 updated_at 컬럼이 아직
+  // 없는 환경에서는 기존 published_at 기반 결과로 안전하게 폴백한다.
+  let postsRes = await client
+    .from('posts')
+    .select('slug,published_at,updated_at,tags,category')
+    .eq('status', 'published');
+  if (postsRes.error) {
+    postsRes = await client
       .from('posts')
       .select('slug,published_at,tags,category')
-      .eq('status', 'published'),
-    client
-      .from('engineer_guides')
-      .select('slug,updated_at')
-      .eq('status', 'published'),
-  ]);
+      .eq('status', 'published') as typeof postsRes;
+  }
+  const guidesRes = await client
+    .from('engineer_guides')
+    .select('slug,updated_at')
+    .eq('status', 'published');
 
   // noindex 처리된 보강 대상 글은 sitemap에서도 제외 (색인 신호 일관성)
-  const posts = ((postsRes.data ?? []) as { slug: string; published_at: string; tags: string[] }[])
+  const posts = ((postsRes.data ?? []) as { slug: string; published_at: string; updated_at?: string | null; tags: string[] }[])
     .filter(p => !NOINDEX_POST_SLUGS.has(p.slug))
     .map(p => ({
       url: `${base}/blog/${p.slug}`,
-      lastModified: new Date(p.published_at),
+      lastModified: new Date(p.updated_at ?? p.published_at),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     }));
@@ -60,7 +66,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         // ep:N은 시리즈 에피소드 순서용 내부 태그 — /tag/ep:1 같은 무의미한
         // 페이지가 sitemap에 들어가지 않도록 제외한다(색인 대상 아님).
         continue;
-      } else {
+      } else if (!tag.includes('/')) {
         tagCount.set(tag, (tagCount.get(tag) ?? 0) + 1);
         if (when > (tagLast.get(tag) ?? '')) tagLast.set(tag, when);
       }
@@ -103,18 +109,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const staticPages = [
-    { url: base, changeFrequency: 'daily' as const, priority: 1 },
-    { url: `${base}/engineer`, changeFrequency: 'daily' as const, priority: 0.9 },
-    { url: `${base}/series`, changeFrequency: 'weekly' as const, priority: 0.8 },
-    { url: `${base}/trending`, changeFrequency: 'hourly' as const, priority: 0.7 },
-    { url: `${base}/tags`, changeFrequency: 'weekly' as const, priority: 0.6 },
-    { url: `${base}/archive`, changeFrequency: 'daily' as const, priority: 0.6 },
-    { url: `${base}/curated`, changeFrequency: 'weekly' as const, priority: 0.6 },
-    { url: `${base}/recommend`, changeFrequency: 'daily' as const, priority: 0.6 },
-    { url: `${base}/about`, changeFrequency: 'monthly' as const, priority: 0.5 },
-    { url: `${base}/contact`, changeFrequency: 'monthly' as const, priority: 0.4 },
-    { url: `${base}/faq`, changeFrequency: 'monthly' as const, priority: 0.4 },
-  ].map(p => ({ ...p, lastModified: latestDate }));
+    { path: '', changeFrequency: 'daily' as const, priority: 1, lastModified: latestDate },
+    { path: '/engineer', changeFrequency: 'daily' as const, priority: 0.9, lastModified: latestDate },
+    { path: '/series', changeFrequency: 'weekly' as const, priority: 0.8, lastModified: latestDate },
+    { path: '/trending', changeFrequency: 'daily' as const, priority: 0.7, lastModified: latestDate },
+    { path: '/tags', changeFrequency: 'weekly' as const, priority: 0.6, lastModified: latestDate },
+    { path: '/archive', changeFrequency: 'daily' as const, priority: 0.6, lastModified: latestDate },
+    { path: '/curated', changeFrequency: 'weekly' as const, priority: 0.6, lastModified: latestDate },
+    { path: '/recommend', changeFrequency: 'daily' as const, priority: 0.6, lastModified: latestDate },
+    { path: '/about', changeFrequency: 'monthly' as const, priority: 0.5, lastModified: new Date('2026-07-31') },
+    { path: '/contact', changeFrequency: 'monthly' as const, priority: 0.4, lastModified: new Date('2026-07-31') },
+    { path: '/faq', changeFrequency: 'monthly' as const, priority: 0.4, lastModified: new Date('2026-07-31') },
+    { path: '/privacy', changeFrequency: 'yearly' as const, priority: 0.3, lastModified: new Date('2026-07-31') },
+    { path: '/terms', changeFrequency: 'yearly' as const, priority: 0.3, lastModified: new Date('2026-04-30') },
+    { path: '/policy', changeFrequency: 'monthly' as const, priority: 0.4, lastModified: new Date('2026-07-31') },
+    { path: '/author', changeFrequency: 'monthly' as const, priority: 0.4, lastModified: new Date('2026-07-31') },
+  ].map(({ path, ...p }) => ({ ...p, url: `${base}${path}` }));
 
   return [...staticPages, ...categoryPages, ...posts, ...guides, ...seriesPages, ...tagPages];
 }

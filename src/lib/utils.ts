@@ -65,5 +65,10 @@ export const MIN_DISPLAY_VIEWS = 100;
 
 // series:/ep: 는 시리즈 회차 관리용 내부 태그 — 노출용(표시·keywords·JSON-LD)에서 제외한다.
 export function publicTags(tags: string[]): string[] {
-  return (tags ?? []).filter(t => !t.startsWith('series:') && !t.startsWith('ep:'));
+  return (tags ?? []).filter(t =>
+    !t.startsWith('series:')
+    && !t.startsWith('ep:')
+    // 슬래시는 단일 동적 세그먼트를 둘로 나눠 내부 404를 만든다.
+    && !t.includes('/')
+  );
 }

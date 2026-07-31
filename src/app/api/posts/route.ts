@@ -78,7 +78,8 @@ export async function POST(req: NextRequest) {
   const {
     title, content, excerpt, category = 'AI & 자동화',
     tags = [], author = 'Content Director', agent_role = 'content_director',
-    cover_image, status = 'published',
+    cover_image, status = 'draft', approval_confirmed = false, reviewed_by,
+    content_evidence,
   } = body;
 
   if (!title || !content) {
@@ -107,10 +108,14 @@ export async function POST(req: NextRequest) {
 
   // 중복 가드: 발행 요청인데 기존 발행글과 제목이 매우 유사하면 draft로 강제 보류.
   // (명시적으로 status='draft'로 들어온 요청은 이미 검토 대상이므로 검사 생략)
-  let effectiveStatus = status;
+  const publishApproved = status === 'published'
+    && approval_confirmed === true
+    && typeof reviewed_by === 'string'
+    && reviewed_by.trim().length > 0;
+  let effectiveStatus = publishApproved ? 'published' : 'draft';
   let heldDuplicate: { id: number; title: string; slug: string; sim: number } | null = null;
   let heldReason: string | null = null;
-  if (status === 'published') {
+  if (publishApproved) {
     heldDuplicate = await findNearDuplicate(sb, title);
     if (heldDuplicate) {
       effectiveStatus = 'draft';
@@ -139,6 +144,9 @@ export async function POST(req: NextRequest) {
     author,
     agent_role,
     status: effectiveStatus,
+    content_evidence: content_evidence ?? null,
+    reviewed_by: publishApproved ? reviewed_by.trim() : null,
+    reviewed_at: publishApproved ? new Date().toISOString() : null,
     views: 0,
     published_at: effectiveStatus === 'published' ? new Date().toISOString() : null,
   }).select().single();
@@ -148,11 +156,11 @@ export async function POST(req: NextRequest) {
   // 보류된 경우: 발행하지 않고 draft로 저장했음을 알린다.
   // 생성 파이프라인은 held_as_draft=true 응답을 받으면 "다른 주제로 재시도"해야
   // 일일 발행 슬롯이 비지 않는다. (주제 선정 전 GET /api/posts/covered-topics 확인 권장)
-  if (heldReason) {
+  if (heldReason || (status === 'published' && !publishApproved)) {
     return NextResponse.json({
       post: data,
       held_as_draft: true,
-      reason: heldReason,
+      reason: heldReason ?? 'publishing requires approval_confirmed=true and a real reviewed_by value',
       ...(heldDuplicate ? { duplicate_of: heldDuplicate } : {}),
       retry_hint: 'pick a different topic; consult GET /api/posts/covered-topics before choosing',
     }, { status: 200 });

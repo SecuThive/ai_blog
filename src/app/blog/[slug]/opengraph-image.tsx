@@ -135,7 +135,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
           <span style={{ fontSize: 14, color: '#2E3548' }}>·</span>
           <span style={{ fontSize: 14, color: '#565E72' }}>{mins}분 읽기</span>
           <span style={{ marginLeft: 'auto', fontSize: 11, color: '#2E3548', letterSpacing: 2 }}>
-            AI · EDITED BY HUMAN
+            REVIEWED · UPDATED
           </span>
         </div>
       </div>
