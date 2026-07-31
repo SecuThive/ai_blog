@@ -395,7 +395,7 @@ function EditorQuote() {
             <div className="att">
               <span className="pip">N</span>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: '-0.005em' }}>Nodelog Editorial Team</div>
+                <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: '-0.005em' }}>Nodelog 기술 편집팀</div>
                 <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.06em', marginTop: 2 }}>
                   AI + HUMAN · {yearMonth}
                 </div>

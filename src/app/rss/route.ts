@@ -7,7 +7,6 @@ interface PostRow {
   slug: string;
   excerpt: string;
   content: string;
-  author: string;
   published_at: string;
   category: string;
 }
@@ -15,7 +14,7 @@ interface PostRow {
 export async function GET() {
   const { data } = await makeFreshClient()
     .from('posts')
-    .select('title,slug,excerpt,content,author,published_at,category')
+    .select('title,slug,excerpt,content,published_at,category')
     .eq('status', 'published')
     .order('published_at', { ascending: false })
     .limit(50);
@@ -30,7 +29,7 @@ export async function GET() {
       <guid isPermaLink="true">${siteUrl}/blog/${p.slug}</guid>
       <description><![CDATA[${p.excerpt ?? ''}]]></description>
       <content:encoded><![CDATA[${p.content ?? p.excerpt ?? ''}]]></content:encoded>
-      <author><![CDATA[${p.author}]]></author>
+      <author><![CDATA[Nodelog 기술 편집팀]]></author>
       <category><![CDATA[${p.category}]]></category>
       <pubDate>${new Date(p.published_at).toUTCString()}</pubDate>
     </item>`).join('\n');

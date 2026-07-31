@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { makeFreshClient } from '@/lib/supabase';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
@@ -15,73 +14,10 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 3600;
-
-interface SiteStats {
-  postCount: number;
-  seriesCount: number;
-  subscriberCount: number;
-  guideCount: number;
-  firstPostDate: string;
-  avgReadingTime: number;
-  totalViews: number;
-}
-
-async function getStats(): Promise<SiteStats> {
-  const client = makeFreshClient();
-
-  const [postsRes, subscribersRes, guidesRes] = await Promise.all([
-    client.from('posts').select('tags, published_at, views, content').eq('status', 'published'),
-    client.from('subscribers').select('id', { count: 'exact', head: true }),
-    client.from('engineer_guides').select('id', { count: 'exact', head: true }).eq('status', 'published'),
-  ]);
-
-  const posts = (postsRes.data ?? []) as { tags: string[]; published_at: string; views: number; content: string }[];
-  const postCount = posts.length;
-
-  const seriesSet = new Set<string>();
-  for (const p of posts) {
-    const tag = (p.tags ?? []).find((t: string) => t.startsWith('series:'));
-    if (tag) seriesSet.add(tag);
-  }
-
-  const sortedDates = posts.map(p => p.published_at).filter(Boolean).sort();
-  let firstPostDate = '2024년 9월부터';
-  if (sortedDates.length) {
-    const d = new Date(sortedDates[0]);
-    firstPostDate = `${d.getFullYear()}년 ${d.getMonth() + 1}월부터`;
-  }
-
-  // reading_time is not a DB column — compute from word count (200 wpm)
-  const readingTimes = posts
-    .map(p => Math.max(1, Math.round((p.content ?? '').trim().split(/\s+/).length / 200)))
-    .filter(t => t > 0);
-  const avgReadingTime = readingTimes.length
-    ? Math.round(readingTimes.reduce((a, b) => a + b, 0) / readingTimes.length)
-    : 14;
-
-  const totalViews = posts.reduce((sum, p) => sum + (p.views ?? 0), 0);
-
-  return {
-    postCount,
-    seriesCount: seriesSet.size,
-    subscriberCount: subscribersRes.count ?? 0,
-    guideCount: guidesRes.count ?? 0,
-    firstPostDate,
-    avgReadingTime,
-    totalViews,
-  };
-}
-
-function formatNum(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-  return String(n);
-}
-
 const STEPS = [
   { n: '01', t: '주제 선정', d: '공식 문서·릴리스 노트·기술 자료와 독자 검색 수요를 바탕으로 다룰 주제를 정합니다.' },
   { n: '02', t: '자료 확인', d: '주제와 직접 관련된 1차 자료를 우선 확인하고 글의 범위와 핵심 질문을 정리합니다.' },
-  { n: '03', t: '초고 생성', d: 'AI 도구로 구조와 초안을 만들고, 참고한 자료는 편집 과정에서 다시 확인합니다.' },
+  { n: '03', t: '초안 준비', d: 'AI 도구를 구조화와 초안 작성의 보조 수단으로 활용하고, 참고 자료는 편집 과정에서 다시 확인합니다.' },
   { n: '04', t: '편집 검토', d: '사실관계·명령어·표현·문맥을 점검하고 불확실하거나 근거가 약한 문장을 수정합니다.' },
   { n: '05', t: '발행', d: '카테고리·시리즈·태그·관련 글 자동 연결. 메타데이터 색인.' },
   { n: '06', t: '보강', d: '오류 제보와 문서 변경을 확인해 필요한 글을 정정하거나 보강합니다.' },
@@ -94,19 +30,12 @@ const PRINCIPLES = [
   { t: '실패도 다룹니다', d: '도입에 실패한 도구, 잘못된 판단의 회고를 거르지 않습니다.' },
 ];
 
-export default async function AboutPage() {
-  const stats = await getStats();
-
-  // 허영 지표(누적 조회수·미달 구독자)는 노출하지 않는다 — 자동생성 인상 완화(#8).
+export default function AboutPage() {
+  // 공개 소개에서는 발행 규모 대신 콘텐츠의 성격과 운영 원칙을 보여준다.
   const STATS = [
-    { num: String(stats.postCount), label: '검토 후 공개된 글', sub: stats.firstPostDate },
-    { num: `${stats.guideCount}+`, label: 'ENGINEER GUIDES', sub: 'Linux · Docker · Git · 보안' },
-    { num: String(stats.seriesCount), label: 'ACTIVE SERIES', sub: '학습 경로형 콘텐츠' },
-    { num: `${stats.avgReadingTime}분`, label: 'AVG READ TIME', sub: '글당 평균 읽기 시간' },
-    // 구독자는 유의미해지기 전까지 숨김(미완성 지표 '—' 제거)
-    ...(stats.subscriberCount >= 50
-      ? [{ num: formatNum(stats.subscriberCount), label: 'SUBSCRIBERS', sub: '주간 뉴스레터' }]
-      : []),
+    { num: 'PRACTICAL', label: 'TECHNICAL GUIDES', sub: 'Linux · Docker · Network · Security' },
+    { num: 'REVIEWED', label: 'EDITORIAL PROCESS', sub: '자료 확인 · 문맥 검토 · 발행 판단' },
+    { num: 'UPDATED', label: 'LIVING CONTENT', sub: '오류 정정 · 문서 변경 반영 · 지속 보강' },
   ];
 
   return (
@@ -144,7 +73,7 @@ export default async function AboutPage() {
                 실무자가 신뢰할 수 있는 IT 정보를 만드는 것. 정보의 양이 아니라 <strong style={{ color: 'var(--text-1)' }}>맥락의 밀도</strong>를 높이는 것.
               </p>
               <p style={{ fontSize: 15.5, lineHeight: 1.7, color: 'var(--text-3)', margin: 0 }}>
-                AI가 정보를 빠르게 수집하고 정리하지만, 어떤 신호가 진짜로 중요한지, 어떤 문장이 오해를 부르는지를 결정하는 일은 여전히 사람의 몫이라고 믿습니다.
+                AI 도구는 자료 조사와 정리를 보조할 수 있지만, 어떤 신호가 중요한지와 어떤 문장이 오해를 부르는지를 판단하는 일은 사람의 몫이라고 믿습니다.
                 Nodelog는 그 협업 방식을 가장 단순하고 정직하게 보여주는 미디어를 지향합니다.
               </p>
             </div>
