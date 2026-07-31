@@ -74,7 +74,7 @@ const CAT_TO_GUIDE_CAT: Record<string, string[]> = {
   'IT 트렌드': ['클라우드', '데이터베이스', '네트워킹 / 서버'],
 };
 
-async function getRelatedGuides(category: string, tags: string[]): Promise<import('@/lib/types').EngineerGuide[]> {
+async function getRelatedGuides(category: string): Promise<import('@/lib/types').EngineerGuide[]> {
   const guideCats = CAT_TO_GUIDE_CAT[category] ?? [];
   if (guideCats.length === 0) return [];
   const client = makeFreshClient();
@@ -141,7 +141,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: post.title,
     description: post.excerpt,
     keywords: cleanTags.join(', '),
-    authors: [{ name: post.author }],
+    authors: [{ name: 'Nodelog 편집팀', url: `${SITE_URL}/author` }],
     alternates: { canonical: url },
     // 품질 감사에서 보강 대상으로 분류된 글은 보강 완료까지 색인 제외
     robots: NOINDEX_POST_SLUGS.has(post.slug) ? { index: false, follow: true } : DEFAULT_ROBOTS,
@@ -151,7 +151,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       type: 'article',
       url,
       publishedTime: post.published_at ?? undefined,
-      authors: [post.author],
+      authors: ['Nodelog 편집팀'],
       tags: cleanTags,
       images: post.cover_image
         ? [{ url: post.cover_image, width: 1200, height: 630 }]
@@ -256,16 +256,25 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const wordCount = post.content.trim().split(/\s+/).length;
   const tone = catTone(post.category);
   const headings = extractHeadings(post.content);
-  const authorInitials = post.author.replace(/[^a-zA-Z가-힣]/g, '').slice(0, 2).toUpperCase() || 'AI';
+  const authorInitials = 'NE';
   const dateStr = post.published_at
     ? new Date(post.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
     : '';
+  const modifiedDate = post.updated_at ?? post.published_at;
+  const modifiedDateStr = modifiedDate
+    ? new Date(modifiedDate).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
+    : '';
+  const hasMeaningfulUpdate = Boolean(
+    post.updated_at
+    && post.published_at
+    && new Date(post.updated_at).getTime() > new Date(post.published_at).getTime() + 60_000
+  );
 
   const [relatedPosts, adjacent, seriesCtx, relatedGuides, comments] = await Promise.all([
     getRelatedPosts(post.category, post.id),
     getAdjacentPosts(post.published_at ?? '', post.id),
     getSeriesContext(post.tags, post.id),
-    getRelatedGuides(post.category, post.tags),
+    getRelatedGuides(post.category),
     getComments(post.slug),
   ]);
   const mdComponents = makeMdComponents();
@@ -282,7 +291,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     description: post.excerpt,
     url: postUrl,
     datePublished: post.published_at,
-    dateModified: post.published_at,
+    dateModified: modifiedDate,
     // author를 가공의 Person으로 표기하지 않는다 — 실제 작성 주체는
     // AI 초안 + 사람 편집 검토 파이프라인을 운영하는 Nodelog 편집팀(조직).
     author: { '@type': 'Organization', name: 'Nodelog 편집팀', url: `${SITE_URL}/author` },
@@ -361,7 +370,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           <div className="article-byline">
             <Link href="/author" className="meta-item" title="작성·검토 방식 보기">
               <span className="author-pip">{authorInitials}</span>
-              {post.author} · Nodelog 편집팀
+              Nodelog 편집팀
             </Link>
             <span className="meta-item">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -369,6 +378,11 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               </svg>
               <time dateTime={post.published_at ?? undefined}>{dateStr}</time>
             </span>
+            {hasMeaningfulUpdate && (
+              <span className="meta-item">
+                업데이트 <time dateTime={post.updated_at ?? undefined}>{modifiedDateStr}</time>
+              </span>
+            )}
             <span className="meta-item">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
@@ -475,6 +489,50 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               {post.content}
             </ReactMarkdown>
 
+            {post.content_evidence && (
+              <section className="editorial-note" aria-labelledby="verification-evidence-title">
+                <div className="editorial-note-head" id="verification-evidence-title">확인 정보</div>
+                {post.content_evidence.testEnvironment && (
+                  <div>
+                    <strong>테스트 환경</strong>
+                    <p className="editorial-note-body">
+                      {[
+                        post.content_evidence.testEnvironment.os,
+                        ...(post.content_evidence.testEnvironment.software ?? []),
+                        post.content_evidence.testEnvironment.testedAt
+                          ? `확인일 ${post.content_evidence.testEnvironment.testedAt}`
+                          : null,
+                      ].filter(Boolean).join(' · ')}
+                    </p>
+                  </div>
+                )}
+                {post.content_evidence.verification?.commands?.length ? (
+                  <div>
+                    <strong>직접 확인한 명령</strong>
+                    <CodeBlock code={post.content_evidence.verification.commands.join('\n')} lang="shell" />
+                    {post.content_evidence.verification.result && <p>{post.content_evidence.verification.result}</p>}
+                  </div>
+                ) : null}
+                {(post.content_evidence.beforeAfter?.before || post.content_evidence.beforeAfter?.after) && (
+                  <div className="grid-2">
+                    <div><strong>해결 전</strong><p>{post.content_evidence.beforeAfter.before}</p></div>
+                    <div><strong>해결 후</strong><p>{post.content_evidence.beforeAfter.after}</p></div>
+                  </div>
+                )}
+                {post.content_evidence.cautions?.length ? (
+                  <div><strong>주의사항</strong><ul>{post.content_evidence.cautions.map(item => <li key={item}>{item}</li>)}</ul></div>
+                ) : null}
+                {post.content_evidence.officialSources?.length ? (
+                  <div className="editorial-note-refs">
+                    <span className="refs-label">공식 문서</span>
+                    {post.content_evidence.officialSources.map(source => (
+                      <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer">{source.label} ↗</a>
+                    ))}
+                  </div>
+                ) : null}
+              </section>
+            )}
+
             {publicTags(post.tags).length > 0 && (
               <div className="end-tags">
                 {publicTags(post.tags).map(tag => (
@@ -494,16 +552,15 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                 편집 검토 · Editorial Review
               </div>
               <p className="editorial-note-body">
-                이 글은 AI 에이전트가 자료 조사와 1차 초안 작성을 담당하고, <strong>사람 편집자가 사실관계·출처·톤과 맥락을 검토</strong>한 뒤 발행했습니다.
-                환경(OS·버전)에 따라 결과가 다를 수 있으니 적용 전 공식 문서를 함께 확인하세요.
+                AI 도구는 자료 조사와 초안 작성의 보조 수단으로 사용될 수 있습니다.
+                Nodelog는 공개 전 내용과 출처를 검토하고, 환경(OS·버전)에 따라 결과가 달라질 수 있는 기술 정보는 공식 문서를 함께 확인하도록 안내합니다.
                 오류를 발견하시면 <a href="mailto:thive8564@gmail.com">이메일로 제보</a>해 주세요 — 확인 후 신속히 정정합니다.
               </p>
               <div className="editorial-note-meta">
-                <span>초안 · AI ({post.author})</span>
-                <span className="sep">·</span>
-                <span>검토 · Nodelog 편집자</span>
+                <span>편집 책임 · {post.reviewed_by || 'Nodelog 편집팀'}</span>
                 <span className="sep">·</span>
                 <span>발행 · <time dateTime={post.published_at ?? undefined}>{dateStr}</time></span>
+                {hasMeaningfulUpdate && <><span className="sep">·</span><span>업데이트 · <time dateTime={post.updated_at ?? undefined}>{modifiedDateStr}</time></span></>}
               </div>
               {officialDocs.length > 0 && (
                 <div className="editorial-note-refs">
@@ -547,9 +604,9 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           <aside className="aside-rail">
             <div className="author-card">
               <div className="author-avatar">{authorInitials}</div>
-              <div className="author-h">작성자</div>
-              <div className="author-name">{post.author}</div>
-              <p className="author-bio">AI 에이전트가 최신 기술 트렌드를 분석하고 작성했습니다. 사람 편집자가 검수합니다.</p>
+              <div className="author-h">편집 책임</div>
+              <div className="author-name">Nodelog 편집팀</div>
+              <p className="author-bio">자료와 문맥을 검토하고 오류 제보와 문서 변경을 반영해 콘텐츠를 정정·보강합니다.</p>
             </div>
 
             <div className="article-info">
@@ -558,6 +615,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               <div className="article-info-row"><span>단어 수</span><span>{wordCount.toLocaleString()}</span></div>
               <div className="article-info-row"><span>섹션</span><span>{headings.filter(h => h.level === 2).length}</span></div>
               <div className="article-info-row"><span>발행일</span><span style={{ fontSize: 11 }}>{dateStr}</span></div>
+              {hasMeaningfulUpdate && <div className="article-info-row"><span>업데이트</span><span style={{ fontSize: 11 }}>{modifiedDateStr}</span></div>}
             </div>
 
             <div className="actions-rail">

@@ -4,12 +4,12 @@ import { makeFreshClient } from '@/lib/supabase';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
-  title: 'About — Nodelog',
-  description: 'Nodelog는 AI 에이전트와 사람 편집자가 함께 운영하는 IT 미디어입니다.',
+  title: 'About',
+  description: 'Nodelog가 IT 실무 정보를 조사하고 검토하며 지속적으로 업데이트하는 운영 원칙을 소개합니다.',
   alternates: { canonical: `${SITE_URL}/about` },
   openGraph: {
-    title: 'About — Nodelog',
-    description: 'Nodelog는 AI 에이전트와 사람 편집자가 함께 운영하는 IT 미디어입니다.',
+    title: 'About | Nodelog',
+    description: 'Nodelog가 IT 실무 정보를 조사하고 검토하며 지속적으로 업데이트하는 운영 원칙을 소개합니다.',
     url: `${SITE_URL}/about`,
     type: 'website',
   },
@@ -99,7 +99,7 @@ export default async function AboutPage() {
 
   // 허영 지표(누적 조회수·미달 구독자)는 노출하지 않는다 — 자동생성 인상 완화(#8).
   const STATS = [
-    { num: `${stats.postCount}+`, label: 'PUBLISHED POSTS', sub: stats.firstPostDate },
+    { num: String(stats.postCount), label: '검토 후 공개된 글', sub: stats.firstPostDate },
     { num: `${stats.guideCount}+`, label: 'ENGINEER GUIDES', sub: 'Linux · Docker · Git · 보안' },
     { num: String(stats.seriesCount), label: 'ACTIVE SERIES', sub: '학습 경로형 콘텐츠' },
     { num: `${stats.avgReadingTime}분`, label: 'AVG READ TIME', sub: '글당 평균 읽기 시간' },
@@ -114,10 +114,10 @@ export default async function AboutPage() {
       <section className="page-hero">
         <div className="container">
           <div className="page-eyebrow">ABOUT NODELOG</div>
-          <h1 className="page-title">AI가 운영하는 IT 미디어,<br />그러나 결정은 사람이.</h1>
+          <h1 className="page-title">검토하고 바로잡으며,<br />계속 업데이트합니다.</h1>
           <p className="page-lead">
-            Nodelog는 AI 도구로 초안을 만들고 사람이 자료·명령어·문맥을 검토해 발행하는
-            IT·개발·보안 실무 미디어입니다.
+            Nodelog는 공식 문서와 기술 자료를 확인하고, 실무자가 판단에 활용할 수 있도록
+            내용을 검토·정리하는 IT·개발·보안 실무 미디어입니다.
           </p>
         </div>
       </section>

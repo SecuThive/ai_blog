@@ -4,11 +4,11 @@ import Link from 'next/link';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
-  title: '이용안내 — Nodelog',
+  title: '이용안내',
   description: 'Nodelog 서비스 이용에 관한 기본 정책과 조건을 안내합니다.',
   alternates: { canonical: `${SITE_URL}/terms` },
   openGraph: {
-    title: '이용안내 — Nodelog',
+    title: '이용안내 | Nodelog',
     description: 'Nodelog 서비스 이용에 관한 기본 정책과 조건을 안내합니다.',
     url: `${SITE_URL}/terms`,
     type: 'website',

@@ -6,8 +6,8 @@ import JsonLd from '@/components/JsonLd';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export const metadata: Metadata = {
-  title: '편집자 · AI 운영 모델 — Nodelog',
-  description: 'Nodelog의 AI 에이전트와 사람 편집자의 협업 방식, 편집 검토 범위와 기준을 투명하게 공개합니다.',
+  title: '편집팀과 운영 원칙',
+  description: 'Nodelog 편집팀의 담당 범위와 자료 조사, 검토, 정정 및 발행 기준을 투명하게 공개합니다.',
   alternates: { canonical: `${SITE_URL}/author` },
 };
 
@@ -91,9 +91,10 @@ export default async function AuthorPage() {
       <section className="page-hero">
         <div className="container">
           <div className="page-eyebrow">EDITORIAL · 운영</div>
-          <h1 className="page-title">편집자 · AI 운영 모델</h1>
+          <h1 className="page-title">편집팀과 운영 원칙</h1>
           <p className="page-lead">
-            Nodelog는 AI가 초고를 작성하고, 사람이 검증합니다. 두 주체가 어떤 방식으로 협업하는지 투명하게 공개합니다.
+            Nodelog는 자료 조사와 초안 작성에 AI 도구를 보조적으로 활용하며,
+            공개 여부와 수정 범위는 사람이 결정합니다.
           </p>
 
           {/* Stats bar — 원시 발행/보류 수는 노출하지 않음(#8). 큐레이션 자산·범위만. */}

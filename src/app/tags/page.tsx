@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
-import { catTone } from '@/lib/utils';
+import { catTone, publicTags } from '@/lib/utils';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
@@ -33,7 +33,7 @@ async function getTags(): Promise<{ popular: TagInfo[]; byCategory: { cat: strin
   const catTags = new Map<string, Map<string, number>>();
 
   for (const p of (data ?? [])) {
-    const tags = (p.tags ?? []) as string[];
+    const tags = publicTags((p.tags ?? []) as string[]);
     const cat = p.category as string;
     if (!catTags.has(cat)) catTags.set(cat, new Map());
     for (const t of tags) {

@@ -18,12 +18,12 @@ export async function generateMetadata({ params }: { params: Promise<{ cat: stri
   // 깨지고 sitemap URL과 불일치 → GSC가 다른 canonical로 오인한다.
   const url = `${SITE_URL}/category/${encodeURIComponent(cat)}`;
   return {
-    title: `${cat} — Nodelog`,
-    description: `${cat} 카테고리의 AI 분석 포스트`,
+    title: cat,
+    description: `${cat} 분야의 실무 문제, 기술 선택과 운영 방법을 검토해 정리한 글입니다.`,
     alternates: { canonical: url },
     openGraph: {
-      title: `${cat} — Nodelog`,
-      description: `${cat} 카테고리의 AI 분석 포스트`,
+      title: `${cat} | Nodelog`,
+      description: `${cat} 분야의 실무 문제, 기술 선택과 운영 방법을 검토해 정리한 글입니다.`,
       url,
       type: 'website',
     },

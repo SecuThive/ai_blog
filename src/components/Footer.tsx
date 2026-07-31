@@ -21,7 +21,7 @@ export default function Footer() {
             </svg>
             NODELOG
           </div>
-          <p>AI 초안과 사람의 편집 검토를 거쳐 발행하는 IT·개발·보안·인프라 실무 미디어.</p>
+          <p>공식 문서와 기술 자료를 확인하고, 검토·정정·업데이트를 이어가는 IT 실무 미디어.</p>
           <div className="footer-social">
             <a href="https://github.com/SecuThive" target="_blank" rel="noopener noreferrer" className="icon-btn" aria-label="GitHub">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">

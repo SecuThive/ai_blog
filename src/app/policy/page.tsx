@@ -1,7 +1,19 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-export const metadata: Metadata = { title: '편집 정책 — Nodelog' };
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
+
+export const metadata: Metadata = {
+  title: '편집 정책',
+  description: 'Nodelog의 자료 조사, AI 보조 도구 사용, 사람 검토, 정정 및 콘텐츠 품질 관리 원칙을 안내합니다.',
+  alternates: { canonical: `${SITE_URL}/policy` },
+  openGraph: {
+    title: '편집 정책 | Nodelog',
+    description: 'Nodelog의 자료 조사, AI 보조 도구 사용, 사람 검토, 정정 및 콘텐츠 품질 관리 원칙을 안내합니다.',
+    url: `${SITE_URL}/policy`,
+    type: 'website',
+  },
+};
 
 const SECTIONS = [
   ['1. AI 사용 범위', 'AI 도구는 주제 조사 보조, 글 구조화, 초고 작성과 관련 콘텐츠 연결에 사용됩니다. 생성된 초안은 자동 공개하지 않으며, 사람이 검토한 뒤 발행 여부와 수정 범위를 결정합니다.'],
@@ -24,7 +36,7 @@ export default function PolicyPage() {
           <h1 className="page-title" style={{ marginBottom: 16 }}>편집 정책</h1>
           <p className="page-lead">Nodelog가 콘텐츠를 만들고 검토하는 원칙을 외부에 공개합니다.</p>
           <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11.5, color: 'var(--text-4)', letterSpacing: '0.06em', marginTop: 18 }}>
-            최종 업데이트 · 2026.07.13 · 적용 시작일 2026.05.01
+            최종 업데이트 · 2026.07.31 · 적용 시작일 2026.05.01
           </div>
         </div>
       </section>
