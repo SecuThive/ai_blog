@@ -141,7 +141,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: post.title,
     description: post.excerpt,
     keywords: cleanTags.join(', '),
-    authors: [{ name: 'Nodelog 편집팀', url: `${SITE_URL}/author` }],
+    authors: [{ name: 'Nodelog 기술 편집팀', url: `${SITE_URL}/author` }],
     alternates: { canonical: url },
     // 품질 감사에서 보강 대상으로 분류된 글은 보강 완료까지 색인 제외
     robots: NOINDEX_POST_SLUGS.has(post.slug) ? { index: false, follow: true } : DEFAULT_ROBOTS,
@@ -151,7 +151,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       type: 'article',
       url,
       publishedTime: post.published_at ?? undefined,
-      authors: ['Nodelog 편집팀'],
+      authors: ['Nodelog 기술 편집팀'],
       tags: cleanTags,
       images: post.cover_image
         ? [{ url: post.cover_image, width: 1200, height: 630 }]
@@ -256,7 +256,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const wordCount = post.content.trim().split(/\s+/).length;
   const tone = catTone(post.category);
   const headings = extractHeadings(post.content);
-  const authorInitials = 'NE';
+  const authorInitials = 'NT';
   const dateStr = post.published_at
     ? new Date(post.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
     : '';
@@ -293,9 +293,9 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     datePublished: post.published_at,
     dateModified: modifiedDate,
     // author를 가공의 Person으로 표기하지 않는다 — 실제 작성 주체는
-    // AI 초안 + 사람 편집 검토 파이프라인을 운영하는 Nodelog 편집팀(조직).
-    author: { '@type': 'Organization', name: 'Nodelog 편집팀', url: `${SITE_URL}/author` },
-    editor: { '@type': 'Organization', name: 'Nodelog 편집팀', url: `${SITE_URL}/author` },
+    // 가공의 Person이 아닌 실제 운영 주체인 기술 편집 조직을 표시한다.
+    author: { '@type': 'Organization', name: 'Nodelog 기술 편집팀', url: `${SITE_URL}/author` },
+    editor: { '@type': 'Organization', name: 'Nodelog 기술 편집팀', url: `${SITE_URL}/author` },
     publisher: {
       '@type': 'Organization',
       name: 'Nodelog',
@@ -370,7 +370,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           <div className="article-byline">
             <Link href="/author" className="meta-item" title="작성·검토 방식 보기">
               <span className="author-pip">{authorInitials}</span>
-              Nodelog 편집팀
+              Nodelog 기술 편집팀
             </Link>
             <span className="meta-item">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -543,7 +543,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
             <div className="endmark">✦ ✦ ✦</div>
 
-            {/* 편집 검토 신뢰 블록 — AI 작성 + 사람 편집자 검토 과정을 본문에서 명시 (E-E-A-T) */}
+            {/* AI 보조 도구 활용과 사람의 편집 판단을 투명하게 안내한다. */}
             <div className="editorial-note">
               <div className="editorial-note-head">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -557,7 +557,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                 오류를 발견하시면 <a href="mailto:thive8564@gmail.com">이메일로 제보</a>해 주세요 — 확인 후 신속히 정정합니다.
               </p>
               <div className="editorial-note-meta">
-                <span>편집 책임 · {post.reviewed_by || 'Nodelog 편집팀'}</span>
+                <span>편집 책임 · {post.reviewed_by || 'Nodelog 기술 편집팀'}</span>
                 <span className="sep">·</span>
                 <span>발행 · <time dateTime={post.published_at ?? undefined}>{dateStr}</time></span>
                 {hasMeaningfulUpdate && <><span className="sep">·</span><span>업데이트 · <time dateTime={post.updated_at ?? undefined}>{modifiedDateStr}</time></span></>}
@@ -605,8 +605,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             <div className="author-card">
               <div className="author-avatar">{authorInitials}</div>
               <div className="author-h">편집 책임</div>
-              <div className="author-name">Nodelog 편집팀</div>
-              <p className="author-bio">자료와 문맥을 검토하고 오류 제보와 문서 변경을 반영해 콘텐츠를 정정·보강합니다.</p>
+              <div className="author-name">Nodelog 기술 편집팀</div>
+              <p className="author-bio">AI 기반 자료 조사 보조 · 편집 검토. 오류 제보와 문서 변경을 반영해 콘텐츠를 정정·보강합니다.</p>
             </div>
 
             <div className="article-info">

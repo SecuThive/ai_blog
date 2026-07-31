@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   title: { default: SITE_NAME, template: `%s | Nodelog` },
   description: SITE_DESC,
   metadataBase: new URL(SITE_URL),
-  authors: [{ name: 'Nodelog Editorial', url: SITE_URL }],
+  authors: [{ name: 'Nodelog 기술 편집팀', url: `${SITE_URL}/author` }],
   creator: 'Nodelog',
   publisher: 'Nodelog',
   openGraph: {
