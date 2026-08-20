@@ -14,8 +14,27 @@
 import Anthropic from '@anthropic-ai/sdk';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import * as os from 'node:os';
+import { execFileSync } from 'node:child_process';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+
+// 사이트 관리 지식 RAG(SEO·콘텐츠·애드센스 노하우) — 로컬 query.py 를 직접 호출해
+// 글과 관련된 가이드를 끌어와 생성 프롬프트에 근거로 넣는다. 실패해도 생성은 계속.
+const SITE_KNOWLEDGE_QUERY = process.env.SITE_KNOWLEDGE_QUERY
+  ?? path.join(os.homedir(), 'claude-web-workspace/site-knowledge/query.py');
+
+function retrieveSiteKnowledge(query: string, k = 4): string {
+  try {
+    const out = execFileSync('python3', [SITE_KNOWLEDGE_QUERY, query, '--json', '-k', String(k)],
+      { encoding: 'utf-8', timeout: 90_000 });
+    const hits = JSON.parse(out || '[]') as Array<{ category: string; title: string; excerpt: string }>;
+    if (!hits.length) return '';
+    return hits.map(h => `- [${h.category}] ${h.title}: ${h.excerpt}`).join('\n');
+  } catch {
+    return '';
+  }
+}
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY ?? '';
 const BLOG_API_KEY  = process.env.BLOG_API_KEY ?? '';
@@ -193,6 +212,14 @@ const TOPICS: Topic[] = [
 // ──────────────────────────────────────────────────────────────────────────
 
 async function generateContent(topic: Topic): Promise<{ content: string; excerpt: string }> {
+  // 사이트 운영 지식 기반에서 이 글과 관련된 SEO·콘텐츠 노하우를 근거로 끌어온다
+  const siteKb = retrieveSiteKnowledge(
+    `${topic.title} ${topic.category} SEO 콘텐츠 품질 제목 검색의도 E-E-A-T`);
+  const siteKbBlock = siteKb
+    ? `\n\n## 사내 사이트 운영 지식 기반 (아래 SEO·콘텐츠 원칙을 반영해 작성)\n${siteKb}\n`
+    : '';
+  if (siteKb) console.log(`  ↳ 사이트 지식 RAG 근거 ${siteKb.split('\n').length}줄 주입`);
+
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 8000,
@@ -232,7 +259,7 @@ async function generateContent(topic: Topic): Promise<{ content: string; excerpt
 - 마크다운 (##, ### 헤더), 한국어, 3000자 이상
 - 표(비교/의사결정표) 1개 이상 포함
 - 전문적이지만 읽기 쉬운 문체
-
+${siteKbBlock}
 글 본문만 출력하세요.`,
       },
     ],
@@ -259,7 +286,8 @@ async function publishPost(topic: Topic, content: string, excerpt: string): Prom
       tags: topic.tags,
       author: topic.author,
       agent_role: topic.agent_role,
-      status: 'published',
+      // 생성 단계에서는 공개하지 않는다. 검토자가 승인 API에서 별도로 발행한다.
+      status: 'draft',
     }),
   });
 
@@ -275,7 +303,7 @@ async function publishPost(topic: Topic, content: string, excerpt: string): Prom
     if (json.duplicate_of) console.log(`     중복 대상: ${json.duplicate_of.title}`);
     return;
   }
-  console.log(`  ✅ 업로드 완료 — slug: ${json.post.slug}`);
+  console.log(`  ✅ 초안 저장 완료 — slug: ${json.post.slug}`);
 }
 
 /** 주제 선정 전 사전 중복 체크 — 이미 다룬 주제는 생성 자체를 건너뛴다 */

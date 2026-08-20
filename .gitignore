@@ -47,3 +47,17 @@ scripts/*-backup-*.json
 scripts/tmp-*.mjs
 scripts/_*.mjs
 scripts/enrich/backup-*.json
+
+refresh_proposals/
+service-account*.json
+GSC CSV/
+
+# python cache / local caches (regenerated, not source)
+scripts/__pycache__/
+**/__pycache__/
+*.pyc
+scripts/.internal_links_cache.json
+
+# ad-hoc scratch work (not part of the app)
+/scratchpad/
+scratchpad_*.mjs
