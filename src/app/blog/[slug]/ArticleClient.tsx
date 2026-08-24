@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { trackEvent } from '@/lib/analytics';
 
 /* ── ViewTracker: 세션당 1회만 조회수 증가 ─────────────────────────── */
 export function ViewTracker({ postId, table = 'posts' }: { postId: number; table?: string }) {
@@ -123,8 +125,9 @@ export function ProgressBar() {
   return <div className="read-progress" style={{ width: `${width}%` }} />;
 }
 
-export function TableOfContents({ headings }: { headings: Heading[] }) {
+export function TableOfContents({ headings, children }: { headings: Heading[]; children?: React.ReactNode }) {
   const [activeId, setActiveId] = useState('');
+  const pathname = usePathname() ?? '';
 
   useEffect(() => {
     const els = headings.map(h => document.getElementById(h.id)).filter(Boolean) as HTMLElement[];
@@ -139,8 +142,13 @@ export function TableOfContents({ headings }: { headings: Heading[] }) {
 
   if (!headings.length) return null;
 
+  const goTo = (id: string) => {
+    trackEvent({ name: 'toc_click', path: pathname, heading_id: id });
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
-    <nav className="toc-rail">
+    <nav className="toc-rail" aria-label="목차">
       <div className="toc-title">목차</div>
       <ul className="toc-list">
         {headings.map(h => (
@@ -148,12 +156,13 @@ export function TableOfContents({ headings }: { headings: Heading[] }) {
             key={h.id}
             role="button"
             tabIndex={0}
+            aria-current={activeId === h.id ? 'location' : undefined}
             className={`${h.level === 3 ? 'h3' : ''}${activeId === h.id ? ' active' : ''}`}
-            onClick={() => document.getElementById(h.id)?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() => goTo(h.id)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                document.getElementById(h.id)?.scrollIntoView({ behavior: 'smooth' });
+                goTo(h.id);
               }
             }}
           >
@@ -161,6 +170,7 @@ export function TableOfContents({ headings }: { headings: Heading[] }) {
           </li>
         ))}
       </ul>
+      {children}
     </nav>
   );
 }
@@ -198,13 +208,16 @@ export function CopyLinkBtn() {
   };
 
   return (
-    <button className="action-btn" onClick={copy} aria-label="링크 복사">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-      </svg>
-      {copied ? '복사됨!' : '링크 복사'}
-    </button>
+    <>
+      <button className="action-btn" onClick={copy} aria-label="링크 복사">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+        </svg>
+        {copied ? '복사됨!' : '링크 복사'}
+      </button>
+      <span className="sr-only" role="status" aria-live="polite">{copied ? '링크가 클립보드에 복사되었습니다' : ''}</span>
+    </>
   );
 }
 
@@ -334,6 +347,7 @@ export function MobileActionBar() {
         </svg>
         맨 위로
       </button>
+      <span className="sr-only" role="status" aria-live="polite">{copied ? '링크가 복사되었습니다' : shared ? '공유되었습니다' : ''}</span>
     </div>
   );
 }

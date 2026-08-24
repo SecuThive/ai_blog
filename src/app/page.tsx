@@ -10,6 +10,7 @@ import {
 } from '@/components/HomeClient';
 import SubscribeForm from '@/components/SubscribeForm';
 import PostThumb from '@/components/PostThumb';
+import TrackedLink from '@/components/TrackedLink';
 
 export const revalidate = 60;
 
@@ -347,18 +348,27 @@ function ReadingLanes({ lanePosts }: { lanePosts: Record<string, PostSummary[]> 
                       </div>
                     </Link>
                   )) : (
-                    <Link className="lane-step" href={`/category/${lane.category}`}>
+                    <TrackedLink
+                      className="lane-step"
+                      href={`/category/${lane.category}`}
+                      event={{ name: 'category_click', path: '/', category: lane.category, position: `lane-empty-${lane.tag}` }}
+                    >
                       <span className="num">→</span>
                       <div>
                         <p className="t">{lane.category} 글 보러가기</p>
                         <p className="m">카테고리 전체</p>
                       </div>
-                    </Link>
+                    </TrackedLink>
                   )}
                 </div>
                 <div className="lane-foot">
                   <span>{items.length} STEPS</span>
-                  <Link href={`/category/${lane.category}`}>전체 보기 →</Link>
+                  <TrackedLink
+                    href={`/category/${lane.category}`}
+                    event={{ name: 'category_click', path: '/', category: lane.category, position: `lane-footer-${lane.tag}` }}
+                  >
+                    전체 보기 →
+                  </TrackedLink>
                 </div>
               </div>
             );
@@ -564,9 +574,14 @@ function EngineerGuidesSection({ guides, total }: { guides: EngineerGuide[]; tot
         </div>
         <div style={{ marginTop: 20, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           {['Linux / Shell', 'Docker / 컨테이너', 'Git / CI·CD', '네트워킹 / 서버', '보안 설정', '데이터베이스'].map(cat => (
-            <Link key={cat} href={`/engineer?cat=${encodeURIComponent(cat)}`} style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-3)', border: '1px solid var(--line-1)', borderRadius: 4, padding: '4px 10px', letterSpacing: '0.04em', textDecoration: 'none' }}>
+            <TrackedLink
+              key={cat}
+              href={`/engineer?cat=${encodeURIComponent(cat)}`}
+              event={{ name: 'category_click', path: '/', category: cat, position: 'engineer-guides-chip' }}
+              style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-3)', border: '1px solid var(--line-1)', borderRadius: 4, padding: '4px 10px', letterSpacing: '0.04em', textDecoration: 'none' }}
+            >
               {cat}
-            </Link>
+            </TrackedLink>
           ))}
         </div>
       </div>
@@ -611,7 +626,9 @@ export default async function HomePage() {
       <DailyBriefing posts={posts} />
       <EngineerGuidesSection guides={recentGuides} total={guideCount} />
       <ReadingLanes lanePosts={lanePosts} />
-      <MagLatestSection posts={posts.slice(1) as MagPost[]} />
+      {/* DailyBriefing이 이미 posts[0..6](리드+서브+퀵리즈)을 노출했으므로, "최신 글" 섹션은
+          그 뒤를 이어 posts[7..]부터 보여준다 — 같은 글이 두 섹션에 중복 노출되는 것을 방지. */}
+      <MagLatestSection posts={posts.slice(7) as MagPost[]} />
       <SeriesShowcase series={series} />
       <EditorQuote />
       <NewsletterBand subscriberCount={subscriberCount} />

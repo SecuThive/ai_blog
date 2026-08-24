@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import type { EngineerGuide } from '@/lib/types';
 import { makeFreshClient } from '@/lib/supabase';
 import { engCatTone, diffLabel, publicTags, DEFAULT_ROBOTS } from '@/lib/utils';
+import { rankRelated } from '@/lib/related';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from '@/components/CodeBlock';
@@ -12,6 +13,8 @@ import { findOfficialDocs } from '@/lib/officialDocs';
 import { TableOfContents, ProgressBar, ScrollToTopBtn, CopyLinkBtn, ShareBtn } from '@/app/blog/[slug]/ArticleClient';
 import Comments, { type CommentRow } from '@/components/Comments';
 import InlineSubscribeCTA from '@/components/InlineSubscribeCTA';
+import RelatedContent, { type RelatedItem } from '@/components/RelatedContent';
+import TrackedExternalLink from '@/components/TrackedExternalLink';
 
 export const revalidate = 60;
 
@@ -84,16 +87,39 @@ function extractHowToSteps(md: string): { name: string }[] {
   return steps;
 }
 
-async function getRelated(category: string, excludeId: number): Promise<EngineerGuide[]> {
-  const { data } = await makeFreshClient()
-    .from('engineer_guides')
-    .select('id,title,slug,summary,category,difficulty,tags')
-    .eq('status', 'published')
-    .eq('category', category)
-    .neq('id', excludeId)
-    .order('created_at', { ascending: false })
-    .limit(4);
-  return (data ?? []) as unknown as EngineerGuide[];
+const RELATED_GUIDE_SELECT = 'id,title,slug,summary,category,difficulty,tags';
+
+interface RankableGuide { id: number; category: string; tags: string[] }
+
+/** 태그·카테고리 유사도 기반 관련 가이드. 부족하면 조회수 상위 가이드로 폴백. */
+async function getRelated(guide: { id: number; category: string; tags: string[] }): Promise<EngineerGuide[]> {
+  const client = makeFreshClient();
+  const cleanTags = publicTags(guide.tags);
+
+  const [tagRes, catRes] = await Promise.all([
+    cleanTags.length > 0
+      ? client.from('engineer_guides').select(RELATED_GUIDE_SELECT).eq('status', 'published').neq('id', guide.id).overlaps('tags', cleanTags).order('created_at', { ascending: false }).limit(8)
+      : Promise.resolve({ data: [] as unknown[] }),
+    client.from('engineer_guides').select(RELATED_GUIDE_SELECT).eq('status', 'published').eq('category', guide.category).neq('id', guide.id).order('created_at', { ascending: false }).limit(8),
+  ]);
+
+  let ranked = rankRelated<RankableGuide & Record<string, unknown>>(guide, [
+    (tagRes.data ?? []) as (RankableGuide & Record<string, unknown>)[],
+    (catRes.data ?? []) as (RankableGuide & Record<string, unknown>)[],
+  ]);
+
+  if (ranked.length < 4) {
+    const { data: fallback } = await client
+      .from('engineer_guides')
+      .select(RELATED_GUIDE_SELECT)
+      .eq('status', 'published')
+      .neq('id', guide.id)
+      .order('views', { ascending: false })
+      .limit(10);
+    ranked = rankRelated(guide, [ranked, (fallback ?? []) as (RankableGuide & Record<string, unknown>)[]]);
+  }
+
+  return ranked.slice(0, 4) as unknown as EngineerGuide[];
 }
 
 export async function generateStaticParams() {
@@ -205,7 +231,7 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
   const tone = engCatTone(guide.category);
   const headings = extractHeadings(guide.content);
   const [related, relatedPosts, qa] = await Promise.all([
-    getRelated(guide.category, guide.id),
+    getRelated(guide),
     getRelatedBlogPosts(guide.category),
     getGuideQa(guide.slug),
   ]);
@@ -384,7 +410,7 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
                 <div className="editorial-note-refs">
                   <span className="refs-label">관련 공식 문서</span>
                   {officialDocs.map(doc => (
-                    <a key={doc.url} href={doc.url} target="_blank" rel="noopener noreferrer">{doc.name} ↗</a>
+                    <TrackedExternalLink key={doc.url} href={doc.url} path={`/engineer/${guide.slug}`} target="_blank" rel="noopener noreferrer">{doc.name} ↗</TrackedExternalLink>
                   ))}
                 </div>
               )}
@@ -472,30 +498,26 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
         </div>
 
         {/* Related blog posts */}
-        {relatedPosts.length > 0 && (
-          <div className="related" style={{ marginTop: 0 }}>
-            <div className="related-h" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 6 }}>
-                  <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
-                </svg>
-                이 가이드와 연관된 블로그 글
-              </span>
-              <Link href="/blog" style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', letterSpacing: '0.04em', textDecoration: 'none' }}>
-                전체 글 →
-              </Link>
-            </div>
-            <div className="related-grid">
-              {relatedPosts.map(p => (
-                <Link key={p.id} href={`/blog/${p.slug}`} className="card card-link" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <span className="badge" style={{ fontSize: 10.5, alignSelf: 'flex-start' }}>{p.category}</span>
-                  <h3 className="card-title" style={{ fontSize: 14.5, margin: 0 }}>{p.title}</h3>
-                  <p style={{ margin: 0, color: 'var(--text-3)', fontSize: 12.5, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.excerpt}</p>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+        <RelatedContent
+          title="이 가이드와 연관된 블로그 글"
+          icon={
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 6 }}>
+              <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
+            </svg>
+          }
+          style={{ marginTop: 0 }}
+          currentPath={`/engineer/${guide.slug}`}
+          viewAllHref="/blog"
+          viewAllLabel="전체 글"
+          items={relatedPosts.map((p): RelatedItem => ({
+            id: p.id,
+            href: `/blog/${p.slug}`,
+            slug: p.slug,
+            title: p.title,
+            description: p.excerpt,
+            category: p.category,
+          }))}
+        />
       </div>
     </div>
   );

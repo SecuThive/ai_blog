@@ -17,6 +17,8 @@ export interface Post {
   reviewed_at?: string | null;
   reviewed_by?: string | null;
   content_evidence?: ContentEvidence | null;
+  /** 선택적 핵심 요약(TL;DR). DB에 값이 없으면 렌더링하지 않는다 — 임의로 채우지 않음. */
+  key_points?: string[] | null;
 }
 
 export interface ContentEvidence {

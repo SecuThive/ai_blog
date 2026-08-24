@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import React from 'react';
+import { usePathname } from 'next/navigation';
+import { trackEvent } from '@/lib/analytics';
 
 const LANG_LABELS: Record<string, string> = {
   bash: 'Bash', sh: 'Shell', shell: 'Shell',
@@ -84,6 +86,7 @@ function highlightLine(line: string, lang?: string): ReactNode {
 
 export default function CodeBlock({ code, lang, filename }: { code: string; lang?: string; filename?: string }) {
   const [copied, setCopied] = useState(false);
+  const pathname = usePathname() ?? '';
   const label = lang ? (LANG_LABELS[lang] ?? lang.toUpperCase()) : 'CODE';
 
   const handleCopy = async () => {
@@ -97,6 +100,7 @@ export default function CodeBlock({ code, lang, filename }: { code: string; lang
       document.execCommand('copy');
       document.body.removeChild(el);
     }
+    trackEvent({ name: 'code_copy', path: pathname, language: lang ?? 'plain' });
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -138,6 +142,7 @@ export default function CodeBlock({ code, lang, filename }: { code: string; lang
             </>
           )}
         </button>
+        <span className="sr-only" role="status" aria-live="polite">{copied ? '코드가 클립보드에 복사되었습니다' : ''}</span>
       </div>
       <pre>
         <code>
