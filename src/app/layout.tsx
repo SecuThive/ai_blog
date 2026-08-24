@@ -78,10 +78,14 @@ const PRETENDARD_CSS_URL =
 
 const GA_ID = 'G-3WP9Z4DEFH';
 
-const NAVER_CODES = [
-  '5bd307f95964d7e0787d21b5763b18401597a1b7',
-  '2304805a68feee778fe525cc3932b9437163b03f',
-];
+// 네이버 서치어드바이저 소유 확인 메타 태그 — 값 자체는 페이지 소스에 공개되는 정보지만,
+// 계정/사이트마다 달라지는 배포별 설정이므로 코드에 고정하지 않고 환경변수로 주입한다.
+// 콤마로 여러 개(예: PC·모바일 속성) 지정 가능. 미설정 시 태그를 출력하지 않는다.
+// .env.example 및 docs/SEO_ANALYTICS.md 참고.
+const NAVER_CODES = (process.env.NAVER_SITE_VERIFICATION ?? '')
+  .split(',')
+  .map(code => code.trim())
+  .filter(Boolean);
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID ?? 'ca-pub-2091277631590195';

@@ -336,6 +336,9 @@ node scripts/score-content-quality.mjs
 
 일부 스크립트는 운영 Supabase 데이터를 변경합니다. 파일 상단의 설명과 dry-run 지원 여부를 확인한 뒤 실행하세요.
 
+대표 도메인 설정, Search Console·네이버 서치어드바이저 등록 체크리스트, sitemap/RSS 제출 URL,
+분석 이벤트 목록과 개인정보 원칙은 [docs/SEO_ANALYTICS.md](./docs/SEO_ANALYTICS.md)를 참고하세요.
+
 ## 배포
 
 `main` 브랜치에 반영된 커밋은 GitHub–Vercel 연동을 통해 프로덕션으로 배포됩니다.
@@ -345,7 +348,7 @@ GitHub main
   → Vercel Build
   → TypeScript / Next.js production build
   → Production Deployment
-  → thivelab.com
+  → www.thivelab.com  (apex thivelab.com은 Cloudflare에서 301로 www로 리디렉션)
 ```
 
 배포 후 권장 확인 항목:

@@ -1,5 +1,6 @@
 import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { catTone, publicTags, DEFAULT_ROBOTS, MIN_DISPLAY_VIEWS } from '@/lib/utils';
+import { rankRelated, isStronglyRelated } from '@/lib/related';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
@@ -8,7 +9,9 @@ import { findOfficialDocs } from '@/lib/officialDocs';
 import { NOINDEX_POST_SLUGS } from '@/lib/noindexPosts';
 import Link from 'next/link';
 import JsonLd from '@/components/JsonLd';
-import PostThumb from '@/components/PostThumb';
+import RelatedContent, { type RelatedItem } from '@/components/RelatedContent';
+import TrackedLink from '@/components/TrackedLink';
+import TrackedExternalLink from '@/components/TrackedExternalLink';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from '@/components/CodeBlock';
@@ -88,17 +91,39 @@ async function getRelatedGuides(category: string): Promise<import('@/lib/types')
   return (data ?? []) as import('@/lib/types').EngineerGuide[];
 }
 
-async function getRelatedPosts(category: string, excludeId: number): Promise<import('@/lib/types').PostSummary[]> {
+const RELATED_POST_SELECT = 'id,title,slug,excerpt,category,tags,author,agent_role,views,published_at,content,cover_image';
+
+interface RankablePost { id: number; category: string; tags: string[] }
+
+/** 태그·카테고리 유사도 기반 관련 글. 3개 미만이면 조회수 상위 글로 폴백해 채운다. */
+async function getRelatedPosts(post: { id: number; category: string; tags: string[] }): Promise<import('@/lib/types').PostSummary[]> {
   const client = makeFreshClient();
-  const { data } = await client
-    .from('posts')
-    .select('id,title,slug,excerpt,category,tags,author,agent_role,views,published_at,content,cover_image')
-    .eq('status', 'published')
-    .eq('category', category)
-    .neq('id', excludeId)
-    .order('published_at', { ascending: false })
-    .limit(3);
-  return (data ?? []).map((p: Record<string, unknown>) => ({
+  const cleanTags = publicTags(post.tags);
+
+  const [tagRes, catRes] = await Promise.all([
+    cleanTags.length > 0
+      ? client.from('posts').select(RELATED_POST_SELECT).eq('status', 'published').neq('id', post.id).overlaps('tags', cleanTags).order('published_at', { ascending: false }).limit(8)
+      : Promise.resolve({ data: [] as unknown[] }),
+    client.from('posts').select(RELATED_POST_SELECT).eq('status', 'published').eq('category', post.category).neq('id', post.id).order('published_at', { ascending: false }).limit(8),
+  ]);
+
+  let ranked = rankRelated<RankablePost & Record<string, unknown>>(post, [
+    (tagRes.data ?? []) as (RankablePost & Record<string, unknown>)[],
+    (catRes.data ?? []) as (RankablePost & Record<string, unknown>)[],
+  ]);
+
+  if (ranked.length < 3) {
+    const { data: fallback } = await client
+      .from('posts')
+      .select(RELATED_POST_SELECT)
+      .eq('status', 'published')
+      .neq('id', post.id)
+      .order('views', { ascending: false })
+      .limit(10);
+    ranked = rankRelated(post, [ranked, (fallback ?? []) as (RankablePost & Record<string, unknown>)[]]);
+  }
+
+  return ranked.slice(0, 3).map((p) => ({
     ...p,
     content: undefined,
     reading_time: readingTime((p.content as string) ?? ''),
@@ -271,7 +296,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   );
 
   const [relatedPosts, adjacent, seriesCtx, relatedGuides, comments] = await Promise.all([
-    getRelatedPosts(post.category, post.id),
+    getRelatedPosts(post),
     getAdjacentPosts(post.published_at ?? '', post.id),
     getSeriesContext(post.tags, post.id),
     getRelatedGuides(post.category),
@@ -399,6 +424,17 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             )}
           </div>
 
+          {/* 핵심 요약(TL;DR) — content_evidence처럼 선택적 필드(key_points)가 실제로 있을 때만 노출.
+              데이터가 없으면 임의로 채우지 않고 섹션 자체를 렌더링하지 않는다. */}
+          {post.key_points && post.key_points.length > 0 && (
+            <div className="key-points">
+              <div className="key-points-head">핵심 요약</div>
+              <ul>
+                {post.key_points.map((point, i) => <li key={i}>{point}</li>)}
+              </ul>
+            </div>
+          )}
+
           {/* Cover image — real image or auto-generated OG image as cover */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -478,7 +514,21 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       <div className="container" style={{ paddingTop: 48, paddingBottom: 80 }}>
         <div className="article-wrap">
           {/* TOC */}
-          <TableOfContents headings={headings} />
+          <TableOfContents headings={headings}>
+            {/* 실제로 강하게 연관된 글이 있을 때만 노출 — 모든 글에 기계적으로 삽입하지 않는다. */}
+            {relatedPosts[0] && isStronglyRelated(post, relatedPosts[0]) && (
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px dashed var(--line-1)' }}>
+                <div className="toc-title">바로 이어보기</div>
+                <TrackedLink
+                  href={`/blog/${relatedPosts[0].slug}`}
+                  event={{ name: 'related_post_click', path: `/blog/${post.slug}`, target_slug: relatedPosts[0].slug, position: -1 }}
+                  style={{ display: 'block', fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}
+                >
+                  → {relatedPosts[0].title}
+                </TrackedLink>
+              </div>
+            )}
+          </TableOfContents>
 
           {/* Prose */}
           <article className="prose">
@@ -526,7 +576,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                   <div className="editorial-note-refs">
                     <span className="refs-label">공식 문서</span>
                     {post.content_evidence.officialSources.map(source => (
-                      <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer">{source.label} ↗</a>
+                      <TrackedExternalLink key={source.url} href={source.url} path={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer">{source.label} ↗</TrackedExternalLink>
                     ))}
                   </div>
                 ) : null}
@@ -566,7 +616,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                 <div className="editorial-note-refs">
                   <span className="refs-label">관련 공식 문서</span>
                   {officialDocs.map(d => (
-                    <a key={d.url} href={d.url} target="_blank" rel="noopener noreferrer">{d.name} ↗</a>
+                    <TrackedExternalLink key={d.url} href={d.url} path={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer">{d.name} ↗</TrackedExternalLink>
                   ))}
                 </div>
               )}
@@ -627,60 +677,46 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         </div>
 
         {/* Related engineer guides */}
-        {relatedGuides.length > 0 && (
-          <div className="related" style={{ marginBottom: 24 }}>
-            <div className="related-h" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 6 }}>
-                  <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
-                </svg>
-                관련 엔지니어 가이드
-              </span>
-              <Link href="/engineer" style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', letterSpacing: '0.04em', textDecoration: 'none' }}>
-                전체 가이드 →
-              </Link>
-            </div>
-            <div className="related-grid">
-              {relatedGuides.map(g => (
-                <Link key={g.id} href={`/engineer/${g.slug}`} className="card card-link" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <span className="badge" style={{ fontSize: 10.5, alignSelf: 'flex-start' }}>{g.category}</span>
-                  <h3 className="card-title" style={{ fontSize: 14.5, margin: 0 }}>{g.title}</h3>
-                  <p style={{ margin: 0, color: 'var(--text-3)', fontSize: 12.5, lineHeight: 1.5 }}>{g.summary}</p>
-                  <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 10.5, color: 'var(--text-4)', marginTop: 4 }}>GUIDE · 실전 레퍼런스</div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+        <RelatedContent
+          title="관련 엔지니어 가이드"
+          icon={
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 6 }}>
+              <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
+            </svg>
+          }
+          className="related--guides"
+          style={{ marginBottom: 24 }}
+          currentPath={`/blog/${post.slug}`}
+          viewAllHref="/engineer"
+          viewAllLabel="전체 가이드"
+          items={relatedGuides.map((g): RelatedItem => ({
+            id: g.id,
+            href: `/engineer/${g.slug}`,
+            slug: g.slug,
+            title: g.title,
+            description: g.summary,
+            category: g.category,
+            meta: 'GUIDE · 실전 레퍼런스',
+          }))}
+        />
 
         {/* Related posts */}
-        {relatedPosts.length > 0 && (
-          <div className="related">
-            <div className="related-h">
-              <span className="num">✦</span> 같은 주제의 글
-            </div>
-            <div className="related-grid">
-              {relatedPosts.map(p => {
-                const rt = catTone(p.category);
-                return (
-                  <Link key={p.id} href={`/blog/${p.slug}`} className="card card-link">
-                    <PostThumb slug={p.slug} title={p.title} coverImage={p.cover_image} category={p.category} />
-                    <div className="card-body">
-                      <div className="card-meta">
-                        <span className={`badge badge-${rt}`}>{p.category}</span>
-                      </div>
-                      <h3 className="card-title">{p.title}</h3>
-                      <p className="card-excerpt">{p.excerpt}</p>
-                      <div className="card-foot">
-                        <span>{p.reading_time}분 읽기</span>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        <RelatedContent
+          title="같은 주제의 글"
+          icon={<span className="num" style={{ marginRight: 8 }}>✦</span>}
+          currentPath={`/blog/${post.slug}`}
+          items={relatedPosts.map((p): RelatedItem => ({
+            id: p.id,
+            href: `/blog/${p.slug}`,
+            slug: p.slug,
+            title: p.title,
+            description: p.excerpt,
+            category: p.category,
+            badgeTone: catTone(p.category),
+            meta: `${p.reading_time}분 읽기`,
+            thumb: { coverImage: p.cover_image },
+          }))}
+        />
       </div>
     </div>
   );
