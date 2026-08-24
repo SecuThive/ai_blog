@@ -215,7 +215,7 @@ function DailyBriefing({ posts }: { posts: PostSummary[] }) {
 
         <div className="brief-wrap">
           <Link className="brief-main" href={`/blog/${lead.slug}`}>
-            <PostThumb slug={lead.slug} title={lead.title} coverImage={lead.cover_image} category={lead.category} className="ph card-thumb" />
+            <PostThumb slug={lead.slug} title={lead.title} coverImage={lead.cover_image} category={lead.category} className="ph card-thumb" priority />
             <div className="brief-main-body">
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 0 }}>
                 <span className={`badge badge-${leadTone}`}>{lead.category}</span>

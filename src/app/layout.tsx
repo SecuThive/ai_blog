@@ -73,6 +73,9 @@ export const metadata: Metadata = {
   },
 };
 
+const PRETENDARD_CSS_URL =
+  'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css';
+
 const GA_ID = 'G-3WP9Z4DEFH';
 
 const NAVER_CODES = [
@@ -99,10 +102,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {NAVER_CODES.map(code => (
           <meta key={code} name="naver-site-verification" content={code} />
         ))}
+        {/* Pretendard 가변 폰트: cdn.jsdelivr.net 3rd-party CSS를 동기 <link rel="stylesheet">로
+            불러오면 렌더링 차단 요청이 되어(폰트 자체는 font-display:swap이어도 CSS 파싱 전에는
+            첫 페인트가 지연됨) FCP/LCP를 늦춘다. preconnect로 연결을 미리 열고,
+            media=print → load 시 all로 전환하는 표준 비차단 로딩 패턴을 적용한다.
+            (noscript로 JS 비활성 환경 폴백 유지) */}
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <link
+          id="pretendard-font"
           rel="stylesheet"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+          media="print"
+          href={PRETENDARD_CSS_URL}
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var l=document.getElementById('pretendard-font');if(!l)return;if(l.sheet){l.media='all';}else{l.addEventListener('load',function(){l.media='all';});}})();`,
+          }}
+        />
+        <noscript>
+          <link rel="stylesheet" href={PRETENDARD_CSS_URL} />
+        </noscript>
         <link
           rel="alternate"
           type="application/rss+xml"
