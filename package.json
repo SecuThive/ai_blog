@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",
@@ -14,7 +15,7 @@
     "date-fns": "^4.1.0",
     "gray-matter": "^4.0.3",
     "next": "16.2.6",
-"react": "19.2.4",
+    "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-markdown": "^10.1.0",
     "rehype-highlight": "^7.0.2",
@@ -28,6 +29,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "patch-package": "^8.0.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
