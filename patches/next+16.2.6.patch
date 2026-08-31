@@ -44,6 +44,39 @@ index cc9d3ff..52c6154 100644
            
  Original Error: ${n}`),"__NEXT_ERROR_CODE",{value:"E949",enumerable:!1,configurable:!0});e.stack="Error: "+e.message+a.slice(i),console.error(e);return}}}else"string"==typeof e&&(n=e);if(n)return void console.error(`Route ${t} errored during ${r}. These errors are normally ignored and may not prevent the route from prerendering but are logged here because build debugging is enabled. No stack was provided.
            
+diff --git a/node_modules/next/dist/esm/server/base-server.js b/node_modules/next/dist/esm/server/base-server.js
+index e5b4514..a494b5f 100644
+--- a/node_modules/next/dist/esm/server/base-server.js
++++ b/node_modules/next/dist/esm/server/base-server.js
+@@ -1189,7 +1189,7 @@ export default class Server {
+         // resolve to a static data route we bail early to avoid
+         // unexpected SSR invocations
+         if (!isSSG && req.headers['x-middleware-prefetch'] && !(is404Page || pathname === '/_error')) {
+-            res.setHeader(MATCHED_PATH_HEADER, pathname);
++            res.setHeader(MATCHED_PATH_HEADER, /[^\t\x20-\x7e\x80-\xff]/.test(pathname) ? encodeURIComponent(pathname) : pathname);
+             res.setHeader('x-middleware-skip', '1');
+             res.setHeader('cache-control', 'private, no-cache, no-store, max-age=0, must-revalidate');
+             res.body('{}').send();
+@@ -1202,7 +1202,8 @@ export default class Server {
+         }
+         const locale = getRequestMeta(req, 'locale');
+         if (!!req.headers['x-nextjs-data'] && (!res.statusCode || res.statusCode === 200)) {
+-            res.setHeader('x-nextjs-matched-path', `${locale ? `/${locale}` : ''}${pathname}`);
++            const matchedPathValue = `${locale ? `/${locale}` : ''}${pathname}`;
++            res.setHeader('x-nextjs-matched-path', /[^\t\x20-\x7e\x80-\xff]/.test(matchedPathValue) ? encodeURIComponent(matchedPathValue) : matchedPathValue);
+         }
+         let routeModule;
+         if (components.routeModule) {
+@@ -1559,7 +1560,8 @@ export default class Server {
+         const middleware = await this.getMiddleware();
+         if (middleware && !!ctx.req.headers['x-nextjs-data'] && (!res.statusCode || res.statusCode === 200 || res.statusCode === 404)) {
+             const locale = getRequestMeta(req, 'locale');
+-            res.setHeader('x-nextjs-matched-path', `${locale ? `/${locale}` : ''}${pathname}`);
++            const matchedPathValue = `${locale ? `/${locale}` : ''}${pathname}`;
++            res.setHeader('x-nextjs-matched-path', /[^\t\x20-\x7e\x80-\xff]/.test(matchedPathValue) ? encodeURIComponent(matchedPathValue) : matchedPathValue);
+             res.statusCode = 200;
+             res.setHeader('Content-Type', JSON_CONTENT_TYPE_HEADER);
+             res.body('{}');
 diff --git a/node_modules/next/dist/esm/server/lib/implicit-tags.js b/node_modules/next/dist/esm/server/lib/implicit-tags.js
 index 3294b8b..a90d20d 100644
 --- a/node_modules/next/dist/esm/server/lib/implicit-tags.js
@@ -79,6 +112,39 @@ index 865dc70..a314c56 100644
      if (type) {
          normalizedPath += `${normalizedPath.endsWith('/') ? '' : '/'}${type}`;
      } else if (isDynamicRoute(originalPath)) {
+diff --git a/node_modules/next/dist/server/base-server.js b/node_modules/next/dist/server/base-server.js
+index 2239b16..6993c0c 100644
+--- a/node_modules/next/dist/server/base-server.js
++++ b/node_modules/next/dist/server/base-server.js
+@@ -1254,7 +1254,7 @@ class Server {
+         // resolve to a static data route we bail early to avoid
+         // unexpected SSR invocations
+         if (!isSSG && req.headers['x-middleware-prefetch'] && !(is404Page || pathname === '/_error')) {
+-            res.setHeader(_constants2.MATCHED_PATH_HEADER, pathname);
++            res.setHeader(_constants2.MATCHED_PATH_HEADER, /[^\t\x20-\x7e\x80-\xff]/.test(pathname) ? encodeURIComponent(pathname) : pathname);
+             res.setHeader('x-middleware-skip', '1');
+             res.setHeader('cache-control', 'private, no-cache, no-store, max-age=0, must-revalidate');
+             res.body('{}').send();
+@@ -1267,7 +1267,8 @@ class Server {
+         }
+         const locale = (0, _requestmeta.getRequestMeta)(req, 'locale');
+         if (!!req.headers['x-nextjs-data'] && (!res.statusCode || res.statusCode === 200)) {
+-            res.setHeader('x-nextjs-matched-path', `${locale ? `/${locale}` : ''}${pathname}`);
++            const matchedPathValue = `${locale ? `/${locale}` : ''}${pathname}`;
++            res.setHeader('x-nextjs-matched-path', /[^\t\x20-\x7e\x80-\xff]/.test(matchedPathValue) ? encodeURIComponent(matchedPathValue) : matchedPathValue);
+         }
+         let routeModule;
+         if (components.routeModule) {
+@@ -1624,7 +1625,8 @@ class Server {
+         const middleware = await this.getMiddleware();
+         if (middleware && !!ctx.req.headers['x-nextjs-data'] && (!res.statusCode || res.statusCode === 200 || res.statusCode === 404)) {
+             const locale = (0, _requestmeta.getRequestMeta)(req, 'locale');
+-            res.setHeader('x-nextjs-matched-path', `${locale ? `/${locale}` : ''}${pathname}`);
++            const matchedPathValue = `${locale ? `/${locale}` : ''}${pathname}`;
++            res.setHeader('x-nextjs-matched-path', /[^\t\x20-\x7e\x80-\xff]/.test(matchedPathValue) ? encodeURIComponent(matchedPathValue) : matchedPathValue);
+             res.statusCode = 200;
+             res.setHeader('Content-Type', _constants2.JSON_CONTENT_TYPE_HEADER);
+             res.body('{}');
 diff --git a/node_modules/next/dist/server/lib/implicit-tags.js b/node_modules/next/dist/server/lib/implicit-tags.js
 index 30699c1..ba9b858 100644
 --- a/node_modules/next/dist/server/lib/implicit-tags.js
