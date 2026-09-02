@@ -7,7 +7,7 @@
 (cron 매주 월 09:00)
   gsc_fetch.py       GSC API → GSC CSV/ 갱신   (미설정 시 기존 CSV 유지, 비차단)
   refresh_finder.py  striking-distance 글을 기회 크기순 분석
-  refresh_pipeline.py 상위 5편의 현재 글(Supabase) + RAG 근거 + 로컬 LLM 으로
+  refresh_pipeline.py 상위 5편의 현재 글(Supabase) + RAG 근거 + Claude API(키 없으면 로컬 LLM 폴백)로
                      개선안(제목안·본문보강·메타) 생성 → refresh_proposals/<날짜>/
   [사람]             INDEX.md 보고 검토·수정·발행
 ```
@@ -81,6 +81,8 @@ python3 scripts/refresh_telegram.py -n 5 --no-content # 제목·메타만(저위
 
 ## 조정
 
-- 생성 LLM: `REFRESH_LLM_MODEL`(기본 qwen2.5:14b) · RAG 경로: `SITE_KNOWLEDGE_QUERY`
+- 생성 LLM: `.env.local`에 `ANTHROPIC_API_KEY` 있으면 Claude(`REFRESH_CLAUDE_MODEL`, 기본
+  claude-sonnet-4-6) 사용, 없거나 호출 실패 시 로컬 Ollama(`REFRESH_LLM_MODEL`, 기본 qwen2.5:14b)로
+  자동 폴백 · RAG 경로: `SITE_KNOWLEDGE_QUERY`
 - 개수: `refresh_pipeline.py -n N` · 노출 하한: `--min-impr`
 - pm2 앱 `blog-refresh`(cron 월 09:00, `--no-autorestart`) — 실행 후 `stopped` 가 정상.

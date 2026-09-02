@@ -2,7 +2,7 @@
 """리프레시 파이프라인 — 측정→분석→**초안 생성**→승인 큐 (발행은 사람).
 
 반자동 루프의 자동 부분. GSC 실측으로 리프레시 최우선 글을 뽑고(refresh_finder),
-각 글의 현재 제목·본문을 Supabase 에서 가져와, 사이트 관리 RAG 근거 + 로컬 LLM 으로
+각 글의 현재 제목·본문을 Supabase 에서 가져와, 사이트 관리 RAG 근거 + Claude API(키 없으면 로컬 LLM 폴백)로
 **개선 제안(제목안·보강 체크리스트)** 을 만들어 `refresh_proposals/<날짜>/` 에 쌓는다.
 
 발행은 하지 않는다 — 사람이 제안을 확인·수정·발행한다(E-E-A-T '사람 검토' 신호 유지).
@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PROPOSAL_DIR = ROOT / "refresh_proposals"
 OLLAMA = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
 LLM_MODEL = os.getenv("REFRESH_LLM_MODEL", "qwen2.5:14b")
+CLAUDE_MODEL = os.getenv("REFRESH_CLAUDE_MODEL", "claude-sonnet-4-6")
 
 
 def _env():
@@ -45,6 +46,7 @@ def _env():
 ENV = _env()
 SUPABASE_URL = (ENV.get("SUPABASE_URL") or ENV.get("NEXT_PUBLIC_SUPABASE_URL") or "").rstrip("/")
 SUPABASE_KEY = ENV.get("SUPABASE_SERVICE_ROLE_KEY", "")
+ANTHROPIC_KEY = ENV.get("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_API_KEY", "")
 
 
 def fetch_post(url: str) -> dict | None:
@@ -94,6 +96,35 @@ def ollama_chat(system: str, user: str, timeout: int = 240) -> str:
         return f"(LLM 제안 생성 실패: {e})"
 
 
+def claude_chat(system: str, user: str, timeout: int = 120, max_tokens: int = 4096) -> str:
+    """Claude API(Messages)로 생성. ANTHROPIC_API_KEY 필요."""
+    req = urllib.request.Request(
+        "https://api.anthropic.com/v1/messages",
+        data=json.dumps({
+            "model": CLAUDE_MODEL,
+            "max_tokens": max_tokens,
+            "system": system,
+            "messages": [{"role": "user", "content": user}],
+        }).encode(),
+        headers={
+            "Content-Type": "application/json",
+            "x-api-key": ANTHROPIC_KEY,
+            "anthropic-version": "2023-06-01",
+        })
+    r = json.loads(urllib.request.urlopen(req, timeout=timeout).read())
+    return "".join(b.get("text", "") for b in r.get("content", [])).strip()
+
+
+def llm_chat(system: str, user: str, timeout: int = 240) -> str:
+    """Claude 우선, ANTHROPIC_API_KEY 없거나 실패 시 로컬 Ollama 로 폴백(비차단 유지)."""
+    if ANTHROPIC_KEY:
+        try:
+            return claude_chat(system, user, timeout=min(timeout, 180))
+        except Exception as e:
+            print(f"! Claude 호출 실패({e}) — Ollama 로 폴백")
+    return ollama_chat(system, user, timeout)
+
+
 _SYS = (
     "너는 기술 블로그 SEO 에디터다. 이미 검색에 노출되지만 순위·CTR 이 아쉬운 기존 글을 "
     "'리프레시'해 1페이지로 끌어올리는 개선안을 낸다. 새 글을 쓰지 말고, 기존 글을 어떻게 "
@@ -128,7 +159,7 @@ def build_proposal(c: dict, post: dict | None, use_llm: bool) -> str:
             "진단이 '제목·메타'면 제목·메타 개선에 집중, '콘텐츠 보강'이면 1차 출처·"
             "의사결정표·코드/예상결과·검색의도 재정렬 중심으로."
         )
-        lines.append(ollama_chat(_SYS, user))
+        lines.append(llm_chat(_SYS, user))
     else:
         lines.append("### 보강 체크리스트 (RAG 기준)")
         if c["issue"] == "제목·메타":

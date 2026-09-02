@@ -24,7 +24,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import refresh_finder as rf
-import refresh_pipeline as rp   # Supabase fetch·Ollama·ENV 재사용
+import refresh_pipeline as rp   # Supabase fetch·Claude(폴백 Ollama)·ENV 재사용
 
 # 봇과 공유하는 승인 큐 (봇이 읽어 적용). 경로는 env 로 오버라이드 가능.
 QUEUE = Path(os.getenv(
@@ -71,9 +71,9 @@ _TITLE_SYS = (
 
 def _gen_title(cur_title, topic):
     rag = rf.rag_refresh_points(topic, 2)
-    out = rp.ollama_chat(_TITLE_SYS,
-                         f"현재 제목: {cur_title}\n참고 원칙: {', '.join(rag) or '없음'}\n"
-                         "검색될 키워드+구체적 이득/숫자를 넣어 개선하라.")
+    out = rp.llm_chat(_TITLE_SYS,
+                      f"현재 제목: {cur_title}\n참고 원칙: {', '.join(rag) or '없음'}\n"
+                      "검색될 키워드+구체적 이득/숫자를 넣어 개선하라.")
     t = re.search(r"TITLE:\s*(.+)", out)
     e = re.search(r"EXCERPT:\s*(.+)", out)
     return (t.group(1).strip() if t else ""), (e.group(1).strip() if e else "")
@@ -88,9 +88,9 @@ _REWRITE_SYS = (
 
 def _gen_rewrite(cur_title, content, topic):
     rag = rf.rag_refresh_points(topic, 3)
-    out = rp.ollama_chat(_REWRITE_SYS,
-                         f"제목: {cur_title}\n참고 원칙: {', '.join(rag) or '없음'}\n\n"
-                         f"현재 본문:\n{content[:6000]}\n\n형식대로 리프레시하라.", timeout=400)
+    out = rp.llm_chat(_REWRITE_SYS,
+                      f"제목: {cur_title}\n참고 원칙: {', '.join(rag) or '없음'}\n\n"
+                      f"현재 본문:\n{content[:6000]}\n\n형식대로 리프레시하라.", timeout=400)
     t = re.search(r"TITLE:\s*(.+)", out)
     e = re.search(r"EXCERPT:\s*(.+)", out)
     body = out.split("---", 1)[1].strip() if "---" in out else out
