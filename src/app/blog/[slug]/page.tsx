@@ -21,26 +21,41 @@ import InlineSubscribeCTA from '@/components/InlineSubscribeCTA';
 
 export const revalidate = 60;
 
+// 아래 보조 데이터(댓글·이전/다음글·시리즈·관련 콘텐츠)는 전부 try/catch로 감싼다 —
+// 하나라도 unhandled로 throw하면 Promise.all 전체가 실패해 ISR 재생성 렌더가 통째로
+// 죽고, Next/Vercel은 마지막으로 성공한 캐시를 그대로 계속 서빙한다(에러가 겉으로
+// 안 보이고 페이지가 몇 시간~며칠씩 그대로 굳어버리는 원인). 실패해도 빈 값으로
+// 폴백해 본문(핵심 콘텐츠)만은 항상 최신으로 재생성되게 한다.
 async function getComments(slugKey: string): Promise<CommentRow[]> {
-  const { data } = await makeFreshClient()
-    .from('comments')
-    .select('id,name,content,created_at,parent_id,likes')
-    .eq('post_slug', slugKey)
-    .eq('status', 'approved')
-    .order('created_at', { ascending: true });
-  return (data ?? []) as CommentRow[];
+  try {
+    const { data } = await makeFreshClient()
+      .from('comments')
+      .select('id,name,content,created_at,parent_id,likes')
+      .eq('post_slug', slugKey)
+      .eq('status', 'approved')
+      .order('created_at', { ascending: true });
+    return (data ?? []) as CommentRow[];
+  } catch (e) {
+    console.error('getComments 실패:', e);
+    return [];
+  }
 }
 
 async function getAdjacentPosts(publishedAt: string, id: number): Promise<{ prev: { title: string; slug: string } | null; next: { title: string; slug: string } | null }> {
-  const client = makeFreshClient();
-  const [prevResult, nextResult] = await Promise.all([
-    client.from('posts').select('title,slug').eq('status', 'published').lt('published_at', publishedAt).neq('id', id).order('published_at', { ascending: false }).limit(1),
-    client.from('posts').select('title,slug').eq('status', 'published').gt('published_at', publishedAt).neq('id', id).order('published_at', { ascending: true }).limit(1),
-  ]);
-  return {
-    prev: prevResult.data?.[0] ?? null,
-    next: nextResult.data?.[0] ?? null,
-  };
+  try {
+    const client = makeFreshClient();
+    const [prevResult, nextResult] = await Promise.all([
+      client.from('posts').select('title,slug').eq('status', 'published').lt('published_at', publishedAt).neq('id', id).order('published_at', { ascending: false }).limit(1),
+      client.from('posts').select('title,slug').eq('status', 'published').gt('published_at', publishedAt).neq('id', id).order('published_at', { ascending: true }).limit(1),
+    ]);
+    return {
+      prev: prevResult.data?.[0] ?? null,
+      next: nextResult.data?.[0] ?? null,
+    };
+  } catch (e) {
+    console.error('getAdjacentPosts 실패:', e);
+    return { prev: null, next: null };
+  }
 }
 
 interface SeriesContext {
@@ -53,20 +68,25 @@ async function getSeriesContext(tags: string[], currentId: number): Promise<Seri
   const seriesTag = tags.find(t => t.startsWith('series:'));
   if (!seriesTag) return null;
   const seriesName = seriesTag.replace('series:', '');
-  const { data } = await makeFreshClient()
-    .from('posts')
-    .select('id,title,slug,tags,published_at')
-    .eq('status', 'published')
-    .contains('tags', [`series:${seriesName}`])
-    .order('published_at', { ascending: true });
-  // ep:N 태그 기준 정렬 (엔진이 부여한 에피소드 번호 존중) — /series 페이지와 일관성 유지.
-  const rows = (data ?? []) as { id: number; title: string; slug: string; tags: string[]; published_at: string }[];
-  const ep = (t: string[]) => { const m = (t ?? []).find(x => /^ep:\d+$/.test(x)); return m ? parseInt(m.slice(3), 10) : null; };
-  rows.sort((a, b) => (ep(a.tags) ?? 1e9) - (ep(b.tags) ?? 1e9) || a.published_at.localeCompare(b.published_at));
-  const posts = rows.map(({ id, title, slug }) => ({ id, title, slug }));
-  const currentIndex = posts.findIndex(p => p.id === currentId);
-  if (currentIndex === -1) return null;
-  return { seriesName, posts, currentIndex };
+  try {
+    const { data } = await makeFreshClient()
+      .from('posts')
+      .select('id,title,slug,tags,published_at')
+      .eq('status', 'published')
+      .contains('tags', [`series:${seriesName}`])
+      .order('published_at', { ascending: true });
+    // ep:N 태그 기준 정렬 (엔진이 부여한 에피소드 번호 존중) — /series 페이지와 일관성 유지.
+    const rows = (data ?? []) as { id: number; title: string; slug: string; tags: string[]; published_at: string }[];
+    const ep = (t: string[]) => { const m = (t ?? []).find(x => /^ep:\d+$/.test(x)); return m ? parseInt(m.slice(3), 10) : null; };
+    rows.sort((a, b) => (ep(a.tags) ?? 1e9) - (ep(b.tags) ?? 1e9) || a.published_at.localeCompare(b.published_at));
+    const posts = rows.map(({ id, title, slug }) => ({ id, title, slug }));
+    const currentIndex = posts.findIndex(p => p.id === currentId);
+    if (currentIndex === -1) return null;
+    return { seriesName, posts, currentIndex };
+  } catch (e) {
+    console.error('getSeriesContext 실패:', e);
+    return null;
+  }
 }
 
 const CAT_TO_GUIDE_CAT: Record<string, string[]> = {
@@ -80,15 +100,20 @@ const CAT_TO_GUIDE_CAT: Record<string, string[]> = {
 async function getRelatedGuides(category: string): Promise<import('@/lib/types').EngineerGuide[]> {
   const guideCats = CAT_TO_GUIDE_CAT[category] ?? [];
   if (guideCats.length === 0) return [];
-  const client = makeFreshClient();
-  const { data } = await client
-    .from('engineer_guides')
-    .select('id,title,slug,summary,category,difficulty,views')
-    .eq('status', 'published')
-    .in('category', guideCats)
-    .order('views', { ascending: false })
-    .limit(3);
-  return (data ?? []) as import('@/lib/types').EngineerGuide[];
+  try {
+    const client = makeFreshClient();
+    const { data } = await client
+      .from('engineer_guides')
+      .select('id,title,slug,summary,category,difficulty,views')
+      .eq('status', 'published')
+      .in('category', guideCats)
+      .order('views', { ascending: false })
+      .limit(3);
+    return (data ?? []) as import('@/lib/types').EngineerGuide[];
+  } catch (e) {
+    console.error('getRelatedGuides 실패:', e);
+    return [];
+  }
 }
 
 const RELATED_POST_SELECT = 'id,title,slug,excerpt,category,tags,author,agent_role,views,published_at,content,cover_image';
@@ -97,37 +122,42 @@ interface RankablePost { id: number; category: string; tags: string[] }
 
 /** 태그·카테고리 유사도 기반 관련 글. 3개 미만이면 조회수 상위 글로 폴백해 채운다. */
 async function getRelatedPosts(post: { id: number; category: string; tags: string[] }): Promise<import('@/lib/types').PostSummary[]> {
-  const client = makeFreshClient();
-  const cleanTags = publicTags(post.tags);
+  try {
+    const client = makeFreshClient();
+    const cleanTags = publicTags(post.tags);
 
-  const [tagRes, catRes] = await Promise.all([
-    cleanTags.length > 0
-      ? client.from('posts').select(RELATED_POST_SELECT).eq('status', 'published').neq('id', post.id).overlaps('tags', cleanTags).order('published_at', { ascending: false }).limit(8)
-      : Promise.resolve({ data: [] as unknown[] }),
-    client.from('posts').select(RELATED_POST_SELECT).eq('status', 'published').eq('category', post.category).neq('id', post.id).order('published_at', { ascending: false }).limit(8),
-  ]);
+    const [tagRes, catRes] = await Promise.all([
+      cleanTags.length > 0
+        ? client.from('posts').select(RELATED_POST_SELECT).eq('status', 'published').neq('id', post.id).overlaps('tags', cleanTags).order('published_at', { ascending: false }).limit(8)
+        : Promise.resolve({ data: [] as unknown[] }),
+      client.from('posts').select(RELATED_POST_SELECT).eq('status', 'published').eq('category', post.category).neq('id', post.id).order('published_at', { ascending: false }).limit(8),
+    ]);
 
-  let ranked = rankRelated<RankablePost & Record<string, unknown>>(post, [
-    (tagRes.data ?? []) as (RankablePost & Record<string, unknown>)[],
-    (catRes.data ?? []) as (RankablePost & Record<string, unknown>)[],
-  ]);
+    let ranked = rankRelated<RankablePost & Record<string, unknown>>(post, [
+      (tagRes.data ?? []) as (RankablePost & Record<string, unknown>)[],
+      (catRes.data ?? []) as (RankablePost & Record<string, unknown>)[],
+    ]);
 
-  if (ranked.length < 3) {
-    const { data: fallback } = await client
-      .from('posts')
-      .select(RELATED_POST_SELECT)
-      .eq('status', 'published')
-      .neq('id', post.id)
-      .order('views', { ascending: false })
-      .limit(10);
-    ranked = rankRelated(post, [ranked, (fallback ?? []) as (RankablePost & Record<string, unknown>)[]]);
+    if (ranked.length < 3) {
+      const { data: fallback } = await client
+        .from('posts')
+        .select(RELATED_POST_SELECT)
+        .eq('status', 'published')
+        .neq('id', post.id)
+        .order('views', { ascending: false })
+        .limit(10);
+      ranked = rankRelated(post, [ranked, (fallback ?? []) as (RankablePost & Record<string, unknown>)[]]);
+    }
+
+    return ranked.slice(0, 3).map((p) => ({
+      ...p,
+      content: undefined,
+      reading_time: readingTime((p.content as string) ?? ''),
+    })) as unknown as import('@/lib/types').PostSummary[];
+  } catch (e) {
+    console.error('getRelatedPosts 실패:', e);
+    return [];
   }
-
-  return ranked.slice(0, 3).map((p) => ({
-    ...p,
-    content: undefined,
-    reading_time: readingTime((p.content as string) ?? ''),
-  })) as unknown as import('@/lib/types').PostSummary[];
 }
 
 async function getPost(slug: string): Promise<Post | null> {

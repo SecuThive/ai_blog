@@ -24,14 +24,23 @@ function qaKey(slug: string): string {
   return `guide:${slug}`;
 }
 
+// getGuideQa·getRelatedBlogPosts·getRelated는 전부 try/catch로 감싼다 — 하나라도
+// unhandled로 throw하면 ISR 재생성 렌더 전체가 실패해 Vercel이 마지막 성공 캐시를
+// 그대로 계속 서빙한다(에러가 안 보이고 페이지가 며칠씩 굳는 원인). 실패 시 빈 값
+// 폴백으로 본문(핵심 콘텐츠)만은 항상 최신으로 재생성되게 한다.
 async function getGuideQa(slug: string): Promise<CommentRow[]> {
-  const { data } = await makeFreshClient()
-    .from('comments')
-    .select('id,name,content,created_at,parent_id,likes')
-    .eq('post_slug', qaKey(slug))
-    .eq('status', 'approved')
-    .order('created_at', { ascending: true });
-  return (data ?? []) as CommentRow[];
+  try {
+    const { data } = await makeFreshClient()
+      .from('comments')
+      .select('id,name,content,created_at,parent_id,likes')
+      .eq('post_slug', qaKey(slug))
+      .eq('status', 'approved')
+      .order('created_at', { ascending: true });
+    return (data ?? []) as CommentRow[];
+  } catch (e) {
+    console.error('getGuideQa 실패:', e);
+    return [];
+  }
 }
 
 async function getGuide(slug: string): Promise<EngineerGuide | null> {
@@ -64,14 +73,19 @@ const GUIDE_TO_POST_CAT: Record<string, string[]> = {
 async function getRelatedBlogPosts(category: string): Promise<{ id: number; title: string; slug: string; excerpt: string; category: string }[]> {
   const cats = GUIDE_TO_POST_CAT[category] ?? [];
   if (cats.length === 0) return [];
-  const { data } = await makeFreshClient()
-    .from('posts')
-    .select('id,title,slug,excerpt,category')
-    .eq('status', 'published')
-    .in('category', cats)
-    .order('views', { ascending: false })
-    .limit(3);
-  return (data ?? []) as { id: number; title: string; slug: string; excerpt: string; category: string }[];
+  try {
+    const { data } = await makeFreshClient()
+      .from('posts')
+      .select('id,title,slug,excerpt,category')
+      .eq('status', 'published')
+      .in('category', cats)
+      .order('views', { ascending: false })
+      .limit(3);
+    return (data ?? []) as { id: number; title: string; slug: string; excerpt: string; category: string }[];
+  } catch (e) {
+    console.error('getRelatedBlogPosts 실패:', e);
+    return [];
+  }
 }
 
 function extractHowToSteps(md: string): { name: string }[] {
@@ -93,33 +107,38 @@ interface RankableGuide { id: number; category: string; tags: string[] }
 
 /** 태그·카테고리 유사도 기반 관련 가이드. 부족하면 조회수 상위 가이드로 폴백. */
 async function getRelated(guide: { id: number; category: string; tags: string[] }): Promise<EngineerGuide[]> {
-  const client = makeFreshClient();
-  const cleanTags = publicTags(guide.tags);
+  try {
+    const client = makeFreshClient();
+    const cleanTags = publicTags(guide.tags);
 
-  const [tagRes, catRes] = await Promise.all([
-    cleanTags.length > 0
-      ? client.from('engineer_guides').select(RELATED_GUIDE_SELECT).eq('status', 'published').neq('id', guide.id).overlaps('tags', cleanTags).order('created_at', { ascending: false }).limit(8)
-      : Promise.resolve({ data: [] as unknown[] }),
-    client.from('engineer_guides').select(RELATED_GUIDE_SELECT).eq('status', 'published').eq('category', guide.category).neq('id', guide.id).order('created_at', { ascending: false }).limit(8),
-  ]);
+    const [tagRes, catRes] = await Promise.all([
+      cleanTags.length > 0
+        ? client.from('engineer_guides').select(RELATED_GUIDE_SELECT).eq('status', 'published').neq('id', guide.id).overlaps('tags', cleanTags).order('created_at', { ascending: false }).limit(8)
+        : Promise.resolve({ data: [] as unknown[] }),
+      client.from('engineer_guides').select(RELATED_GUIDE_SELECT).eq('status', 'published').eq('category', guide.category).neq('id', guide.id).order('created_at', { ascending: false }).limit(8),
+    ]);
 
-  let ranked = rankRelated<RankableGuide & Record<string, unknown>>(guide, [
-    (tagRes.data ?? []) as (RankableGuide & Record<string, unknown>)[],
-    (catRes.data ?? []) as (RankableGuide & Record<string, unknown>)[],
-  ]);
+    let ranked = rankRelated<RankableGuide & Record<string, unknown>>(guide, [
+      (tagRes.data ?? []) as (RankableGuide & Record<string, unknown>)[],
+      (catRes.data ?? []) as (RankableGuide & Record<string, unknown>)[],
+    ]);
 
-  if (ranked.length < 4) {
-    const { data: fallback } = await client
-      .from('engineer_guides')
-      .select(RELATED_GUIDE_SELECT)
-      .eq('status', 'published')
-      .neq('id', guide.id)
-      .order('views', { ascending: false })
-      .limit(10);
-    ranked = rankRelated(guide, [ranked, (fallback ?? []) as (RankableGuide & Record<string, unknown>)[]]);
+    if (ranked.length < 4) {
+      const { data: fallback } = await client
+        .from('engineer_guides')
+        .select(RELATED_GUIDE_SELECT)
+        .eq('status', 'published')
+        .neq('id', guide.id)
+        .order('views', { ascending: false })
+        .limit(10);
+      ranked = rankRelated(guide, [ranked, (fallback ?? []) as (RankableGuide & Record<string, unknown>)[]]);
+    }
+
+    return ranked.slice(0, 4) as unknown as EngineerGuide[];
+  } catch (e) {
+    console.error('getRelated 실패:', e);
+    return [];
   }
-
-  return ranked.slice(0, 4) as unknown as EngineerGuide[];
 }
 
 export async function generateStaticParams() {
