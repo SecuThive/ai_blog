@@ -2,9 +2,11 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { EngineerGuide } from '@/lib/types';
+import { unstable_cache } from 'next/cache';
 import { makeFreshClient } from '@/lib/supabase';
 import { engCatTone, diffLabel, publicTags, DEFAULT_ROBOTS } from '@/lib/utils';
 import { rankRelated } from '@/lib/related';
+import { guideCacheTag } from '@/lib/cacheTags';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from '@/components/CodeBlock';
@@ -43,16 +45,27 @@ async function getGuideQa(slug: string): Promise<CommentRow[]> {
   }
 }
 
+// 현재 가이드 슬러그는 전부 ASCII라 암묵적 pathname 태그로도 정상 재생성되지만,
+// blog/[slug]와 동일 패턴(명시적 ASCII 해시 태그)으로 맞춰 향후 한글 슬러그
+// 가이드가 생기더라도 같은 재생성 정지 문제를 겪지 않도록 한다. 상세는
+// blog/[slug]/page.tsx의 getPost 주석 참고.
 async function getGuide(slug: string): Promise<EngineerGuide | null> {
   try {
-    const { data, error } = await makeFreshClient()
-      .from('engineer_guides')
-      .select('*')
-      .eq('slug', decodeURIComponent(slug))
-      .eq('status', 'published')
-      .single();
-    if (error || !data) return null;
-    return data as unknown as EngineerGuide;
+    const decoded = decodeURIComponent(slug);
+    return await unstable_cache(
+      async () => {
+        const { data, error } = await makeFreshClient()
+          .from('engineer_guides')
+          .select('*')
+          .eq('slug', decoded)
+          .eq('status', 'published')
+          .single();
+        if (error || !data) return null;
+        return data as unknown as EngineerGuide;
+      },
+      ['guide-by-slug', decoded],
+      { tags: [guideCacheTag(decoded)], revalidate: 60 },
+    )();
   } catch {
     return null;
   }

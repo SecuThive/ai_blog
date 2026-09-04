@@ -1,6 +1,8 @@
+import { unstable_cache } from 'next/cache';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { catTone, publicTags, DEFAULT_ROBOTS, MIN_DISPLAY_VIEWS } from '@/lib/utils';
 import { rankRelated, isStronglyRelated } from '@/lib/related';
+import { postCacheTag } from '@/lib/cacheTags';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
@@ -160,20 +162,30 @@ async function getRelatedPosts(post: { id: number; category: string; tags: strin
   }
 }
 
+// 본문 조회는 명시적 ASCII 태그(postCacheTag)로 캐싱한다 — 슬러그(대부분 한글)를
+// Next의 암묵적 pathname 기반 소프트 태그(`_N_T_/blog/<slug>`)에 그대로 맡기면,
+// 그 인코딩 경로가 프로덕션에서 깨져(x-matched-path 등에 미인코딩 원본 바이트
+// 유출 확인됨) 60초 재검증도 /api/revalidate 수동 호출도 전혀 반영되지 않는
+// 현상이 실측 확인됐다(한글 슬러그 글 다수가 수십 시간째 고정, ASCII 슬러그
+// 글은 정상 재생성). 해시 태그는 언어와 무관하게 항상 ASCII라 이 경로를 우회한다.
 async function getPost(slug: string): Promise<Post | null> {
   try {
     const decoded = decodeURIComponent(slug);
-    const client = makeFreshClient();
-    const { data, error } = await client
-      .from('posts')
-      .select('*')
-      .eq('slug', decoded)
-      .eq('status', 'published')
-      .single();
-    if (error || !data) return null;
-    const post = data as unknown as Post;
-
-    return post;
+    return await unstable_cache(
+      async () => {
+        const client = makeFreshClient();
+        const { data, error } = await client
+          .from('posts')
+          .select('*')
+          .eq('slug', decoded)
+          .eq('status', 'published')
+          .single();
+        if (error || !data) return null;
+        return data as unknown as Post;
+      },
+      ['post-by-slug', decoded],
+      { tags: [postCacheTag(decoded)], revalidate: 60 },
+    )();
   } catch {
     return null;
   }
