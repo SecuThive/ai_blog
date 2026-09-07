@@ -6,7 +6,15 @@ export async function POST(req: NextRequest) {
   if (req.headers.get('x-api-key') !== process.env.BLOG_API_KEY) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const { slug, type = 'post' } = await req.json().catch(() => ({}));
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return NextResponse.json({ error: 'JSON object required' }, { status: 400 });
+  }
+  const { slug, type = 'post' } = body;
+  if ((slug !== undefined && (typeof slug !== 'string' || !slug.trim()))
+    || (type !== 'post' && type !== 'guide')) {
+    return NextResponse.json({ error: 'Invalid slug or type' }, { status: 400 });
+  }
 
   revalidatePath('/');
   revalidatePath('/trending');
@@ -14,20 +22,20 @@ export async function POST(req: NextRequest) {
   revalidatePath('/tags');
   revalidatePath('/archive');
   revalidatePath('/sitemap.xml');
+  revalidatePath('/category/[cat]', 'page');
+  revalidatePath('/tag/[tag]', 'page');
+  revalidatePath('/series/[id]', 'page');
 
-  // 개별 글/가이드는 revalidatePath가 아니라 revalidateTag(ASCII 해시)로 무효화한다.
-  // revalidatePath('/blog/<한글슬러그>')는 Next의 암묵적 pathname 소프트 태그
-  // 인코딩 경로를 타는데, 이 경로가 프로덕션에서 깨져(x-matched-path 미인코딩
-  // 유출 확인) 한글 슬러그 글에는 사실상 아무 효과가 없었다(실측: 반복 호출해도
-  // 캐시 age가 전혀 리셋 안 됨). getPost/getGuide가 같은 해시 태그로 캐싱되므로
-  // revalidateTag만으로 해당 글 전체(본문+댓글+관련글 등)가 재생성된다.
+  // 편집 웹훅은 즉시 만료시켜 다음 요청부터 새 본문을 읽는다.
+  // 'max'는 첫 요청에 예전 본문을 반환하므로 발행 직후 검증에 맞지 않는다.
+  // 상세 HTML은 동적 렌더링하며, 이 태그는 본문 데이터 캐시에 적용된다.
   if (type === 'guide') {
     revalidatePath('/engineer');
     revalidatePath('/engineer/[slug]', 'page');
-    if (slug) revalidateTag(guideCacheTag(slug), 'max');
+    if (slug) revalidateTag(guideCacheTag(slug), { expire: 0 });
   } else {
     revalidatePath('/blog/[slug]', 'page');
-    if (slug) revalidateTag(postCacheTag(slug), 'max');
+    if (slug) revalidateTag(postCacheTag(slug), { expire: 0 });
   }
 
   return NextResponse.json({ revalidated: true, type, slug });

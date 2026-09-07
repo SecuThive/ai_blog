@@ -1,0 +1,96 @@
+[
+  {
+    "table": "engineer_guides",
+    "id": 92,
+    "slug": "linux-archive-compress-guide",
+    "contentFile": "content/linux-archive.md",
+    "expected": {
+      "title": "리눅스에서의 파일 압축 및 해제 가이드: tar, gzip, zip, 7z, zstd",
+      "summary": "tar, gzip, bzip2, xz, zip, 7z, zstd(.tar.zst) 압축·해제 명령과 용도별 선택 기준, zst 압축 해제 시 자주 겪는 에러(구버전 tar 호환) 해결법까지 정리합니다.",
+      "updated_at": "2026-09-07T00:11:35.988638+00:00",
+      "contentSha256": "01226a3c9758263340d3d3f533bec777958c485d3a5d57591013d9a925509c4d"
+    },
+    "title": "리눅스 압축 해제 명령어: tar.gz·tar.zst·zst·zip·7z",
+    "summary": "tar.gz·tar.zst·단일 zst 압축 해제 명령을 확장자별로 정리합니다. tar xzf 옵션, 원본 보존, zstd 미설치·미지원 오류와 형식별 선택 기준을 확인하세요."
+  },
+  {
+    "table": "engineer_guides",
+    "id": 71,
+    "slug": "nginx-502-bad-gateway-fix",
+    "contentFile": "content/nginx-502.md",
+    "expected": {
+      "title": "Nginx 502 Bad Gateway 오류 해결 방법 및 원인 분석",
+      "summary": "Nginx 502 Bad Gateway가 뜨는 6가지 원인 (upstream 미실행, 소켓 경로 불일치, PHP-FPM 크래시, 타임아웃, 권한, 메모리)을 로그 기반으로 빠르게 진단하고 해결하는 가이드.",
+      "updated_at": "2026-09-07T00:11:46.204264+00:00",
+      "contentSha256": "11262d7ac94f2abe36e6afd8b377bfed712ec6a00923776d26011df3ccdb1ea5"
+    },
+    "title": "Nginx 502 Bad Gateway 해결: 로그별 원인과 점검 순서",
+    "summary": "Nginx 502 Bad Gateway를 error.log로 진단합니다. Connection refused, PHP-FPM 소켓·권한, upstream 연결 종료와 큰 헤더 오류를 구분하고 수정 후 검증까지 안내합니다."
+  },
+  {
+    "table": "posts",
+    "id": 640,
+    "slug": "ssh-connection-closedreset-by-peer-5분-진단복구-fail2banmaxstartups",
+    "contentFile": "content/ssh-reset.md",
+    "expected": {
+      "title": "SSH 'Connection closed by remote host' & 'reset by peer': 5분 진단 및 복구 가이드 (Fail2Ban, MaxStartups)",
+      "excerpt": "SSH 연결 시 발생하는 `ssh_exchange_identification: Connection closed by remote host`와 `kex_exchange_identification: read: Connection reset by peer` 에러 해결 방법을 5단계로 정리한 가이드.",
+      "updated_at": "2026-09-07T00:11:42.444428+00:00",
+      "contentSha256": "a5a5d2a69d58ce5b54fd2bdc606b9ff06ee5fba771a643e44df2ec4d32e5fd19"
+    },
+    "title": "SSH kex_exchange_identification: Connection reset by peer 원인과 해결",
+    "excerpt": "SSH reset by peer·Connection closed 오류를 ssh -vvv와 서버 로그로 진단합니다. Fail2Ban 차단, MaxStartups, 계정 정책을 구분하고 설정 검증·복구 순서를 확인하세요."
+  },
+  {
+    "table": "posts",
+    "id": 168,
+    "slug": "필독-llm-에이전트-보안-취약점-분석-및-기업용-ai-거버넌스-프레임워크-구축-가이드",
+    "contentFile": "content/llm-governance.md",
+    "expected": {
+      "title": "LLM 에이전트 보안 강화 전략 및 기업용 AI 거버넌스 프레임워크 구축 가이드 - 실무 적용 사례 포함",
+      "excerpt": "기업용 AI 보안과 거버넌스를 위한 최적의 전략과 프레임워크를 소개합니다. LLM 에이전트 보안 강화, 실무 적용 사례 포함 (90일 내 최신 정보 업데이트)",
+      "updated_at": "2026-07-22T07:53:35.088493+00:00",
+      "contentSha256": "7b67e94e54c85148fb8ad253ce631bd94282678c2f85caad00a6454c562794c8"
+    },
+    "title": "LLM AI 보안 및 거버넌스 체크리스트: RAG·도구 권한·출시 점검",
+    "excerpt": "기업용 LLM 에이전트 출시 전 점검할 보안·거버넌스 체크리스트입니다. RAG 접근통제, 도구 인가, 프롬프트 인젝션 테스트, 감사 로그와 사고 대응 증거를 정리합니다."
+  },
+  {
+    "table": "posts",
+    "id": 656,
+    "slug": "개인정보-위탁-vs-제3자-제공-차이-동의-또-받아야-할까-2026-가이드",
+    "contentFile": "content/privacy-outsourcing.md",
+    "expected": {
+      "title": "개인정보 위탁 vs 제3자 제공 차이, 동의 필요 여부 5문항 판단법 (2026 가이드)",
+      "excerpt": "위탁과 제3자 제공을 가르는 기준과 동의 필요 여부를 5문항 플로우차트로 판단하고, 위수탁 계약서 필수 8개 조항까지 정리했습니다.",
+      "updated_at": "2026-09-02T08:24:30.633313+00:00",
+      "contentSha256": "4e592acbf3e317cb56899013247e3d03cc3b03f837ffe5bca12a376ac6b0df5b"
+    },
+    "title": "개인정보 위탁 vs 제3자 제공 차이: 동의 필요 여부·사례 비교",
+    "excerpt": "개인정보 위탁과 제3자 제공을 목적·역할로 구분합니다. 동의 외 법적 근거, 위탁 계약·공개·감독, 클라우드·LLM API의 국외 이전 확인사항을 비교합니다."
+  },
+  {
+    "table": "engineer_guides",
+    "id": 70,
+    "slug": "ssh-connection-troubleshoot",
+    "contentFile": "content/ssh-general.md",
+    "expected": {
+      "title": "SSH 접속 오류(Connection refused, Permission denied 등) 해결 가이드",
+      "summary": "ssh: connect to host port 22: Connection refused, Permission denied (publickey) 등 SSH 접속 오류 유형별 원인을 빠르게 특정하고 해결하는 트러블슈팅 가이드.",
+      "updated_at": "2026-08-02T06:51:13.976808+00:00",
+      "contentSha256": "3cb9f149f20450fcd51516e570ba00be0a99701423313859be80219b76a8eafb"
+    }
+  },
+  {
+    "table": "engineer_guides",
+    "id": 158,
+    "slug": "logrotate-log-rotation-guide",
+    "contentFile": "content/logrotate.md",
+    "expected": {
+      "title": "logrotate 완전 가이드 — 로그 자동 순환과 압축",
+      "summary": "logrotate로 로그 파일을 자동 순환·압축·보관하는 방법을 설명합니다. /etc/logrotate.conf와 /etc/logrotate.d 구조, rotate·size·compress·postrotate 지시어, copytruncate vs create 방식, cron/systemd 연동, 디버깅까지 다룹니다.",
+      "updated_at": "2026-06-18T14:17:08.01938+00:00",
+      "contentSha256": "70eb3af8468642ebc9c4b878fd1ec4168162cd4a81405cfcb86e3f0920e0362b"
+    }
+  }
+]

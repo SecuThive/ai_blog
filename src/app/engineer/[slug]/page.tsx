@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { EngineerGuide } from '@/lib/types';
 import { unstable_cache } from 'next/cache';
+import { cache } from 'react';
 import { makeFreshClient } from '@/lib/supabase';
 import { engCatTone, diffLabel, publicTags, DEFAULT_ROBOTS } from '@/lib/utils';
 import { rankRelated } from '@/lib/related';
@@ -18,7 +19,8 @@ import InlineSubscribeCTA from '@/components/InlineSubscribeCTA';
 import RelatedContent, { type RelatedItem } from '@/components/RelatedContent';
 import TrackedExternalLink from '@/components/TrackedExternalLink';
 
-export const revalidate = 60;
+// HTML은 요청 시 렌더링하고, 본문 데이터만 60초 캐싱한다.
+export const revalidate = 0;
 
 // 가이드 Q&A는 comments 테이블을 재사용하되 post_slug를 'guide:'로 네임스페이스해
 // 블로그 글 slug와 충돌하지 않게 한다.
@@ -45,31 +47,24 @@ async function getGuideQa(slug: string): Promise<CommentRow[]> {
   }
 }
 
-// 현재 가이드 슬러그는 전부 ASCII라 암묵적 pathname 태그로도 정상 재생성되지만,
-// blog/[slug]와 동일 패턴(명시적 ASCII 해시 태그)으로 맞춰 향후 한글 슬러그
-// 가이드가 생기더라도 같은 재생성 정지 문제를 겪지 않도록 한다. 상세는
-// blog/[slug]/page.tsx의 getPost 주석 참고.
-async function getGuide(slug: string): Promise<EngineerGuide | null> {
-  try {
-    const decoded = decodeURIComponent(slug);
-    return await unstable_cache(
-      async () => {
-        const { data, error } = await makeFreshClient()
-          .from('engineer_guides')
-          .select('*')
-          .eq('slug', decoded)
-          .eq('status', 'published')
-          .single();
-        if (error || !data) return null;
-        return data as unknown as EngineerGuide;
-      },
-      ['guide-by-slug', decoded],
-      { tags: [guideCacheTag(decoded)], revalidate: 60 },
-    )();
-  } catch {
-    return null;
-  }
-}
+// 메타데이터·본문 조회를 합치고, 실제로 없는 가이드만 null로 캐싱한다.
+const getGuide = cache(async (slug: string): Promise<EngineerGuide | null> => {
+  const decoded = decodeURIComponent(slug);
+  return unstable_cache(
+    async () => {
+      const { data, error } = await makeFreshClient()
+        .from('engineer_guides')
+        .select('*')
+        .eq('slug', decoded)
+        .eq('status', 'published')
+        .maybeSingle();
+      if (error) throw new Error(`Guide lookup failed: ${error.code}`);
+      return data as EngineerGuide | null;
+    },
+    ['guide-by-slug', decoded],
+    { tags: [guideCacheTag(decoded)], revalidate: 60 },
+  )();
+});
 
 const GUIDE_TO_POST_CAT: Record<string, string[]> = {
   'Linux / Shell':       ['인프라', '개발'],
@@ -152,14 +147,6 @@ async function getRelated(guide: { id: number; category: string; tags: string[] 
     console.error('getRelated 실패:', e);
     return [];
   }
-}
-
-export async function generateStaticParams() {
-  const { data } = await makeFreshClient()
-    .from('engineer_guides')
-    .select('slug')
-    .eq('status', 'published');
-  return ((data ?? []) as { slug: string }[]).map(g => ({ slug: g.slug }));
 }
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';

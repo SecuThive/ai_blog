@@ -1,4 +1,5 @@
 import { unstable_cache } from 'next/cache';
+import { cache } from 'react';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { catTone, publicTags, DEFAULT_ROBOTS, MIN_DISPLAY_VIEWS } from '@/lib/utils';
 import { rankRelated, isStronglyRelated } from '@/lib/related';
@@ -21,7 +22,9 @@ import { ProgressBar, TableOfContents, CopyLinkBtn, ScrollToTopBtn, ShareBtn, Mo
 import Comments, { type CommentRow } from '@/components/Comments';
 import InlineSubscribeCTA from '@/components/InlineSubscribeCTA';
 
-export const revalidate = 60;
+// HTML은 매 요청 렌더링해 한글 경로의 ISR 재생성 정지를 우회한다.
+// 본문 데이터의 60초 캐시는 아래 unstable_cache에서 별도로 유지한다.
+export const revalidate = 0;
 
 // 아래 보조 데이터(댓글·이전/다음글·시리즈·관련 콘텐츠)는 전부 try/catch로 감싼다 —
 // 하나라도 unhandled로 throw하면 Promise.all 전체가 실패해 ISR 재생성 렌더가 통째로
@@ -162,39 +165,26 @@ async function getRelatedPosts(post: { id: number; category: string; tags: strin
   }
 }
 
-// 본문 조회는 명시적 ASCII 태그(postCacheTag)로 캐싱한다 — 슬러그(대부분 한글)를
-// Next의 암묵적 pathname 기반 소프트 태그(`_N_T_/blog/<slug>`)에 그대로 맡기면,
-// 그 인코딩 경로가 프로덕션에서 깨져(x-matched-path 등에 미인코딩 원본 바이트
-// 유출 확인됨) 60초 재검증도 /api/revalidate 수동 호출도 전혀 반영되지 않는
-// 현상이 실측 확인됐다(한글 슬러그 글 다수가 수십 시간째 고정, ASCII 슬러그
-// 글은 정상 재생성). 해시 태그는 언어와 무관하게 항상 ASCII라 이 경로를 우회한다.
-async function getPost(slug: string): Promise<Post | null> {
-  try {
-    const decoded = decodeURIComponent(slug);
-    return await unstable_cache(
-      async () => {
-        const client = makeFreshClient();
-        const { data, error } = await client
-          .from('posts')
-          .select('*')
-          .eq('slug', decoded)
-          .eq('status', 'published')
-          .single();
-        if (error || !data) return null;
-        return data as unknown as Post;
-      },
-      ['post-by-slug', decoded],
-      { tags: [postCacheTag(decoded)], revalidate: 60 },
-    )();
-  } catch {
-    return null;
-  }
-}
-
-export async function generateStaticParams() {
-  const { data } = await makeFreshClient().from('posts').select('slug').eq('status', 'published');
-  return ((data ?? []) as { slug: string }[]).map(p => ({ slug: p.slug }));
-}
+// React cache는 같은 렌더의 메타데이터·본문 조회를 합친다.
+// DB 장애는 404로 캐싱하지 않고 오류로 전달한다. 없는 글만 null을 반환한다.
+const getPost = cache(async (slug: string): Promise<Post | null> => {
+  const decoded = decodeURIComponent(slug);
+  return unstable_cache(
+    async () => {
+      const client = makeFreshClient();
+      const { data, error } = await client
+        .from('posts')
+        .select('*')
+        .eq('slug', decoded)
+        .eq('status', 'published')
+        .maybeSingle();
+      if (error) throw new Error(`Post lookup failed: ${error.code}`);
+      return data as Post | null;
+    },
+    ['post-by-slug', decoded],
+    { tags: [postCacheTag(decoded)], revalidate: 60 },
+  )();
+});
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
