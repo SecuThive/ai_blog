@@ -112,6 +112,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             media=print → load 시 all로 전환하는 표준 비차단 로딩 패턴을 적용한다.
             (noscript로 JS 비활성 환경 폴백 유지) */}
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
         <link
           id="pretendard-font"
           rel="stylesheet"

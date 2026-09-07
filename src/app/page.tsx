@@ -12,7 +12,10 @@ import SubscribeForm from '@/components/SubscribeForm';
 import PostThumb from '@/components/PostThumb';
 import TrackedLink from '@/components/TrackedLink';
 
-export const revalidate = 60;
+// 홈은 DB 쿼리 6개를 병렬로 조합하므로 매분 콜드 재생성하면 최초 응답이 길어진다.
+// 발행 웹훅이 목록·sitemap을 별도로 무효화하므로 5분 캐시로 최신 글 반영과 응답 안정성을
+// 함께 확보한다.
+export const revalidate = 300;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
