@@ -14,14 +14,13 @@ if (reverseCheck.status === 0) {
   process.exit(0);
 }
 
-const result = spawnSync('patch-package', [], {
+const result = spawnSync('git', ['apply', patchFile], {
   cwd: projectRoot,
   stdio: 'inherit',
-  shell: process.platform === 'win32',
 });
 
 if (result.error) {
-  console.error(`Failed to run patch-package: ${result.error.message}`);
+  console.error(`Failed to apply the Next.js patch: ${result.error.message}`);
   process.exit(1);
 }
 
