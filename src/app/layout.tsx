@@ -76,7 +76,7 @@ export const metadata: Metadata = {
 const PRETENDARD_CSS_URL =
   'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css';
 
-const GA_ID = 'G-3WP9Z4DEFH';
+const GA_ID = 'G-WL5W341ZFQ';
 
 // 네이버 서치어드바이저 소유 확인 메타 태그 — 값 자체는 페이지 소스에 공개되는 정보지만,
 // 계정/사이트마다 달라지는 배포별 설정이므로 코드에 고정하지 않고 환경변수로 주입한다.
