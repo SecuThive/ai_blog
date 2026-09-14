@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "patch-package"
+    "postinstall": "node scripts/apply-next-patch.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",
