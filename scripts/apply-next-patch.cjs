@@ -1,4 +1,5 @@
 const { spawnSync } = require('node:child_process');
+const fs = require('node:fs');
 const path = require('node:path');
 
 const projectRoot = path.resolve(__dirname, '..');
@@ -14,14 +15,35 @@ if (reverseCheck.status === 0) {
   process.exit(0);
 }
 
-const result = spawnSync('git', ['apply', patchFile], {
+const patch = fs.readFileSync(patchFile, 'utf8');
+const rejectFiles = [...patch.matchAll(/^\+\+\+ b\/(.+)$/gm)].map((match) =>
+  path.join(projectRoot, `${match[1]}.rej`),
+);
+
+const result = spawnSync('git', ['apply', '--reject', patchFile], {
   cwd: projectRoot,
-  stdio: 'inherit',
+  encoding: 'utf8',
 });
+
+for (const rejectFile of rejectFiles) {
+  fs.rmSync(rejectFile, { force: true });
+}
+
+const verify = spawnSync('git', ['apply', '--check', '--reverse', patchFile], {
+  cwd: projectRoot,
+  stdio: 'ignore',
+});
+
+if (verify.status === 0) {
+  console.log('Next.js patch is applied.');
+  process.exit(0);
+}
 
 if (result.error) {
   console.error(`Failed to apply the Next.js patch: ${result.error.message}`);
-  process.exit(1);
+} else if (result.stderr) {
+  console.error(result.stderr.trim());
 }
 
-process.exit(result.status ?? 1);
+console.error('The Next.js patch could not be fully applied.');
+process.exit(1);
