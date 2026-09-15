@@ -33,4 +33,17 @@ export const POST_REDIRECTS: Record<string, string> = {
     '실전-가이드-rag-성능-병목-지점-3가지-진단-및-운영-레벨-최적화-로드맵',
   'git-permission-denied-publickey-에러-해결-ssh-키부터-다중계정까지':
     'ssh-permission-denied-publickey-원인해결-5분-진단-ec2',
+  // 2026-09-15: 고신뢰 404 중복
+  'nginx-502-bad-gateway-원인-7가지와-errorlog-5분-진단법':
+    'nginx-502-bad-gateway-원인-진단표복붙-명령어로-5분-해결',
+  'nginx-502-bad-gateway-원인별-진단-및-근본-해결-방법-가이드':
+    'nginx-502-bad-gateway-원인-진단표복붙-명령어로-5분-해결',
+  'crashloopbackoff-해결-pod-재시작-원인-7가지exit-code-진단법':
+    'crashloopbackoff-해결-pod-무한-재시작-7가지-원인-진단법',
+  'k8s-forbidden-에러-원인부터-serviceaccountrbac-디버깅까지-완벽-가이드':
+    'k8s-forbidden-오류-rbac부터-serviceaccount까지-5단계로-완벽-진단하는-방법',
+  'llm-환각-현상-완벽-해결-가이드-rag검색-증강-생성-아키텍처-완벽-분석':
+    'llm-환각-현상-완벽-해결-가이드-rag검색-증강-생성-원리부터-실습까지',
+  '단일-llm-호출의-한계를-넘어서-multi-agent-systemmas-아키텍처-완벽-가이드':
+    '단순-호출을-넘어선-시스템-설계-multi-agent-systemmas-완벽-가이드',
 };
