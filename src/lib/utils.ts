@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
-export function catTone(cat: string): string {
+export function catTone(cat: string | null | undefined): string {
+  if (!cat) return 'blue';
   if (cat.includes('AI') || cat.includes('자동화')) return 'blue';
   if (cat.includes('트렌드') || cat.includes('IT')) return 'purple';
   if (cat.includes('개발') || cat.includes('인프라')) return 'mint';

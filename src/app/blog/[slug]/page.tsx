@@ -66,8 +66,9 @@ interface SeriesContext {
   currentIndex: number;
 }
 
-async function getSeriesContext(tags: string[], currentId: number): Promise<SeriesContext | null> {
-  const seriesTag = tags.find(t => t.startsWith('series:'));
+async function getSeriesContext(tags: string[] | null | undefined, currentId: number): Promise<SeriesContext | null> {
+  const list = tags ?? [];
+  const seriesTag = list.find(t => t.startsWith('series:'));
   if (!seriesTag) return null;
   const seriesName = seriesTag.replace('series:', '');
   try {
@@ -309,20 +310,22 @@ function makeMdComponents() {
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const post = await getPost(slug);
-
-  if (!post) {
-    // 중복 정리로 강등된 글의 구 URL은 유지된 글로 308 영구 리다이렉트 — 링크 가치 이전
-    const target = POST_REDIRECTS[decodeURIComponent(slug)];
-    if (target) permanentRedirect(`/blog/${encodeURIComponent(target)}`);
-    // 발행 취소·삭제된 글: soft 404(200) 대신 진짜 404 반환 — GSC Soft 404 / AdSense low-value 방지
-    notFound();
+  const decodedSlug = decodeURIComponent(slug);
+  const redirectTarget = POST_REDIRECTS[decodedSlug];
+  if (redirectTarget) {
+    permanentRedirect(`/blog/${encodeURIComponent(redirectTarget)}`);
   }
 
-  const mins = readingTime(post.content);
-  const wordCount = post.content.trim().split(/\s+/).length;
+  const post = await getPost(slug);
+  if (!post) notFound();
+
+  const content = typeof post.content === 'string' ? post.content : '';
+  if (!content.trim()) notFound();
+
+  const mins = readingTime(content);
+  const wordCount = content.trim().split(/\s+/).length;
   const tone = catTone(post.category);
-  const headings = extractHeadings(post.content);
+  const headings = extractHeadings(content);
   const authorInitials = 'NT';
   const dateStr = post.published_at
     ? new Date(post.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -340,12 +343,12 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const [relatedPosts, adjacent, seriesCtx, relatedGuides, comments] = await Promise.all([
     getRelatedPosts(post),
     getAdjacentPosts(post.published_at ?? '', post.id),
-    getSeriesContext(post.tags, post.id),
+    getSeriesContext(post.tags ?? [], post.id),
     getRelatedGuides(post.category),
     getComments(post.slug),
   ]);
   const mdComponents = makeMdComponents();
-  const officialDocs = findOfficialDocs(post.title, post.tags, post.category);
+  const officialDocs = findOfficialDocs(post.title, post.tags ?? [], post.category ?? '');
 
   const postUrl = `${SITE_URL}/blog/${post.slug}`;
   // 콘텐츠 성격에 맞는 스키마 타입 — 이 글들은 뉴스가 아니라 상시 참고용 기술/분석 글이므로
@@ -578,7 +581,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               remarkPlugins={[remarkGfm]}
               components={mdComponents as Record<string, unknown>}
             >
-              {post.content}
+              {content}
             </ReactMarkdown>
 
             {post.content_evidence && (
