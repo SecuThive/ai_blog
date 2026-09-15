@@ -3,6 +3,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const projectRoot = path.resolve(__dirname, '..');
+const nextVersion = require('next/package.json').version;
+if (nextVersion !== '16.2.6') {
+  console.log(`Skipping the Next.js 16.2.6 patch for Next.js ${nextVersion}.`);
+  process.exit(0);
+}
 const patchFile = path.join(projectRoot, 'patches', 'next+16.2.6.patch');
 
 const reverseCheck = spawnSync('git', ['apply', '--check', '--reverse', patchFile], {
