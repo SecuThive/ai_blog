@@ -1,5 +1,42 @@
 import type { MetadataRoute } from 'next';
 
+/** Paths that burn crawl budget / show up as junk in GSC. Applied to * and named bots
+ *  that use `allow: ['/*']` (those groups replace `*`, they do not inherit Disallow). */
+const DISALLOW = [
+  '/api/',
+  '/admin/',
+  '/var',
+  '/var/',
+  '/etc/',
+  '/wp-admin',
+  '/wp-login.php',
+  '/.env',
+  // slug-less OG route is not a real page (per-post OG lives under /blog/[slug]/opengraph-image)
+  '/blog/opengraph-image',
+] as const;
+
+const GEO_BOTS = [
+  'GPTBot',
+  'OAI-SearchBot',
+  'ChatGPT-User',
+  'Claude-Web',
+  'ClaudeBot',
+  'Claude-User',
+  'Claude-SearchBot',
+  'Anthropic-ai',
+  'PerplexityBot',
+  'Perplexity-User',
+  'Googlebot',
+  'Google-Extended',
+  'bingbot',
+  'CCBot',
+  'DuckAssistBot',
+  'meta-externalagent',
+  'FacebookBot',
+  'Applebot-Extended',
+  'Google-CloudVertexBot',
+] as const;
+
 export default function robots(): MetadataRoute.Robots {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
   return {
@@ -7,32 +44,15 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/admin/'],
+        disallow: [...DISALLOW],
       },
-      // 네이버 크롤러
-      { userAgent: 'Yeti',          allow: '/' },
-      { userAgent: 'NaverBot',      allow: '/' },
-      // AI crawlers — allow full indexing for GEO (generative engine optimization)
-      // Allow: /* overrides Cloudflare-managed Disallow: / (longer path wins per RFC 9309)
-      { userAgent: 'GPTBot',                  allow: ['/*'] },
-      { userAgent: 'OAI-SearchBot',            allow: ['/*'] },
-      { userAgent: 'ChatGPT-User',             allow: ['/*'] },
-      { userAgent: 'Claude-Web',               allow: ['/*'] },
-      { userAgent: 'ClaudeBot',                allow: ['/*'] },
-      { userAgent: 'Claude-User',              allow: ['/*'] },
-      { userAgent: 'Claude-SearchBot',         allow: ['/*'] },
-      { userAgent: 'Anthropic-ai',             allow: ['/*'] },
-      { userAgent: 'PerplexityBot',            allow: ['/*'] },
-      { userAgent: 'Perplexity-User',          allow: ['/*'] },
-      { userAgent: 'Googlebot',                allow: ['/*'] },
-      { userAgent: 'Google-Extended',          allow: ['/*'] },
-      { userAgent: 'bingbot',                  allow: ['/*'] },
-      { userAgent: 'CCBot',                    allow: ['/*'] },
-      { userAgent: 'DuckAssistBot',            allow: ['/*'] },
-      { userAgent: 'meta-externalagent',       allow: ['/*'] },
-      { userAgent: 'FacebookBot',              allow: ['/*'] },
-      { userAgent: 'Applebot-Extended',        allow: ['/*'] },
-      { userAgent: 'Google-CloudVertexBot',    allow: ['/*'] },
+      { userAgent: 'Yeti', allow: '/', disallow: [...DISALLOW] },
+      { userAgent: 'NaverBot', allow: '/', disallow: [...DISALLOW] },
+      ...GEO_BOTS.map((userAgent) => ({
+        userAgent,
+        allow: ['/*'] as string[],
+        disallow: [...DISALLOW],
+      })),
     ],
     sitemap: `${base}/sitemap.xml`,
   };
