@@ -1,8 +1,13 @@
 import type { MetadataRoute } from 'next';
 
-/** Paths that burn crawl budget / show up as junk in GSC. Applied to * and named bots
- *  that use `allow: ['/*']` (those groups replace `*`, they do not inherit Disallow). */
-const DISALLOW = [
+/**
+ * GEO-safe robots:
+ * - Named AI/search bots keep `allow: ['/*']` so they beat Cloudflare's Disallow: /
+ * - Junk Disallow only on `*` + Googlebot/bingbot (crawl-budget / GSC). AI GEO bots
+ *   stay Allow-only so their group has zero Disallow noise.
+ * - Never Disallow `/` and never drop `Allow: /*` on GEO bots.
+ */
+const JUNK = [
   '/api/',
   '/admin/',
   '/var',
@@ -11,9 +16,10 @@ const DISALLOW = [
   '/wp-admin',
   '/wp-login.php',
   '/.env',
-  // slug-less OG route is not a real page (per-post OG lives under /blog/[slug]/opengraph-image)
   '/blog/opengraph-image',
 ] as const;
+
+const SEARCH_BOTS = ['Googlebot', 'bingbot', 'Google-Extended'] as const;
 
 const GEO_BOTS = [
   'GPTBot',
@@ -26,9 +32,6 @@ const GEO_BOTS = [
   'Anthropic-ai',
   'PerplexityBot',
   'Perplexity-User',
-  'Googlebot',
-  'Google-Extended',
-  'bingbot',
   'CCBot',
   'DuckAssistBot',
   'meta-externalagent',
@@ -44,14 +47,18 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: [...DISALLOW],
+        disallow: [...JUNK],
       },
-      { userAgent: 'Yeti', allow: '/', disallow: [...DISALLOW] },
-      { userAgent: 'NaverBot', allow: '/', disallow: [...DISALLOW] },
+      { userAgent: 'Yeti', allow: '/', disallow: [...JUNK] },
+      { userAgent: 'NaverBot', allow: '/', disallow: [...JUNK] },
+      ...SEARCH_BOTS.map((userAgent) => ({
+        userAgent,
+        allow: ['/*'] as string[],
+        disallow: [...JUNK],
+      })),
       ...GEO_BOTS.map((userAgent) => ({
         userAgent,
         allow: ['/*'] as string[],
-        disallow: [...DISALLOW],
       })),
     ],
     sitemap: `${base}/sitemap.xml`,
