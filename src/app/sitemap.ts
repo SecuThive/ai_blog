@@ -51,8 +51,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   //  크롤 예산이 낭비되고 lastmod 신뢰도가 떨어진다.)
   const seriesCount = new Map<string, number>();
   const seriesLast = new Map<string, string>();
-  const tagCount = new Map<string, number>();
-  const tagLast = new Map<string, string>();
   const catLast = new Map<string, string>();
   for (const row of (postsRes.data ?? []) as { published_at: string; tags: string[]; category?: string }[]) {
     const when = row.published_at ?? '';
@@ -62,13 +60,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const name = tag.replace('series:', '');
         seriesCount.set(name, (seriesCount.get(name) ?? 0) + 1);
         if (when > (seriesLast.get(name) ?? '')) seriesLast.set(name, when);
-      } else if (/^ep:\d+$/.test(tag)) {
-        // ep:N은 시리즈 에피소드 순서용 내부 태그 — /tag/ep:1 같은 무의미한
-        // 페이지가 sitemap에 들어가지 않도록 제외한다(색인 대상 아님).
-        continue;
-      } else if (!tag.includes('/')) {
-        tagCount.set(tag, (tagCount.get(tag) ?? 0) + 1);
-        if (when > (tagLast.get(tag) ?? '')) tagLast.set(tag, when);
       }
     }
   }
@@ -86,18 +77,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: seriesLast.get(name) ? new Date(seriesLast.get(name)!) : latestDate,
       changeFrequency: 'weekly' as const,
       priority: 0.6,
-    }));
-
-  // 얇은 태그 페이지(글 < MIN_TAG_POSTS)는 sitemap에서 제외 — low-value/doorway 페이지 방지.
-  // 태그 페이지(tag/[tag])의 noindex 임계값과 동일하게 유지할 것.
-  const MIN_TAG_POSTS = 3;
-  const tagPages = Array.from(tagCount.entries())
-    .filter(([, count]) => count >= MIN_TAG_POSTS)
-    .map(([tag]) => ({
-      url: `${base}/tag/${encodeURIComponent(tag)}`,
-      lastModified: tagLast.get(tag) ? new Date(tagLast.get(tag)!) : latestDate,
-      changeFrequency: 'weekly' as const,
-      priority: 0.5,
     }));
 
   const CATEGORIES = ['AI & 자동화', 'IT 트렌드', '개발', '툴 리뷰', '보안', '인프라'];
@@ -126,5 +105,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/author', changeFrequency: 'monthly' as const, priority: 0.4, lastModified: new Date('2026-07-31') },
   ].map(({ path, ...p }) => ({ ...p, url: `${base}${path}` }));
 
-  return [...staticPages, ...categoryPages, ...posts, ...guides, ...seriesPages, ...tagPages];
+  return [...staticPages, ...categoryPages, ...posts, ...guides, ...seriesPages];
 }
