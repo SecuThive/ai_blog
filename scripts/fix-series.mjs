@@ -8,6 +8,9 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 
 const DRY_RUN = process.argv.includes('--dry-run');
 
@@ -16,8 +19,12 @@ const SB_URL     = 'https://isfzeksbzxtuqymfocqv.supabase.co';
 const SB_SERVICE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzZnpla3Nienh0dXF5bWZvY3F2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODczMzc2NCwiZXhwIjoyMDk0MzA5NzY0fQ.DKetrvS0DzApprniPZ0_ST1lHKLKUR6Pari4JXE7la0';
 const db = createClient(SB_URL, SB_SERVICE);
 
-// ── Anthropic OAuth 토큰 ────────────────────────────────────────────────────
-const ANTHROPIC_TOKEN = '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';
+// ── Codex 브릿지 ────────────────────────────────────────────────────────────
+const CODEX_BRIDGE_URL = process.env.CODEX_BRIDGE_URL ?? 'http://127.0.0.1:8787/v1/chat/completions';
+const CODEX_BRIDGE_MODEL = process.env.CODEX_BRIDGE_MODEL ?? 'codex-agent';
+const CODEX_BRIDGE_USER = process.env.CODEX_BRIDGE_USER ?? 'thive8564@gmail.com';
+const CODEX_BRIDGE_TOKEN = process.env.CODEX_BRIDGE_TOKEN
+  ?? readFileSync(process.env.CODEX_BRIDGE_TOKEN_FILE ?? join(homedir(), 'wiki/.bridge-token'), 'utf8').trim();
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 1. 병합 대상: { postId, oldSeriesTag, newSeriesTag }
@@ -384,25 +391,27 @@ function toSlug(title) {
     .slice(0, 80);
 }
 
-async function callClaude(prompt, retries = 5) {
+async function callCodex(prompt, retries = 5) {
   for (let attempt = 0; attempt <= retries; attempt++) {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(CODEX_BRIDGE_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01',
-        'x-api-key': ANTHROPIC_TOKEN,
+        Authorization: `Bearer ${CODEX_BRIDGE_TOKEN}`,
+        'X-OpenWebUI-User-Email': CODEX_BRIDGE_USER,
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
+        model: CODEX_BRIDGE_MODEL,
+        stream: false,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
 
     if (res.ok) {
       const data = await res.json();
-      return data.content[0].type === 'text' ? data.content[0].text : '';
+      const content = data.choices?.[0]?.message?.content?.trim() ?? '';
+      if (!content) throw new Error('Codex bridge returned an empty response');
+      return content;
     }
 
     if (res.status === 429 || res.status === 529) {
@@ -413,9 +422,9 @@ async function callClaude(prompt, retries = 5) {
     }
 
     const err = await res.text();
-    throw new Error(`Claude API ${res.status}: ${err.slice(0, 200)}`);
+    throw new Error(`Codex bridge ${res.status}: ${err.slice(0, 200)}`);
   }
-  throw new Error(`Claude API 재시도 초과`);
+  throw new Error(`Codex bridge 재시도 초과`);
 }
 
 function makeExcerpt(content) {
@@ -469,8 +478,8 @@ async function generateAndInsertEpisodes() {
       const publishedAt = new Date(baseDate.getTime() + ep.publishOffset * 60 * 1000);
 
       // 내용 생성
-      console.log(`  ✍️  Claude 생성 중…`);
-      const content = await callClaude(ep.prompt);
+      console.log(`  ✍️  Codex 브릿지 생성 중…`);
+      const content = await callCodex(ep.prompt);
       const excerpt = makeExcerpt(content);
       const slug = toSlug(ep.episodeTitle);
 

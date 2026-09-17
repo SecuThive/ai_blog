@@ -11,7 +11,7 @@
 ## 2. 두뇌 = 신규글 생성 엔진 (SAFESUARE 백엔드 안)
 
 - 위치: `project/SAFESUARE/backend/utils/ai_company_engine.py` (ai_company 기능의 일부)
-- 흐름: 스케줄러 → CEO 기획 → **content_writer(Claude 생성)** → content_reviewer(검토) → `_publish_to_blog`
+- 흐름: 스케줄러 → CEO 기획 → **content_writer(Codex 브릿지 생성)** → content_reviewer(검토) → `_publish_to_blog`
 - 발행: 블로그 API `POST /api/posts` (blog_settings.json 이 라이브를 가리킴)
 - **주 3편 한도**: `_MAX_POSTS_PER_WEEK=3` + `_MAX_POSTS_PER_DAY=1`
 - **승인**: `require_approval=true` → draft 저장 + 텔레그램 승인 요청
@@ -51,8 +51,8 @@ refresh_telegram.py 개선안(제목/본문, 한국어) 생성 → 승인 큐 + 
 | `blog-health` | 3시간마다 이상 시 텔레그램 알림 | cron·stopped 정상 |
 
 - ⚠️ **재부팅 자동복구**: pm2 startup 미설치 → `sudo … pm2 startup launchd …` 1회 실행 필요(TODO).
-- Codex 브릿지(8787, `codex-agent`) = 모든 기존 글 수정·업데이트 제안 및 리라이트.
-  브릿지 실패 시 다른 모델로 폴백하지 않는다. 신규글 생성 엔진은 별도 경로다.
+- Codex 브릿지(8787, `codex-agent`) = 신규 글 생성과 모든 기존 글 수정·업데이트 제안 및 리라이트.
+  브릿지 실패 시 다른 모델로 폴백하지 않는다.
 
 ## 6. 폐기됨 (혼동 금지)
 

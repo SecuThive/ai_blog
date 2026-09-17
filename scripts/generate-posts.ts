@@ -1,9 +1,9 @@
 /**
  * AI 블로그 글 자동 생성 스크립트
- * 보안(10편) + 인프라(10편) 카테고리 글을 Claude API로 생성 후 DB에 업로드합니다.
+ * 보안(10편) + 인프라(10편) 카테고리 글을 Codex 브릿지로 생성 후 DB에 업로드합니다.
  *
  * 사전 준비:
- *   .env.local에 ANTHROPIC_API_KEY 추가
+ *   로컬 Codex 브릿지 실행 (기본: http://127.0.0.1:8787)
  *
  * 실행:
  *   npx tsx scripts/generate-posts.ts
@@ -11,8 +11,8 @@
  *   npx tsx scripts/generate-posts.ts --limit=3   # 3편만 생성
  */
 
-import Anthropic from '@anthropic-ai/sdk';
 import * as dotenv from 'dotenv';
+import { readFileSync } from 'node:fs';
 import * as path from 'path';
 import * as os from 'node:os';
 import { execFileSync } from 'node:child_process';
@@ -36,18 +36,20 @@ function retrieveSiteKnowledge(query: string, k = 4): string {
   }
 }
 
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY ?? '';
+const CODEX_BRIDGE_URL = process.env.CODEX_BRIDGE_URL ?? 'http://127.0.0.1:8787/v1/chat/completions';
+const CODEX_BRIDGE_MODEL = process.env.CODEX_BRIDGE_MODEL ?? 'codex-agent';
+const CODEX_BRIDGE_USER = process.env.CODEX_BRIDGE_USER ?? 'thive8564@gmail.com';
+const CODEX_BRIDGE_TOKEN = process.env.CODEX_BRIDGE_TOKEN
+  ?? readFileSync(process.env.CODEX_BRIDGE_TOKEN_FILE ?? path.join(os.homedir(), 'wiki/.bridge-token'), 'utf8').trim();
 const BLOG_API_KEY  = process.env.BLOG_API_KEY ?? '';
 const SITE_URL      = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
-if (!ANTHROPIC_KEY) { console.error('❌ ANTHROPIC_API_KEY가 .env.local에 없습니다.'); process.exit(1); }
+if (!CODEX_BRIDGE_TOKEN) { console.error('❌ Codex 브릿지 토큰이 없습니다.'); process.exit(1); }
 if (!BLOG_API_KEY)  { console.error('❌ BLOG_API_KEY가 .env.local에 없습니다.');  process.exit(1); }
 
 const args    = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
 const LIMIT   = (() => { const m = args.find(a => a.startsWith('--limit=')); return m ? parseInt(m.split('=')[1]) : 999; })();
-
-const client = new Anthropic({ apiKey: ANTHROPIC_KEY });
 
 // ──────────────────────────────────────────────────────────────────────────
 // 생성할 주제 목록
@@ -220,10 +222,17 @@ async function generateContent(topic: Topic): Promise<{ content: string; excerpt
     : '';
   if (siteKb) console.log(`  ↳ 사이트 지식 RAG 근거 ${siteKb.split('\n').length}줄 주입`);
 
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 8000,
-    messages: [
+  const response = await fetch(CODEX_BRIDGE_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${CODEX_BRIDGE_TOKEN}`,
+      'X-OpenWebUI-User-Email': CODEX_BRIDGE_USER,
+    },
+    body: JSON.stringify({
+      model: CODEX_BRIDGE_MODEL,
+      stream: false,
+      messages: [
       {
         role: 'user',
         content: `당신은 IT 전문 미디어 Nodelog의 기술 에디터입니다. AI가 초안을 쓰고 사람이 검토하는 매체이므로, 아래 규칙을 어기면 발행이 자동 보류됩니다.
@@ -262,10 +271,13 @@ async function generateContent(topic: Topic): Promise<{ content: string; excerpt
 ${siteKbBlock}
 글 본문만 출력하세요.`,
       },
-    ],
+      ],
+    }),
   });
-
-  const content = response.content[0].type === 'text' ? response.content[0].text : '';
+  if (!response.ok) throw new Error(`Codex bridge ${response.status}: ${(await response.text()).slice(0, 200)}`);
+  const result = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
+  const content = result.choices?.[0]?.message?.content?.trim() ?? '';
+  if (!content) throw new Error('Codex bridge returned an empty response');
   const excerpt = content.replace(/[#*`\[\]]/g, '').replace(/\n+/g, ' ').trim().slice(0, 200) + '…';
 
   return { content, excerpt };
