@@ -647,8 +647,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                 편집 검토 · Editorial Review
               </div>
               <p className="editorial-note-body">
-                AI 도구는 자료 조사와 초안 작성의 보조 수단으로 사용될 수 있습니다.
-                Nodelog는 공개 전 내용과 출처를 검토하고, 환경(OS·버전)에 따라 결과가 달라질 수 있는 기술 정보는 공식 문서를 함께 확인하도록 안내합니다.
+                Nodelog는 모든 콘텐츠의 내용과 출처를 공개 전에 검토합니다.
+                환경(OS·버전)에 따라 결과가 달라질 수 있는 기술 정보는 공식 문서와 함께 확인하며, 검토 기준과 정정 원칙은 <Link href="/policy">편집 정책</Link>에서 안내합니다.
                 오류를 발견하시면 <a href="mailto:thive8564@gmail.com">이메일로 제보</a>해 주세요 — 확인 후 신속히 정정합니다.
               </p>
               <div className="editorial-note-meta">
@@ -701,7 +701,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               <div className="author-avatar">{authorInitials}</div>
               <div className="author-h">편집 책임</div>
               <div className="author-name">Nodelog 기술 편집팀</div>
-              <p className="author-bio">AI 기반 자료 조사 보조 · 편집 검토. 오류 제보와 문서 변경을 반영해 콘텐츠를 정정·보강합니다.</p>
+              <p className="author-bio">공식 문서 대조 · 명령어 검증 · 편집 검토. 오류 제보와 문서 변경을 반영해 콘텐츠를 정정·보강합니다.</p>
             </div>
 
             <div className="article-info">

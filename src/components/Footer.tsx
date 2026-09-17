@@ -86,7 +86,7 @@ export default function Footer() {
         <div className="footer-bottom" style={{ gridColumn: '1 / -1' }}>
           <div className="footer-status">
             <span className="live-dot" />
-            © 2026 NODELOG · AI-ASSISTED · HUMAN-REVIEWED
+            © 2026 NODELOG · EDITORIAL REVIEW
           </div>
           <div>SEOUL · CONTINUOUSLY UPDATED</div>
         </div>

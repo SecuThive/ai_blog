@@ -146,8 +146,8 @@ function HeroV2({ posts, seriesCount, guideCount, subscriberCount }: {
               <em>오늘의</em> 실전 IT 인사이트.
             </h1>
             <p className="heroX-lead">
-              자동화, 개발, 보안, 인프라, 생산성. 공식 문서와 기술 자료를 바탕으로 초안을 만들고,
-              편집 과정에서 핵심 사실과 문맥을 확인해 실무에 활용할 수 있는 콘텐츠로 다듬습니다.
+              자동화, 개발, 보안, 인프라, 생산성. 공식 문서와 기술 자료에서 실무에 필요한 내용을 추리고,
+              편집 과정에서 핵심 사실과 문맥을 확인해 활용도 높은 콘텐츠로 다듬습니다.
             </p>
             <div className="heroX-actions">
               {posts[0] && (
@@ -403,14 +403,14 @@ function EditorQuote() {
                 맥락의 밀도
               </span>
               를 높이는 일.
-              AI가 빠르게 정리하지만, 어떤 신호가 진짜로 중요한지를 결정하는 건 여전히 사람의 몫이라고 믿습니다.
+              정보는 빠르게 쌓이지만, 실무에 중요한 신호를 가려내고 맥락을 더하는 일은 우리의 몫이라고 믿습니다.
             </blockquote>
             <div className="att">
               <span className="pip">N</span>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: '-0.005em' }}>Nodelog 기술 편집팀</div>
                 <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.06em', marginTop: 2 }}>
-                  AI + HUMAN · {yearMonth}
+                  TECH EDITORIAL · {yearMonth}
                 </div>
               </div>
             </div>
@@ -482,7 +482,7 @@ function NewsletterBand({ subscriberCount }: { subscriberCount: number }) {
         <div className="subscribe">
           <div>
             <div className="section-eyebrow" style={{ marginBottom: 14 }}>NEWSLETTER · WEEKLY · 매주 화요일</div>
-            <h3>한 주의 IT를, AI가 정리해 보냅니다.</h3>
+            <h3>한 주의 IT를, 편집팀이 골라 보냅니다.</h3>
             <p>가장 의미 있는 변화 5개, 실무에 적용 가능한 도구 3개, 그리고 가장 깊이 있는 시리즈 1편. {subLabel}</p>
           </div>
           <div>
