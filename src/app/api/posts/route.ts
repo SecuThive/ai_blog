@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, readingTime, toSlug } from '@/lib/supabase';
+import { localizePost } from '@/i18n/content';
+import type { Locale } from '@/i18n/config';
 
 function auth(req: NextRequest): boolean {
   const key = req.headers.get('x-api-key');
@@ -47,41 +49,40 @@ export async function GET(req: NextRequest) {
   const page     = Number(searchParams.get('page') ?? 1);
   const limit    = Number(searchParams.get('limit') ?? 12);
   const category = searchParams.get('category');
-  const locale = searchParams.get('locale') === 'en' ? 'en' : 'ko';
+  const locale: Locale = searchParams.get('locale') === 'en' ? 'en' : 'ko';
 
   const sb = supabaseAdmin();
   const rangeFrom = (page - 1) * limit;
   const rangeTo = page * limit - 1;
-  const baseCols = 'id,title,slug,excerpt,cover_image,category,tags,author,agent_role,views,published_at,content';
   let q = sb
     .from('posts')
-    .select(`${baseCols},title_en,excerpt_en`)
+    .select('id,title,slug,excerpt,cover_image,category,tags,author,agent_role,views,published_at,content,content_evidence')
     .eq('status', 'published')
     .order('published_at', { ascending: false })
     .range(rangeFrom, rangeTo);
 
   if (category) q = q.eq('category', category);
 
-  let { data, error } = await q;
-  if (error) {
-    q = sb
-      .from('posts')
-      .select(baseCols)
-      .eq('status', 'published')
-      .order('published_at', { ascending: false })
-      .range(rangeFrom, rangeTo);
-    if (category) q = q.eq('category', category);
-    ({ data, error } = await q);
-  }
+  const { data, error } = await q;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const posts = (data ?? []).map(p => ({
-    ...p,
-    title: locale === 'en' && p.title_en ? p.title_en : p.title,
-    excerpt: locale === 'en' && p.excerpt_en ? p.excerpt_en : p.excerpt,
-    content: undefined,
-    reading_time: readingTime(p.content ?? ''),
-  }));
+  const posts = (data ?? []).map(p => {
+    const localized = localizePost({
+      title: p.title,
+      excerpt: p.excerpt,
+      content: p.content,
+      tags: p.tags,
+      content_evidence: p.content_evidence,
+    }, locale);
+    return {
+      ...p,
+      title: localized.title,
+      excerpt: localized.excerpt,
+      content: undefined,
+      content_evidence: undefined,
+      reading_time: readingTime(p.content ?? ''),
+    };
+  });
 
   return NextResponse.json({ posts });
 }

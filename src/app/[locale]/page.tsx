@@ -83,24 +83,20 @@ async function getSubscriberCount(): Promise<number> {
 
 async function getPosts(locale: Locale): Promise<PostSummary[]> {
   const client = makeFreshClient();
-  const base = 'id,title,slug,excerpt,cover_image,category,tags,author,agent_role,views,published_at,content';
-  const withEn = await client
+  const { data: rows } = await client
     .from('posts')
-    .select(`${base},title_en,excerpt_en`)
+    .select('id,title,slug,excerpt,cover_image,category,tags,author,agent_role,views,published_at,content,content_evidence')
     .eq('status', 'published')
     .order('published_at', { ascending: false })
     .limit(20);
-  const rows = (withEn.error
-    ? (await client.from('posts').select(base).eq('status', 'published').order('published_at', { ascending: false }).limit(20)).data
-    : withEn.data) ?? [];
 
   return (rows as Record<string, unknown>[]).map((p) => {
     const localized = localizePost({
       title: String(p.title ?? ''),
       excerpt: String(p.excerpt ?? ''),
       content: String(p.content ?? ''),
-      title_en: (p.title_en as string | null) ?? null,
-      excerpt_en: (p.excerpt_en as string | null) ?? null,
+      tags: p.tags as string[] | null,
+      content_evidence: p.content_evidence,
     }, locale);
     return {
       ...p,
@@ -504,20 +500,18 @@ async function getLanePosts(locale: Locale): Promise<Record<string, PostSummary[
   const client = makeFreshClient();
   const entries = await Promise.all(
     LANE_DEFS.map(async (lane) => {
-      const withEn = await client
+      const { data } = await client
         .from('posts')
-        .select('id,title,slug,category,content,published_at,tags,title_en')
+        .select('id,title,slug,category,content,published_at,tags')
         .eq('status', 'published')
         .eq('category', lane.category)
         .order('published_at', { ascending: false })
         .limit(3);
-      const data = (withEn.error
-        ? (await client.from('posts').select('id,title,slug,category,content,published_at,tags').eq('status', 'published').eq('category', lane.category).order('published_at', { ascending: false }).limit(3)).data
-        : withEn.data) ?? [];
       const items = (data as Record<string, unknown>[]).map((p) => {
         const localized = localizePost({
           title: String(p.title ?? ''),
-          title_en: (p.title_en as string | null) ?? null,
+          tags: p.tags as string[] | null,
+          content: String(p.content ?? ''),
         }, locale);
         return {
           ...p,
@@ -534,15 +528,12 @@ async function getLanePosts(locale: Locale): Promise<Record<string, PostSummary[
 
 async function getRecentGuides(locale: Locale): Promise<EngineerGuide[]> {
   const client = makeFreshClient();
-  const withEn = await client
+  const { data } = await client
     .from('engineer_guides')
-    .select('id,title,slug,summary,category,difficulty,views,created_at,tags,title_en,summary_en')
+    .select('id,title,slug,summary,category,difficulty,views,created_at,tags,content')
     .eq('status', 'published')
     .order('created_at', { ascending: false })
     .limit(6);
-  const data = (withEn.error
-    ? (await client.from('engineer_guides').select('id,title,slug,summary,category,difficulty,views,created_at,tags').eq('status', 'published').order('created_at', { ascending: false }).limit(6)).data
-    : withEn.data) ?? [];
   return (data as EngineerGuide[]).map((g) => localizeGuide(g, locale));
 }
 
