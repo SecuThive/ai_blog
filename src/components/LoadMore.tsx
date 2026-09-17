@@ -1,9 +1,13 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/i18n/link';
 import { useState } from 'react';
 import { catTone } from '@/lib/utils';
 import PostThumb from '@/components/PostThumb';
+import { useT } from '@/i18n/provider';
+import { interpolate } from '@/i18n/messages';
+import { categoryLabel } from '@/i18n/categories';
+import { formatTimeAgo } from '@/i18n/format';
 
 interface PostRow {
   id: number;
@@ -23,15 +27,8 @@ interface LoadMoreProps {
   layout?: 'grid' | 'list';
 }
 
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const d = Math.floor(diff / 86400000);
-  if (d < 1) return '오늘';
-  if (d < 7) return `${d}일 전`;
-  return new Date(dateStr).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-}
-
 export default function LoadMore({ initialPosts, fetchUrl, pageSize = 12, layout = 'grid' }: LoadMoreProps) {
+  const { dict, locale } = useT();
   const [posts, setPosts] = useState<PostRow[]>(initialPosts);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -65,9 +62,9 @@ export default function LoadMore({ initialPosts, fetchUrl, pageSize = 12, layout
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6, flexWrap: 'wrap' }}>
                     <span className={`badge badge-${tone}`}>{post.category}</span>
-                    <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)' }}>{timeAgo(post.published_at)}</span>
+                    <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)' }}>{formatTimeAgo(post.published_at, locale, dict)}</span>
                     {post.reading_time && (
-                      <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)' }}>{post.reading_time}분</span>
+                      <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)' }}>{interpolate(dict.home.minShort, { min: post.reading_time })}</span>
                     )}
                   </div>
                   <h3 style={{ margin: '0 0 4px', fontSize: 15.5, letterSpacing: '-0.015em', lineHeight: 1.4 }}>{post.title}</h3>
@@ -82,7 +79,7 @@ export default function LoadMore({ initialPosts, fetchUrl, pageSize = 12, layout
         {!exhausted && (
           <div style={{ textAlign: 'center', marginTop: 32, marginBottom: 64 }}>
             <button className="btn btn-ghost" onClick={loadMore} disabled={loading}>
-              {loading ? '불러오는 중…' : '더 보기'}
+              {loading ? dict.common.loading : dict.common.loadMore}
             </button>
           </div>
         )}
@@ -98,9 +95,9 @@ export default function LoadMore({ initialPosts, fetchUrl, pageSize = 12, layout
             <PostThumb slug={post.slug} title={post.title} coverImage={post.cover_image} category={post.category} />
             <div className="card-body">
               <div className="card-meta">
-                <span className={`badge badge-${catTone(post.category)}`}>{post.category}</span>
-                <span className="card-time">{timeAgo(post.published_at)}</span>
-                {post.reading_time && <span className="card-time">{post.reading_time}분</span>}
+                <span className={`badge badge-${catTone(post.category)}`}>{categoryLabel(post.category, locale)}</span>
+                <span className="card-time">{formatTimeAgo(post.published_at, locale, dict)}</span>
+                {post.reading_time && <span className="card-time">{interpolate(dict.home.minShort, { min: post.reading_time })}</span>}
               </div>
               <h3 className="card-title">{post.title}</h3>
               <p className="card-excerpt">{post.excerpt}</p>
@@ -111,7 +108,7 @@ export default function LoadMore({ initialPosts, fetchUrl, pageSize = 12, layout
       {!exhausted && (
         <div style={{ textAlign: 'center', marginBottom: 64 }}>
           <button className="btn btn-ghost" onClick={loadMore} disabled={loading}>
-            {loading ? '불러오는 중…' : `더 보기 (${posts.length}개 표시 중)`}
+            {loading ? dict.common.loading : `${dict.common.loadMore} (${interpolate(dict.common.showing, { count: posts.length })})`}
           </button>
         </div>
       )}

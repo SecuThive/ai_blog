@@ -1,12 +1,30 @@
 import { makeFreshClient } from '@/lib/supabase';
 import { NOINDEX_POST_SLUGS } from '@/lib/noindexPosts';
 import type { MetadataRoute } from 'next';
+import { withLocale } from '@/i18n/path';
+
 
 // sitemap.ts는 이 Next 버전에서 "기본 캐시되는 특수 Route Handler"라
 // revalidate ISR이 프로덕션에서 신뢰되게 동작하지 않았다(7/6 이후 신규 글 미반영 사고).
 // 매 요청 동적 생성으로 전환 — 크롤러 요청량이 적고 쿼리가 가벼워 비용이 미미하며,
 // 신규 발행·강등이 sitemap에 즉시 반영되는 것이 색인 신호 일관성에 더 중요하다.
 export const dynamic = 'force-dynamic';
+
+function entry(base: string, path: string, rest: Omit<MetadataRoute.Sitemap[number], 'url' | 'alternates'>): MetadataRoute.Sitemap[number] {
+  const koPath = path === '/' ? '' : path;
+  const enPath = withLocale(path, 'en');
+  return {
+    url: `${base}${koPath}`,
+    alternates: {
+      languages: {
+        ko: `${base}${koPath}`,
+        en: `${base}${enPath}`,
+        'x-default': `${base}${koPath}`,
+      },
+    },
+    ...rest,
+  };
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
@@ -32,17 +50,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // noindex 처리된 보강 대상 글은 sitemap에서도 제외 (색인 신호 일관성)
   const posts = ((postsRes.data ?? []) as { slug: string; published_at: string; updated_at?: string | null; tags: string[] }[])
     .filter(p => !NOINDEX_POST_SLUGS.has(p.slug))
-    .map(p => ({
-      url: `${base}/blog/${p.slug}`,
+    .map(p => entry(base, `/blog/${p.slug}`, {
       lastModified: new Date(p.updated_at ?? p.published_at),
-      changeFrequency: 'weekly' as const,
+      changeFrequency: 'weekly',
       priority: 0.8,
     }));
 
-  const guides = ((guidesRes.data ?? []) as { slug: string; updated_at: string }[]).map(g => ({
-    url: `${base}/engineer/${g.slug}`,
+  const guides = ((guidesRes.data ?? []) as { slug: string; updated_at: string }[]).map(g => entry(base, `/engineer/${g.slug}`, {
     lastModified: new Date(g.updated_at),
-    changeFrequency: 'monthly' as const,
+    changeFrequency: 'monthly',
     priority: 0.7,
   }));
 
@@ -72,18 +88,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const MIN_SERIES_EPISODES = 2;
   const seriesPages = Array.from(seriesCount.entries())
     .filter(([, count]) => count >= MIN_SERIES_EPISODES)
-    .map(([name]) => ({
-      url: `${base}/series/${encodeURIComponent(name)}`,
+    .map(([name]) => entry(base, `/series/${encodeURIComponent(name)}`, {
       lastModified: seriesLast.get(name) ? new Date(seriesLast.get(name)!) : latestDate,
-      changeFrequency: 'weekly' as const,
+      changeFrequency: 'weekly',
       priority: 0.6,
     }));
 
   const CATEGORIES = ['AI & 자동화', 'IT 트렌드', '개발', '툴 리뷰', '보안', '인프라'];
-  const categoryPages = CATEGORIES.map(cat => ({
-    url: `${base}/category/${encodeURIComponent(cat)}`,
+  const categoryPages = CATEGORIES.map(cat => entry(base, `/category/${encodeURIComponent(cat)}`, {
     lastModified: catLast.get(cat) ? new Date(catLast.get(cat)!) : latestDate,
-    changeFrequency: 'daily' as const,
+    changeFrequency: 'daily',
     priority: 0.8,
   }));
 
@@ -103,7 +117,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/terms', changeFrequency: 'yearly' as const, priority: 0.3, lastModified: new Date('2026-04-30') },
     { path: '/policy', changeFrequency: 'monthly' as const, priority: 0.4, lastModified: new Date('2026-07-31') },
     { path: '/author', changeFrequency: 'monthly' as const, priority: 0.4, lastModified: new Date('2026-07-31') },
-  ].map(({ path, ...p }) => ({ ...p, url: `${base}${path}` }));
+  ].map(({ path, ...p }) => entry(base, path || '/', p));
 
   return [...staticPages, ...categoryPages, ...posts, ...guides, ...seriesPages];
 }

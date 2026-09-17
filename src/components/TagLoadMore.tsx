@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/i18n/link';
 import { useState } from 'react';
 import { catTone } from '@/lib/utils';
 import PostThumb from '@/components/PostThumb';

@@ -1,21 +1,29 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/i18n/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { catTone } from '@/lib/utils';
 import { useTheme } from '@/components/ThemeProvider';
+import { useT } from '@/i18n/provider';
+import { stripLocale, withLocale } from '@/i18n/path';
+import { toKoreanCategory } from '@/i18n/categories';
+import { interpolate } from '@/i18n/messages';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
-const NAV = [
-  { href: '/', label: '홈' },
-  { href: '/category/AI & 자동화', label: 'AI 자동화' },
-  { href: '/category/IT 트렌드', label: 'IT 트렌드' },
-  { href: '/category/개발', label: '개발' },
-  { href: '/category/툴 리뷰', label: '리뷰' },
-  { href: '/series', label: '시리즈' },
-  { href: '/engineer', label: '엔지니어' },
-  { href: '/security', label: '보안솔루션' },
-];
+function useNav() {
+  const { dict } = useT();
+  return [
+    { href: '/', label: dict.nav.home },
+    { href: '/category/AI & 자동화', label: dict.nav.ai },
+    { href: '/category/IT 트렌드', label: dict.nav.trends },
+    { href: '/category/개발', label: dict.nav.dev },
+    { href: '/category/툴 리뷰', label: dict.nav.review },
+    { href: '/series', label: dict.nav.series },
+    { href: '/engineer', label: dict.nav.engineer },
+    { href: '/security', label: dict.nav.security },
+  ];
+}
 
 function decode(path: string) {
   try { return decodeURIComponent(path); } catch { return path; }
@@ -51,6 +59,7 @@ interface SearchResult {
 }
 
 function SearchModal({ onClose }: { onClose: () => void }) {
+  const { dict, locale } = useT();
   const [q, setQ] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -80,7 +89,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
     const t = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&locale=${locale}`);
         setResults(await res.json());
       } finally { setLoading(false); }
     }, 300);
@@ -99,14 +108,14 @@ function SearchModal({ onClose }: { onClose: () => void }) {
   const goSearch = () => {
     if (q.trim()) saveRecent(q);
     onClose();
-    router.push(`/search?q=${encodeURIComponent(q)}`);
+    router.push(withLocale(`/search?q=${encodeURIComponent(q)}`, locale));
   };
 
   const CATS = [
-    { href: '/category/AI & 자동화', label: 'AI 자동화', tone: 'blue' },
-    { href: '/category/개발', label: '개발', tone: 'mint' },
-    { href: '/category/IT 트렌드', label: 'IT 트렌드', tone: 'purple' },
-    { href: '/category/툴 리뷰', label: '툴 리뷰', tone: 'amber' },
+    { href: '/category/AI & 자동화', label: dict.nav.ai, tone: 'blue' },
+    { href: '/category/개발', label: dict.nav.dev, tone: 'mint' },
+    { href: '/category/IT 트렌드', label: dict.nav.trends, tone: 'purple' },
+    { href: '/category/툴 리뷰', label: dict.nav.review, tone: 'amber' },
   ];
 
   return (
@@ -120,7 +129,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
             ref={inputRef}
             value={q}
             onChange={e => setQ(e.target.value)}
-            placeholder="궁금한 IT 주제나 AI 도구를 검색해보세요"
+            placeholder={dict.search.placeholder}
             onKeyDown={e => { if (e.key === 'Enter' && q) goSearch(); }}
             style={{ flex: 1, background: 'transparent', border: 0, outline: 'none', color: 'var(--text-1)', fontSize: 16 }}
           />
@@ -129,7 +138,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
 
         {!q && (
           <>
-            <div className="search-section-title">최근 검색</div>
+            <div className="search-section-title">{dict.search.recentSearches}</div>
             {recent.length > 0 ? recent.map(t => (
               <div key={t} className="search-result" onClick={() => setQ(t)}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ color: 'var(--text-4)', flexShrink: 0, marginTop: 2 }}>
@@ -138,9 +147,9 @@ function SearchModal({ onClose }: { onClose: () => void }) {
                 <span style={{ fontSize: 14, color: 'var(--text-2)' }}>{t}</span>
               </div>
             )) : (
-              <div style={{ padding: '10px 18px', color: 'var(--text-4)', fontSize: 13 }}>최근 검색 기록이 없습니다.</div>
+              <div style={{ padding: '10px 18px', color: 'var(--text-4)', fontSize: 13 }}>{dict.search.noHistory}</div>
             )}
-            <div className="search-section-title">인기 카테고리</div>
+            <div className="search-section-title">{dict.search.popularCats}</div>
             {CATS.map(c => (
               <Link key={c.href} href={c.href} className="search-result" onClick={onClose}>
                 <span className={`badge badge-${c.tone}`} style={{ flexShrink: 0 }}>{c.label}</span>
@@ -156,7 +165,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
         {q && (
           <>
             <div className="search-section-title">
-              {loading ? '검색 중…' : `글 · ${results.length}건`}
+              {loading ? dict.search.searching : interpolate(dict.search.results, { count: results.length })}
             </div>
             {results.map(p => {
               const href = p.source === 'guide' ? `/engineer/${p.slug}` : `/blog/${p.slug}`;
@@ -177,7 +186,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
             })}
             {results.length === 0 && !loading && (
               <div style={{ padding: '20px 18px', color: 'var(--text-3)', fontSize: 14 }}>
-                &quot;{q}&quot;에 대한 결과를 찾을 수 없습니다.
+                {interpolate(dict.search.noResults, { q })}
               </div>
             )}
             <div className="search-result" onClick={goSearch} style={{ borderTop: '1px solid var(--line-1)', cursor: 'pointer' }}>
@@ -185,7 +194,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
                 <path d="M7 17L17 7M7 7h10v10" />
               </svg>
               <span style={{ flex: 1, color: 'var(--acc-blue)', fontSize: 14 }}>
-                &quot;{q}&quot; 전체 검색 결과 보기 →
+                {interpolate(dict.search.viewAll, { q })}
               </span>
             </div>
           </>
@@ -196,8 +205,10 @@ function SearchModal({ onClose }: { onClose: () => void }) {
 }
 
 export default function Header() {
+  const { dict } = useT();
+  const NAV = useNav();
   const pathname = usePathname();
-  const decoded = decode(pathname);
+  const decoded = decode(stripLocale(pathname ?? '/'));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { theme, toggle } = useTheme();
@@ -225,10 +236,17 @@ export default function Header() {
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
 
+  const normalize = (path: string) => {
+    const m = path.match(/^\/category\/(.+)$/);
+    if (!m) return path;
+    return `/category/${toKoreanCategory(m[1])}`;
+  };
+
   const isActive = (href: string) => {
-    if (href === '/') return decoded === '/';
-    const dHref = decode(href);
-    return decoded === dHref || decoded.startsWith(dHref + '/');
+    const current = normalize(decoded);
+    const target = normalize(decode(href));
+    if (target === '/') return current === '/';
+    return current === target || current.startsWith(target + '/');
   };
 
   return (
@@ -249,18 +267,19 @@ export default function Header() {
           </nav>
 
           <div className="header-right">
-            <button className="search-trigger" aria-label="검색 (⌘K)" onClick={openSearch}>
+            <button className="search-trigger" aria-label={dict.search.shortcut} onClick={openSearch}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <circle cx="11" cy="11" r="7" /><line x1="16.5" y1="16.5" x2="22" y2="22" />
               </svg>
-              검색
+              {dict.nav.search}
               <span className="kbd">⌘K</span>
             </button>
+            <LanguageSwitcher />
             <button
               className="theme-toggle"
               onClick={toggle}
-              aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
-              title={theme === 'dark' ? '라이트 모드' : '다크 모드'}
+              aria-label={theme === 'dark' ? dict.theme.toLightMode : dict.theme.toDarkMode}
+              title={theme === 'dark' ? dict.theme.lightMode : dict.theme.darkMode}
             >
               {theme === 'dark' ? (
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -276,8 +295,8 @@ export default function Header() {
                 </svg>
               )}
             </button>
-            <Link href="/subscribe" className="btn btn-primary btn-sm">구독하기</Link>
-            <button className="menu-btn" aria-label="메뉴 열기" onClick={() => setMobileOpen(true)}>
+            <Link href="/subscribe" className="btn btn-primary btn-sm">{dict.nav.subscribe}</Link>
+            <button className="menu-btn" aria-label={dict.nav.openMenu} onClick={() => setMobileOpen(true)}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <line x1="3" y1="7" x2="21" y2="7" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="17" x2="21" y2="17" />
               </svg>
@@ -295,7 +314,7 @@ export default function Header() {
               <span className="brand-mark"><BrandMark /></span>
               NODELOG
             </Link>
-            <button className="icon-btn" onClick={() => setMobileOpen(false)} aria-label="닫기">
+            <button className="icon-btn" onClick={() => setMobileOpen(false)} aria-label={dict.nav.close}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -305,7 +324,7 @@ export default function Header() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <circle cx="11" cy="11" r="7" /><line x1="16.5" y1="16.5" x2="22" y2="22" />
             </svg>
-            검색
+            {dict.nav.search}
           </button>
           <div className="mobile-nav-divider" />
           {NAV.map(n => (
@@ -313,14 +332,17 @@ export default function Header() {
               {n.label}
             </Link>
           ))}
-          <Link href="/tags" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>태그</Link>
-          <Link href="/archive" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>아카이브</Link>
-          <Link href="/trending" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>트렌딩</Link>
-          <Link href="/bookmarks" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>저장한 글</Link>
-          <Link href="/about" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>소개</Link>
+          <Link href="/tags" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>{dict.nav.tags}</Link>
+          <Link href="/archive" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>{dict.nav.archive}</Link>
+          <Link href="/trending" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>{dict.nav.trending}</Link>
+          <Link href="/bookmarks" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>{dict.nav.bookmarks}</Link>
+          <Link href="/about" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>{dict.nav.about}</Link>
           <div className="mobile-nav-divider" />
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+            <LanguageSwitcher />
+          </div>
           <Link href="/subscribe" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', height: 46 }} onClick={() => setMobileOpen(false)}>
-            구독하기
+            {dict.nav.subscribe}
           </Link>
         </div>
       )}

@@ -3,6 +3,7 @@
 import Script from 'next/script';
 import { usePathname } from 'next/navigation';
 import { NOINDEX_POST_SLUGS } from '@/lib/noindexPosts';
+import { stripLocale } from '@/i18n/path';
 
 /**
  * 승인 후 수동 광고 단위 운영을 전제로 광고 스크립트를 고유 콘텐츠가 충분한 화면에서만 로드한다.
@@ -24,7 +25,7 @@ function isMonetizablePath(pathname: string): boolean {
 }
 
 export default function AdSenseScript({ adsenseId }: { adsenseId: string }) {
-  const pathname = usePathname() ?? '/';
+  const pathname = stripLocale(usePathname() ?? '/');
   if (!isMonetizablePath(pathname)) return null;
   return (
     <Script

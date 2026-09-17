@@ -1,6 +1,10 @@
-import Link from 'next/link';
+'use client';
+
+import Link from '@/i18n/link';
+import { useT } from '@/i18n/provider';
 
 export default function Footer() {
+  const { dict } = useT();
   return (
     <footer className="site-footer">
       <div className="container">
@@ -21,7 +25,7 @@ export default function Footer() {
             </svg>
             NODELOG
           </div>
-          <p>공식 문서와 기술 자료를 확인하고, 검토·정정·업데이트를 이어가는 IT 실무 미디어.</p>
+          <p>{dict.footer.description}</p>
           <div className="footer-social">
             <a href="https://github.com/SecuThive" target="_blank" rel="noopener noreferrer" className="icon-btn" aria-label="GitHub">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -39,45 +43,45 @@ export default function Footer() {
 
         {/* Topic column */}
         <div className="footer-col">
-          <h5>주제</h5>
+          <h5>{dict.footer.topics}</h5>
           <ul>
-            <li><Link href="/category/AI & 자동화">AI 자동화</Link></li>
-            <li><Link href="/category/IT 트렌드">IT 트렌드</Link></li>
-            <li><Link href="/category/개발">개발</Link></li>
-            <li><Link href="/category/툴 리뷰">리뷰</Link></li>
+            <li><Link href="/category/AI & 자동화">{dict.nav.ai}</Link></li>
+            <li><Link href="/category/IT 트렌드">{dict.nav.trends}</Link></li>
+            <li><Link href="/category/개발">{dict.nav.dev}</Link></li>
+            <li><Link href="/category/툴 리뷰">{dict.nav.review}</Link></li>
           </ul>
         </div>
 
         {/* Navigation column */}
         <div className="footer-col">
-          <h5>탐색</h5>
+          <h5>{dict.footer.navigation}</h5>
           <ul>
-            <li><Link href="/trending">트렌딩</Link></li>
-            <li><Link href="/series">시리즈</Link></li>
-            <li><Link href="/engineer">엔지니어</Link></li>
-            <li><Link href="/tags">태그 목록</Link></li>
-            <li><Link href="/archive">아카이브</Link></li>
+            <li><Link href="/trending">{dict.nav.trending}</Link></li>
+            <li><Link href="/series">{dict.nav.series}</Link></li>
+            <li><Link href="/engineer">{dict.nav.engineer}</Link></li>
+            <li><Link href="/tags">{dict.footer.tagList}</Link></li>
+            <li><Link href="/archive">{dict.nav.archive}</Link></li>
           </ul>
         </div>
 
         {/* About column */}
         <div className="footer-col">
-          <h5>About</h5>
+          <h5>{dict.footer.about}</h5>
           <ul>
-            <li><Link href="/about">소개</Link></li>
-            <li><Link href="/author">편집 원칙</Link></li>
-            <li><Link href="/faq">FAQ</Link></li>
-            <li><Link href="/contact">문의 · 제휴</Link></li>
+            <li><Link href="/about">{dict.footer.intro}</Link></li>
+            <li><Link href="/author">{dict.footer.editPolicy}</Link></li>
+            <li><Link href="/faq">{dict.footer.faq}</Link></li>
+            <li><Link href="/contact">{dict.footer.contact}</Link></li>
           </ul>
         </div>
 
         {/* Legal column */}
         <div className="footer-col">
-          <h5>법적 고지</h5>
+          <h5>{dict.footer.legal}</h5>
           <ul>
-            <li><Link href="/terms">이용안내</Link></li>
-            <li><Link href="/privacy">개인정보 처리방침</Link></li>
-            <li><Link href="/policy">편집 정책</Link></li>
+            <li><Link href="/terms">{dict.footer.terms}</Link></li>
+            <li><Link href="/privacy">{dict.footer.privacy}</Link></li>
+            <li><Link href="/policy">{dict.footer.policy}</Link></li>
             <li><a href="/rss">RSS</a></li>
           </ul>
         </div>

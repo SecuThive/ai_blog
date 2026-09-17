@@ -19,6 +19,9 @@ export interface Post {
   content_evidence?: ContentEvidence | null;
   /** 선택적 핵심 요약(TL;DR). DB에 값이 없으면 렌더링하지 않는다 — 임의로 채우지 않음. */
   key_points?: string[] | null;
+  title_en?: string | null;
+  excerpt_en?: string | null;
+  content_en?: string | null;
 }
 
 export interface ContentEvidence {
@@ -56,6 +59,9 @@ export interface EngineerGuide {
   status: 'draft' | 'published';
   created_at: string;
   updated_at: string;
+  title_en?: string | null;
+  summary_en?: string | null;
+  content_en?: string | null;
 }
 
 export interface PostSummary {
@@ -71,4 +77,6 @@ export interface PostSummary {
   published_at: string;
   updated_at?: string | null;
   reading_time: number;     // estimated minutes
+  title_en?: string | null;
+  excerpt_en?: string | null;
 }

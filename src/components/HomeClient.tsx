@@ -1,9 +1,13 @@
 'use client';
 
 import { useRef, useEffect, useState, useMemo } from 'react';
-import Link from 'next/link';
+import Link from '@/i18n/link';
 import PostThumb from '@/components/PostThumb';
 import { catTone, publicTags } from '@/lib/utils';
+import { useT } from '@/i18n/provider';
+import { interpolate } from '@/i18n/messages';
+import { categoryLabel } from '@/i18n/categories';
+import { formatTimeAgo } from '@/i18n/format';
 
 /* ===== Types ===== */
 export interface TickItem  { tag: string; title: string }
@@ -278,24 +282,15 @@ export function SignalDashboard({ signals, heatmapDates }: { signals: SignalData
 }
 
 /* ===== Mag Latest (client — with working category filter) ===== */
-function magTimeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const h = Math.floor(diff / 3600000);
-  if (h < 1) return '방금 전';
-  if (h < 24) return `${h}시간 전`;
-  const d = Math.floor(h / 24);
-  if (d < 7) return `${d}일 전`;
-  return new Date(dateStr).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-}
-
-const MAG_FILTERS = [
-  { label: '전체', cat: null },
-  { label: 'AI',   cat: 'AI & 자동화' },
-  { label: '개발',  cat: '개발' },
-  { label: 'IT',   cat: 'IT 트렌드' },
+const MAG_FILTERS: { cat: string | null; label: (dict: ReturnType<typeof useT>['dict']) => string }[] = [
+  { cat: null, label: (dict) => dict.home.filterAll },
+  { cat: 'AI & 자동화', label: () => 'AI' },
+  { cat: '개발', label: (dict) => dict.nav.dev },
+  { cat: 'IT 트렌드', label: () => 'IT' },
 ];
 
 export function MagLatestSection({ posts }: { posts: MagPost[] }) {
+  const { dict, locale } = useT();
   const [active, setActive] = useState<string | null>(null);
 
   const filtered = active ? posts.filter(p => p.category === active) : posts;
@@ -305,7 +300,7 @@ export function MagLatestSection({ posts }: { posts: MagPost[] }) {
   if (!big) return (
     <section className="section">
       <div className="container">
-        <p style={{ color: 'var(--text-3)', textAlign: 'center', padding: '40px 0' }}>해당 카테고리의 글이 없습니다.</p>
+        <p style={{ color: 'var(--text-3)', textAlign: 'center', padding: '40px 0' }}>{dict.home.noCategoryPosts}</p>
       </div>
     </section>
   );
@@ -319,22 +314,22 @@ export function MagLatestSection({ posts }: { posts: MagPost[] }) {
           <div className="left">
             <span className="num">04 / LATEST</span>
             <div>
-              <h2>최신 글</h2>
-              <p className="sub">AI 큐레이션 + 편집자 검토를 거친 신규 인사이트. 시간순으로 정리되어 있습니다.</p>
+              <h2>{dict.home.latestTitle}</h2>
+              <p className="sub">{dict.home.latestSub}</p>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             {MAG_FILTERS.map(f => (
               <button
-                key={f.label}
+                key={String(f.cat)}
                 className={`filter-tab${active === f.cat ? ' active' : ''}`}
                 onClick={() => setActive(f.cat)}
               >
-                {f.label}
+                {f.label(dict)}
               </button>
             ))}
             <Link href="/archive" className="section-link" style={{ marginLeft: 4 }}>
-              아카이브
+              {dict.home.archive}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
@@ -347,15 +342,15 @@ export function MagLatestSection({ posts }: { posts: MagPost[] }) {
             <PostThumb slug={big.slug} title={big.title} coverImage={big.cover_image} category={big.category} />
             <div className="card-body" style={{ padding: '22px 24px 26px' }}>
               <div className="card-meta">
-                <span className={`badge badge-${bigTone}`}>{big.category}</span>
+                <span className={`badge badge-${bigTone}`}>{categoryLabel(big.category, locale)}</span>
                 <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)' }}>
-                  {big.reading_time}분 READ
+                  {interpolate(dict.home.minRead, { min: big.reading_time })}
                 </span>
               </div>
               <h3 className="card-title">{big.title}</h3>
               <p className="card-excerpt" style={{ WebkitLineClamp: 3 } as React.CSSProperties}>{big.excerpt}</p>
               <div className="card-foot">
-                <span>{magTimeAgo(big.published_at)}</span>
+                <span>{formatTimeAgo(big.published_at, locale, dict)}</span>
                 <span className="dot" />
                 <span>REVIEWED · UPDATED</span>
               </div>
@@ -369,14 +364,14 @@ export function MagLatestSection({ posts }: { posts: MagPost[] }) {
                 <PostThumb slug={p.slug} title={p.title} coverImage={p.cover_image} category={p.category} />
                 <div className="card-body">
                   <div className="card-meta">
-                    <span className={`badge badge-${tone}`}>{p.category}</span>
+                    <span className={`badge badge-${tone}`}>{categoryLabel(p.category, locale)}</span>
                   </div>
                   <h3 className="card-title">{p.title}</h3>
                   <p className="card-excerpt">{p.excerpt}</p>
                   <div className="card-foot">
-                    <span>{magTimeAgo(p.published_at)}</span>
+                    <span>{formatTimeAgo(p.published_at, locale, dict)}</span>
                     <span className="dot" />
-                    <span>{p.reading_time}분 읽기</span>
+                    <span>{interpolate(dict.home.minRead, { min: p.reading_time })}</span>
                   </div>
                 </div>
               </Link>

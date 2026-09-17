@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useT } from '@/i18n/provider';
+import { formatTimeAgo } from '@/i18n/format';
 
 export interface CommentRow {
   id: number;
@@ -13,48 +15,30 @@ export interface CommentRow {
 
 type Variant = 'comments' | 'qa';
 
-const COPY: Record<Variant, {
-  heading: string;
-  empty: string;
-  placeholder: string;
-  submit: string;
-  submitting: string;
-  success: string;
-  replyVerb: string;
-  replyPlaceholder: string;
-}> = {
-  comments: {
-    heading: '댓글',
-    empty: '첫 번째 댓글을 남겨보세요.',
-    placeholder: '댓글을 입력하세요...',
-    submit: '댓글 등록',
-    submitting: '등록 중...',
-    success: '댓글이 등록되었습니다.',
-    replyVerb: '답글',
-    replyPlaceholder: '답글을 입력하세요...',
-  },
-  qa: {
-    heading: '질문 & 답변 (Q&A)',
-    empty: '이 가이드에 대해 궁금한 점을 질문해보세요. 확인 후 답변드립니다.',
-    placeholder: '이 가이드에 대해 궁금한 점을 질문하세요...',
-    submit: '질문 등록',
-    submitting: '등록 중...',
-    success: '질문이 등록되었습니다. 검토 후 답변드립니다.',
-    replyVerb: '답변',
-    replyPlaceholder: '답변을 입력하세요...',
-  },
-};
-
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return '방금 전';
-  if (m < 60) return `${m}분 전`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}시간 전`;
-  const d = Math.floor(h / 24);
-  if (d < 7) return `${d}일 전`;
-  return new Date(dateStr).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+function useCopy(variant: Variant) {
+  const { dict } = useT();
+  if (variant === 'qa') {
+    return {
+      heading: dict.comments.qaHeading,
+      empty: dict.comments.qaEmpty,
+      placeholder: dict.comments.qaPlaceholder,
+      submit: dict.comments.qaSubmit,
+      submitting: dict.comments.submitting,
+      success: dict.comments.qaSuccess,
+      replyVerb: dict.comments.qaReply,
+      replyPlaceholder: dict.comments.qaReplyPlaceholder,
+    };
+  }
+  return {
+    heading: dict.comments.heading,
+    empty: dict.comments.empty,
+    placeholder: dict.comments.placeholder,
+    submit: dict.comments.submit,
+    submitting: dict.comments.submitting,
+    success: dict.comments.success,
+    replyVerb: dict.comments.replyVerb,
+    replyPlaceholder: dict.comments.replyPlaceholder,
+  };
 }
 
 const LIKED_KEY = 'nodelog_liked_comments';
@@ -78,7 +62,7 @@ export default function Comments({
   variant?: Variant;
   initialComments?: CommentRow[];
 }) {
-  const t = COPY[variant];
+  const t = useCopy(variant);
   const [comments, setComments] = useState<CommentRow[]>(initialComments);
   const [name, setName] = useState('');
   const [content, setContent] = useState('');
@@ -293,12 +277,13 @@ function CommentBody({
   onReply?: () => void;
   replyOpen?: boolean;
 }) {
-  const t = COPY[variant];
+  const t = useCopy(variant);
+  const { locale, dict } = useT();
   return (
     <>
       <div className="comment-meta">
         <span className="comment-name">{c.name}</span>
-        <span className="comment-time">{timeAgo(c.created_at)}</span>
+        <span className="comment-time">{formatTimeAgo(c.created_at, locale, dict)}</span>
       </div>
       <p className="comment-body">{c.content}</p>
       <div className="comment-actions">
@@ -342,7 +327,7 @@ function ReplyForm({
   onSubmit: (body: string, author: string) => Promise<void>;
   onCancel: () => void;
 }) {
-  const t = COPY[variant];
+  const t = useCopy(variant);
   const [name, setName] = useState('');
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);

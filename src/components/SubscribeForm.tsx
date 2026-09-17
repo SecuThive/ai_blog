@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useT } from '@/i18n/provider';
 
 export default function SubscribeForm({ compact = false }: { compact?: boolean }) {
+  const { dict } = useT();
   const [email, setEmail] = useState('');
   const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [msg, setMsg] = useState('');
@@ -21,11 +23,11 @@ export default function SubscribeForm({ compact = false }: { compact?: boolean }
         setState('ok');
       } else {
         setState('error');
-        setMsg(data.error ?? '오류가 발생했습니다.');
+        setMsg(data.error ?? dict.subscribe.genericError);
       }
     } catch {
       setState('error');
-      setMsg('네트워크 오류가 발생했습니다.');
+      setMsg(dict.subscribe.networkError);
     }
   }
 
@@ -34,8 +36,8 @@ export default function SubscribeForm({ compact = false }: { compact?: boolean }
       <div className="subscribe-success">
         <span className="subscribe-success-icon">✓</span>
         <div>
-          <p className="subscribe-success-title">구독 완료!</p>
-          <p className="subscribe-success-desc">확인 메일을 보내드렸습니다. 매주 화요일 인박스에서 만나요.</p>
+          <p className="subscribe-success-title">{dict.subscribe.successTitle}</p>
+          <p className="subscribe-success-desc">{dict.subscribe.successDesc}</p>
         </div>
       </div>
     );
@@ -53,15 +55,15 @@ export default function SubscribeForm({ compact = false }: { compact?: boolean }
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
-            placeholder={compact ? 'your@email.com' : '이메일 주소를 입력하세요'}
+            placeholder={compact ? dict.subscribe.placeholderCompact : dict.subscribe.placeholder}
             required
             disabled={state === 'loading'}
           />
         </div>
         <button type="submit" className="btn btn-primary subscribe-btn" disabled={state === 'loading'}>
           {state === 'loading'
-            ? <span className="subscribe-btn-loading"><span className="subscribe-spinner" />처리 중</span>
-            : compact ? '구독' : '무료 구독하기 →'}
+            ? <span className="subscribe-btn-loading"><span className="subscribe-spinner" />{dict.subscribe.loading}</span>
+            : compact ? dict.subscribe.buttonCompact : dict.subscribe.button}
         </button>
       </form>
       {state === 'error' && (

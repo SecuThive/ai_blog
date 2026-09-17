@@ -69,6 +69,7 @@ export function publicTags(tags: string[]): string[] {
   return (tags ?? []).filter(t =>
     !t.startsWith('series:')
     && !t.startsWith('ep:')
+    && !t.startsWith('i18n.')
     // 슬래시는 단일 동적 세그먼트를 둘로 나눠 내부 404를 만든다.
     && !t.includes('/')
   );
