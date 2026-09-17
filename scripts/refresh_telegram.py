@@ -24,7 +24,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import refresh_finder as rf
-import refresh_pipeline as rp   # Supabase fetch·Claude(폴백 Ollama)·ENV 재사용
+import refresh_pipeline as rp   # Supabase fetch·Codex 브릿지·ENV 재사용
 
 # 봇과 공유하는 승인 큐 (봇이 읽어 적용). 경로는 env 로 오버라이드 가능.
 QUEUE = Path(os.getenv(

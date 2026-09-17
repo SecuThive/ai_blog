@@ -2,7 +2,7 @@
 """리프레시 파이프라인 — 측정→분석→**초안 생성**→승인 큐 (발행은 사람).
 
 반자동 루프의 자동 부분. GSC 실측으로 리프레시 최우선 글을 뽑고(refresh_finder),
-각 글의 현재 제목·본문을 Supabase 에서 가져와, 사이트 관리 RAG 근거 + Claude API(키 없으면 로컬 LLM 폴백)로
+각 글의 현재 제목·본문을 Supabase 에서 가져와, 사이트 관리 RAG 근거 + Codex 브릿지로
 **개선 제안(제목안·보강 체크리스트)** 을 만들어 `refresh_proposals/<날짜>/` 에 쌓는다.
 
 발행은 하지 않는다 — 사람이 제안을 확인·수정·발행한다(E-E-A-T '사람 검토' 신호 유지).
@@ -26,9 +26,10 @@ import refresh_finder as rf   # 분석 로직 재사용
 
 ROOT = Path(__file__).resolve().parent.parent
 PROPOSAL_DIR = ROOT / "refresh_proposals"
-OLLAMA = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
-LLM_MODEL = os.getenv("REFRESH_LLM_MODEL", "qwen2.5:14b")
-CLAUDE_MODEL = os.getenv("REFRESH_CLAUDE_MODEL", "claude-sonnet-4-6")
+CODEX_BRIDGE_URL = os.getenv(
+    "CODEX_BRIDGE_URL", "http://127.0.0.1:8787/v1/chat/completions").rstrip("/")
+CODEX_BRIDGE_MODEL = os.getenv("CODEX_BRIDGE_MODEL", "codex-agent")
+CODEX_BRIDGE_USER = os.getenv("CODEX_BRIDGE_USER", "thive8564@gmail.com")
 
 
 def _env():
@@ -46,7 +47,11 @@ def _env():
 ENV = _env()
 SUPABASE_URL = (ENV.get("SUPABASE_URL") or ENV.get("NEXT_PUBLIC_SUPABASE_URL") or "").rstrip("/")
 SUPABASE_KEY = ENV.get("SUPABASE_SERVICE_ROLE_KEY", "")
-ANTHROPIC_KEY = ENV.get("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_API_KEY", "")
+CODEX_BRIDGE_TOKEN_FILE = Path(os.path.expanduser(os.getenv(
+    "CODEX_BRIDGE_TOKEN_FILE", "~/wiki/.bridge-token")))
+CODEX_BRIDGE_TOKEN = ENV.get("CODEX_BRIDGE_TOKEN") or os.getenv("CODEX_BRIDGE_TOKEN", "")
+if not CODEX_BRIDGE_TOKEN and CODEX_BRIDGE_TOKEN_FILE.exists():
+    CODEX_BRIDGE_TOKEN = CODEX_BRIDGE_TOKEN_FILE.read_text(encoding="utf-8").strip()
 
 
 def fetch_post(url: str) -> dict | None:
@@ -65,64 +70,36 @@ def fetch_post(url: str) -> dict | None:
         return None
 
 
-import re as _re
-
-# 한국어에 안 쓰는 중국어(간체) 글자 감지 — qwen 계열이 가끔 섞는다. 감지되면 1회 재시도.
-_CJK = _re.compile(r"[一-鿿]")
-
-
-def _ollama_once(system: str, user: str, timeout: int) -> str:
+def codex_bridge_chat(system: str, user: str, timeout: int = 900) -> str:
+    """로컬 OpenAI 호환 브리지의 codex-agent로 수정·업데이트 초안을 생성한다."""
+    if not CODEX_BRIDGE_TOKEN:
+        raise RuntimeError(
+            "CODEX_BRIDGE_TOKEN 또는 CODEX_BRIDGE_TOKEN_FILE이 필요합니다")
     req = urllib.request.Request(
-        f"{OLLAMA}/api/chat",
-        data=json.dumps({"model": LLM_MODEL, "stream": False,
-                         "messages": [{"role": "system", "content": system},
-                                      {"role": "user", "content": user}],
-                         "options": {"temperature": 0.6}}).encode(),
-        headers={"Content-Type": "application/json"})
-    r = json.loads(urllib.request.urlopen(req, timeout=timeout).read())
-    return r["message"]["content"].strip()
-
-
-def ollama_chat(system: str, user: str, timeout: int = 240) -> str:
-    """qwen 이 중국어를 섞으면(한자 다수) 한국어 강제 지시를 덧붙여 1회 재시도한다."""
-    try:
-        out = _ollama_once(system, user, timeout)
-        if len(_CJK.findall(out)) >= 3:   # 한자 3자 이상 = 중국어 섞임으로 간주
-            out = _ollama_once(
-                "★★★ 반드시 한국어로만 출력하라. 중국어·한자·일본어 문장은 절대 쓰지 마라. "
-                "영문은 고유명사·기술약어만 허용.\n" + system, user, timeout)
-        return out
-    except Exception as e:
-        return f"(LLM 제안 생성 실패: {e})"
-
-
-def claude_chat(system: str, user: str, timeout: int = 120, max_tokens: int = 4096) -> str:
-    """Claude API(Messages)로 생성. ANTHROPIC_API_KEY 필요."""
-    req = urllib.request.Request(
-        "https://api.anthropic.com/v1/messages",
+        CODEX_BRIDGE_URL,
         data=json.dumps({
-            "model": CLAUDE_MODEL,
-            "max_tokens": max_tokens,
-            "system": system,
-            "messages": [{"role": "user", "content": user}],
+            "model": CODEX_BRIDGE_MODEL,
+            "stream": False,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
         }).encode(),
         headers={
             "Content-Type": "application/json",
-            "x-api-key": ANTHROPIC_KEY,
-            "anthropic-version": "2023-06-01",
+            "Authorization": f"Bearer {CODEX_BRIDGE_TOKEN}",
+            "X-OpenWebUI-User-Email": CODEX_BRIDGE_USER,
         })
     r = json.loads(urllib.request.urlopen(req, timeout=timeout).read())
-    return "".join(b.get("text", "") for b in r.get("content", [])).strip()
+    content = (((r.get("choices") or [{}])[0].get("message") or {}).get("content") or "").strip()
+    if not content:
+        raise RuntimeError("Codex 브릿지가 빈 응답을 반환했습니다")
+    return content
 
 
 def llm_chat(system: str, user: str, timeout: int = 240) -> str:
-    """Claude 우선, ANTHROPIC_API_KEY 없거나 실패 시 로컬 Ollama 로 폴백(비차단 유지)."""
-    if ANTHROPIC_KEY:
-        try:
-            return claude_chat(system, user, timeout=min(timeout, 180))
-        except Exception as e:
-            print(f"! Claude 호출 실패({e}) — Ollama 로 폴백")
-    return ollama_chat(system, user, timeout)
+    """모든 글 수정·업데이트 초안은 Codex 브릿지로 생성한다."""
+    return codex_bridge_chat(system, user, timeout=max(timeout, 900))
 
 
 _SYS = (

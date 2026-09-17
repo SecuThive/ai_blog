@@ -51,7 +51,8 @@ refresh_telegram.py 개선안(제목/본문, 한국어) 생성 → 승인 큐 + 
 | `blog-health` | 3시간마다 이상 시 텔레그램 알림 | cron·stopped 정상 |
 
 - ⚠️ **재부팅 자동복구**: pm2 startup 미설치 → `sudo … pm2 startup launchd …` 1회 실행 필요(TODO).
-- Ollama(11434) = 리프레시 생성 의존. Claude = 신규글 생성(`llm.claude_code`).
+- Codex 브릿지(8787, `codex-agent`) = 모든 기존 글 수정·업데이트 제안 및 리라이트.
+  브릿지 실패 시 다른 모델로 폴백하지 않는다. 신규글 생성 엔진은 별도 경로다.
 
 ## 6. 폐기됨 (혼동 금지)
 

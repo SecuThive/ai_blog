@@ -27,7 +27,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import refresh_pipeline as rp   # ENV·Supabase·Ollama·RAG 재사용
+import refresh_pipeline as rp   # ENV·Supabase·Codex 브릿지·RAG 재사용
 
 ROOT = Path(__file__).resolve().parent.parent
 LOG = ROOT / "refresh_proposals" / "published.log"
@@ -114,7 +114,7 @@ def apply_rewrite(url):
         f"제목: {row['title']}\n참고 원칙(사내 지식): {', '.join(rag) or '없음'}\n\n"
         f"현재 본문:\n{(row.get('content') or '')[:6000]}\n\n"
         "위 글을 리프레시해 형식대로 출력하라.")
-    out = rp.ollama_chat(_SYS, user, timeout=400)
+    out = rp.llm_chat(_SYS, user, timeout=900)
 
     m = re.search(r"TITLE:\s*(.+)", out)
     e = re.search(r"EXCERPT:\s*(.+)", out)
