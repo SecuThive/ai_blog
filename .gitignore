@@ -26,6 +26,9 @@
 
 # debug
 npm-debug.log*
+scripts/fill-english.log
+scripts/fill-english.stdout
+scripts/fill-english.pid
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*

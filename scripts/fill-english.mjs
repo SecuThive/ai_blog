@@ -85,29 +85,44 @@ function hasEn(row) {
     && Boolean(row.content_evidence?.en?.content || (typeof row.content === 'string' && row.content.includes('<!--NodelogEN')));
 }
 
-function extractJson(text) {
-  const trimmed = text.trim();
-  const fence = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
-  const raw = fence ? fence[1] : trimmed;
-  const start = raw.indexOf('{');
-  const end = raw.lastIndexOf('}');
-  if (start === -1 || end === -1) throw new Error('No JSON object in model output');
-  return JSON.parse(raw.slice(start, end + 1));
+function parseDelimited(text) {
+  const raw = text.trim().replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/, '');
+  const lines = raw.split('\n');
+  let title = '';
+  let excerpt = '';
+  let i = 0;
+  while (i < lines.length && !title) {
+    const m = lines[i].match(/^TITLE:\s*(.*)$/i);
+    if (m) title = m[1].trim();
+    i++;
+  }
+  while (i < lines.length && !excerpt) {
+    const m = lines[i].match(/^EXCERPT:\s*(.*)$/i);
+    if (m) excerpt = m[1].trim();
+    i++;
+  }
+  while (i < lines.length && lines[i].trim() === '') i++;
+  if (i < lines.length && /^---+$/.test(lines[i].trim())) i++;
+  const content = lines.slice(i).join('\n').trim();
+  if (!title || !content) {
+    throw new Error(`Bad translation shape: ${raw.slice(0, 180).replace(/\s+/g, ' ')}`);
+  }
+  return { title, excerpt, content };
 }
 
 async function translateDoc({ title, excerpt, content, kind }) {
-  const prompt = `You are translating a Korean IT ${kind} into natural English for practitioners.
+  const prompt = `Translate this Korean IT ${kind} into natural English for practitioners.
 
-Return ONLY a JSON object with keys:
-- "title": English title, concise
-- "excerpt": 1-2 sentence English summary
-- "content": full English Markdown body
+Return EXACTLY this layout, nothing else:
+TITLE: <english title>
+EXCERPT: <1-2 sentence summary>
+---
+<full English Markdown body>
 
 Rules:
 - Preserve Markdown structure (headings, lists, tables, links).
 - Keep code blocks, commands, file paths, and API names unchanged.
 - Keep Korean only if it is a proper noun that should stay Korean.
-- Do not add a preamble or commentary.
 
 Title:
 ${title}
@@ -127,19 +142,14 @@ ${content}`;
     body: JSON.stringify({
       model: MODEL,
       temperature: 0.2,
+      max_tokens: 16000,
       messages: [{ role: 'user', content: prompt }],
     }),
   });
   if (!res.ok) throw new Error(`xAI ${res.status} ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
   const text = data.choices?.[0]?.message?.content ?? '';
-  const parsed = extractJson(text);
-  if (!parsed.title || !parsed.content) throw new Error('Incomplete translation JSON');
-  return {
-    title: String(parsed.title).trim(),
-    excerpt: String(parsed.excerpt || '').trim(),
-    content: String(parsed.content).trim(),
-  };
+  return parseDelimited(text);
 }
 
 function upsertTags(tags, title, excerpt) {
