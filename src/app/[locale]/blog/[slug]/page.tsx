@@ -17,6 +17,7 @@ import TrackedExternalLink from '@/components/TrackedExternalLink';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from '@/components/CodeBlock';
+import MermaidDiagram from '@/components/MermaidDiagram';
 import { ProgressBar, TableOfContents, CopyLinkBtn, ScrollToTopBtn, ShareBtn, MobileActionBar, ArticleFeedback, ViewTracker, BookmarkBtn, ReadingPositionTracker } from './ArticleClient';
 import Comments, { type CommentRow } from '@/components/Comments';
 import InlineSubscribeCTA from '@/components/InlineSubscribeCTA';
@@ -302,6 +303,9 @@ function makeMdComponents() {
         const lang = langPart || undefined;
         const filename = filenamePart || undefined;
         const content = String(code ?? '').replace(/\n$/, '');
+        if (lang === 'mermaid') {
+          return <MermaidDiagram chart={content} />;
+        }
         return <CodeBlock code={content} lang={lang} filename={filename} />;
       }
       return <pre>{children}</pre>;
@@ -311,13 +315,17 @@ function makeMdComponents() {
       return <code>{children}</code>;
     },
     hr: () => <hr />,
-    img: ({ src, alt }: { src?: string; alt?: string }) => (
-      <figure className="prose-figure">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src ?? ''} alt={alt ?? ''} loading="lazy" />
-        {alt && <figcaption className="prose-caption">{alt}</figcaption>}
-      </figure>
-    ),
+    img: ({ src, alt }: { src?: string; alt?: string }) => {
+      // Skip empty/relative placeholder srcs (e.g. image.jpg, rag_arch.png) that 404.
+      if (!src || (!src.startsWith('http') && !src.startsWith('/'))) return null;
+      return (
+        <figure className="prose-figure">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={src} alt={alt ?? ''} loading="lazy" />
+          {alt && <figcaption className="prose-caption">{alt}</figcaption>}
+        </figure>
+      );
+    },
   };
 }
 
