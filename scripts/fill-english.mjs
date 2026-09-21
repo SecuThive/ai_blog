@@ -193,6 +193,20 @@ async function main() {
   const posts = await sbGet('posts?select=id,title,excerpt,content,tags,content_evidence,status&status=eq.published&order=published_at.desc');
   const guides = await sbGet('engineer_guides?select=id,title,summary,content,tags,status&status=eq.published&order=created_at.desc');
 
+  // orphan-tag-sync: content_evidence.en exists but i18n.title tag missing
+  let orphanSynced = 0;
+  for (const row of posts) {
+    const en = row.content_evidence?.en;
+    const hasTitleTag = (row.tags ?? []).some((t) => String(t).startsWith("i18n.title:"));
+    if (en?.title && !hasTitleTag) {
+      const tags = upsertTags(row.tags, en.title, en.excerpt || "");
+      await sbPatch("posts", row.id, { tags });
+      orphanSynced++;
+      log(`synced-orphan-tags post#${row.id}`);
+    }
+  }
+  log(`orphan-tag-sync count=${orphanSynced}`);
+
   const postJobs = posts.filter((p) => !hasEn(p)).slice(0, LIMIT).map((row) => ({ kind: 'post', row }));
   const remaining = Math.max(0, LIMIT - postJobs.length);
   const guideJobs = guides.filter((g) => !hasEn(g)).slice(0, remaining).map((row) => ({ kind: 'guide', row }));

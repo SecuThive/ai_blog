@@ -3,7 +3,7 @@
 import { useT } from '@/i18n/provider';
 
 import { useState, useMemo } from 'react';
-import { VENDORS, CATEGORIES, CATEGORY_TONE, type SecurityCategory } from './data';
+import { VENDORS, CATEGORIES, CATEGORY_TONE, categoryLabel, type SecurityCategory } from './data';
 
 export default function SecurityCatalog() {
   const { locale } = useT();
@@ -19,6 +19,8 @@ export default function SecurityCatalog() {
         v.name.toLowerCase().includes(q) ||
         v.nameEn.toLowerCase().includes(q) ||
         v.desc.toLowerCase().includes(q) ||
+        (v.descEn ?? '').toLowerCase().includes(q) ||
+        categoryLabel(v.categories[0], locale).toLowerCase().includes(q) ||
         v.products.some(p => p.toLowerCase().includes(q)) ||
         v.categories.some(c => c.toLowerCase().includes(q))
       );
@@ -92,7 +94,7 @@ export default function SecurityCatalog() {
                   color: isActive ? `var(--acc-${tone})` : 'var(--text-3)',
                 }}
               >
-                {cat} <span style={{ fontFamily: 'var(--ff-mono)', opacity: 0.7 }}>{counts[cat] ?? 0}</span>
+                {categoryLabel(cat, locale)} <span style={{ fontFamily: 'var(--ff-mono)', opacity: 0.7 }}>{counts[cat] ?? 0}</span>
               </button>
             );
           })}
@@ -101,7 +103,7 @@ export default function SecurityCatalog() {
 
       {/* 결과 수 */}
       <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11.5, color: 'var(--text-4)', marginBottom: 20, letterSpacing: '0.06em' }}>
-        {locale === 'en' ? `${filtered.length} vendors` : `${filtered.length}개 벤더`}{active ? ` · ${active}` : ''}
+        {locale === 'en' ? `${filtered.length} vendors` : `${filtered.length}개 벤더`}{active ? ` · ${categoryLabel(active, locale)}` : ''}
         {query ? ` · "${query}"` : ''}
       </div>
 
@@ -125,10 +127,10 @@ export default function SecurityCatalog() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                 <div>
                   <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-1)', lineHeight: 1.2 }}>
-                    {v.name}
+                    {locale === 'en' ? v.nameEn : v.name}
                   </div>
                   <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 10.5, color: 'var(--text-4)', marginTop: 3, letterSpacing: '0.06em' }}>
-                    {v.nameEn} · Est. {v.founded}
+                    {locale === 'en' ? `${v.name} · Est. ${v.founded}` : `${v.nameEn} · Est. ${v.founded}`}
                   </div>
                 </div>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
@@ -140,13 +142,13 @@ export default function SecurityCatalog() {
               {/* 카테고리 배지 */}
               <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 12 }}>
                 {v.categories.map(c => (
-                  <span key={c} className={`badge badge-${CATEGORY_TONE[c]}`} style={{ fontSize: 11 }}>{c}</span>
+                  <span key={c} className={`badge badge-${CATEGORY_TONE[c]}`} style={{ fontSize: 11 }}>{categoryLabel(c, locale)}</span>
                 ))}
               </div>
 
               {/* 설명 */}
               <p style={{ margin: '0 0 14px', fontSize: 13, color: 'var(--text-3)', lineHeight: 1.6, flex: 1 }}>
-                {v.desc}
+                {locale === 'en' ? (v.descEn || v.desc) : v.desc}
               </p>
 
               {/* 주요 제품 */}

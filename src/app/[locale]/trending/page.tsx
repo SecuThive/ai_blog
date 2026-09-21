@@ -2,7 +2,10 @@ import { isLocale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/messages';
 import { pageMetadata } from '@/i18n/metadata';
 import { categoryLabel } from '@/i18n/categories';
-import { titleForLocale } from '@/i18n/content';
+import { titleForLocale, excerptForLocale } from '@/i18n/content';
+import { formatTimeAgo } from '@/i18n/format';
+import { tagLabel } from '@/i18n/display';
+import type { Locale } from '@/i18n/config';
 import Link from '@/i18n/link';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
@@ -29,6 +32,7 @@ interface PostRow {
   tags: string[];
   views: number;
   published_at: string;
+  content_evidence?: unknown;
 }
 
 /** 조회수 ÷ 발행 후 경과일 — 최근 급상승 글을 우선 */
@@ -51,7 +55,7 @@ async function getTrending(): Promise<{
   noStore();
   const { data } = await makeFreshClient()
     .from('posts')
-    .select('id,title,slug,excerpt,category,tags,views,published_at')
+    .select('id,title,slug,excerpt,category,tags,views,published_at,content_evidence')
     .eq('status', 'published')
     .order('views', { ascending: false })
     .limit(50);
@@ -103,21 +107,16 @@ async function getTrending(): Promise<{
 }
 
 /* ── 유틸 ── */
-function fmtViews(n: number): string {
+function fmtViews(n: number, locale: Locale = 'ko'): string {
+  if (locale === 'en') {
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+    return n.toLocaleString('en-US');
+  }
   if (n >= 10_000) return `${(n / 10_000).toFixed(1)}만`;
   if (n >= 1_000)  return `${(n / 1_000).toFixed(1)}k`;
-  return n.toLocaleString();
+  return n.toLocaleString('ko-KR');
 }
 
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const h = Math.floor(diff / 3_600_000);
-  if (h < 24) return `${h}시간 전`;
-  const d = Math.floor(h / 24);
-  if (d < 7)  return `${d}일 전`;
-  if (d < 30) return `${Math.floor(d / 7)}주 전`;
-  return new Date(dateStr).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-}
 
 export default async function TrendingPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params;
@@ -137,16 +136,13 @@ export default async function TrendingPage({ params }: { params: Promise<{ local
             TRENDING
           </div>
           <h1 className="page-title">{dict.pages.trendingTitle}</h1>
-          <p className="page-lead">
-            조회수 ÷ 발행 경과일로 산출한 <strong style={{ color: 'var(--text-1)' }}>실시간 상승 지수</strong> 기준.
-            막 올라오는 글일수록 더 빠르게 상위에 반영됩니다.
-          </p>
+          <p className="page-lead">{dict.pages.trendingLeadFull}</p>
 
           {totalViews > 0 && (
             <div style={{ marginTop: 24, display: 'flex', gap: 28, flexWrap: 'wrap' }}>
               <div>
                 <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>
-                  {fmtViews(totalViews)}
+                  {fmtViews(totalViews, locale)}
                 </div>
                 <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 2 }}>
                   TOTAL VIEWS (TOP 50)
@@ -185,9 +181,9 @@ export default async function TrendingPage({ params }: { params: Promise<{ local
                     HOT NOW
                   </span>
                   <div>
-                    <h2 style={{ margin: 0, fontSize: 26, fontWeight: 600, letterSpacing: '-0.025em' }}>급상승 중인 글</h2>
+                    <h2 style={{ margin: 0, fontSize: 26, fontWeight: 600, letterSpacing: '-0.025em' }}>{dict.pages.trendingRising}</h2>
                     <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-3)' }}>
-                      조회수 ÷ 발행 경과일 기준 — 최근 올라온 인기 글이 먼저 표시됩니다.
+                      {dict.pages.trendingRisingSub}
                     </p>
                   </div>
                 </div>
@@ -214,7 +210,7 @@ export default async function TrendingPage({ params }: { params: Promise<{ local
                         {String(i + 1).padStart(2, '0')}
                       </div>
                       <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
-                        <span className={`badge badge-${tone}`}>{p.category}</span>
+                        <span className={`badge badge-${tone}`}>{categoryLabel(p.category, locale)}</span>
                         {i === 0 && (
                           <span style={{
                             fontFamily: 'var(--ff-mono)', fontSize: 10, letterSpacing: '0.06em',
@@ -223,21 +219,21 @@ export default async function TrendingPage({ params }: { params: Promise<{ local
                             border: '1px solid color-mix(in oklch, var(--acc-mint) 25%, transparent)',
                             padding: '2px 7px', borderRadius: 4,
                           }}>
-                            ↑ 1위
+                            {dict.pages.trendingRank1}
                           </span>
                         )}
                       </div>
-                      <h3 style={{ margin: '0 0 10px', fontSize: 17, lineHeight: 1.35, letterSpacing: '-0.015em' }}>{p.title}</h3>
-                      <p style={{ margin: '0 0 14px', color: 'var(--text-3)', fontSize: 13, lineHeight: 1.55 }}>{p.excerpt}</p>
+                      <h3 style={{ margin: '0 0 10px', fontSize: 17, lineHeight: 1.35, letterSpacing: '-0.015em' }}>{titleForLocale(locale, p.title, { tags: p.tags, content_evidence: p.content_evidence })}</h3>
+                      <p style={{ margin: '0 0 14px', color: 'var(--text-3)', fontSize: 13, lineHeight: 1.55 }}>{excerptForLocale(locale, p.excerpt, { tags: p.tags, content_evidence: p.content_evidence })}</p>
                       <div className="card-foot" style={{ marginTop: 'auto' }}>
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
                         </svg>
-                        <span>{fmtViews(p.views)} 조회</span>
+                        <span>{fmtViews(p.views, locale)} {dict.pages.trendingViews}</span>
                         <span className="dot" />
-                        <span>{timeAgo(p.published_at)}</span>
+                        <span>{formatTimeAgo(p.published_at, locale, dict)}</span>
                         <span className="dot" />
-                        <span style={{ color: 'var(--acc-blue)' }}>{score.toFixed(1)}/일</span>
+                        <span style={{ color: 'var(--acc-blue)' }}>{score.toFixed(1)}{dict.pages.trendingPerDay}</span>
                       </div>
                     </Link>
                   );
@@ -275,15 +271,15 @@ export default async function TrendingPage({ params }: { params: Promise<{ local
                       </span>
                       <div>
                         <div style={{ marginBottom: 4 }}>
-                          <span className={`badge badge-${tone}`}>{p.category}</span>
+                          <span className={`badge badge-${tone}`}>{categoryLabel(p.category, locale)}</span>
                         </div>
-                        <div style={{ fontSize: 14.5, color: 'var(--text-1)', letterSpacing: '-0.01em', lineHeight: 1.35 }}>{p.title}</div>
+                        <div style={{ fontSize: 14.5, color: 'var(--text-1)', letterSpacing: '-0.01em', lineHeight: 1.35 }}>{titleForLocale(locale, p.title, { tags: p.tags, content_evidence: p.content_evidence })}</div>
                         <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', marginTop: 4, letterSpacing: '0.04em' }}>
-                          {timeAgo(p.published_at)}
+                          {formatTimeAgo(p.published_at, locale, dict)}
                         </div>
                       </div>
                       <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
-                        {fmtViews(p.views)}
+                        {fmtViews(p.views, locale)}
                       </span>
                     </Link>
                   );
@@ -321,16 +317,16 @@ export default async function TrendingPage({ params }: { params: Promise<{ local
                           </span>
                           <div>
                             <div style={{ marginBottom: 4 }}>
-                              <span className={`badge badge-${tone}`}>{p.category}</span>
+                              <span className={`badge badge-${tone}`}>{categoryLabel(p.category, locale)}</span>
                             </div>
-                            <div style={{ fontSize: 14.5, color: 'var(--text-1)', letterSpacing: '-0.01em', lineHeight: 1.35 }}>{p.title}</div>
+                            <div style={{ fontSize: 14.5, color: 'var(--text-1)', letterSpacing: '-0.01em', lineHeight: 1.35 }}>{titleForLocale(locale, p.title, { tags: p.tags, content_evidence: p.content_evidence })}</div>
                             <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', marginTop: 4, letterSpacing: '0.04em' }}>
-                              {timeAgo(p.published_at)}
+                              {formatTimeAgo(p.published_at, locale, dict)}
                             </div>
                           </div>
                           <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--acc-blue)', whiteSpace: 'nowrap', textAlign: 'right' }}>
-                            <span style={{ display: 'block', fontSize: 12, color: 'var(--text-3)' }}>{fmtViews(p.views)}</span>
-                            {score.toFixed(1)}/일
+                            <span style={{ display: 'block', fontSize: 12, color: 'var(--text-3)' }}>{fmtViews(p.views, locale)}</span>
+                            {score.toFixed(1)}{dict.pages.trendingPerDay}
                           </span>
                         </Link>
                       );
@@ -358,11 +354,11 @@ export default async function TrendingPage({ params }: { params: Promise<{ local
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                             <span className="widget-item-meta">{c.cat}</span>
                             <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 10.5, color: 'var(--text-4)' }}>
-                              {fmtViews(c.post.views)}
+                              {fmtViews(c.post.views, locale)}
                             </span>
                           </div>
                           <Link href={`/blog/${c.post.slug}`} className="widget-item-title" style={{ color: 'var(--text-1)', textDecoration: 'none', fontSize: 13 }}>
-                            {c.post.title}
+                            {titleForLocale(locale, c.post.title, { tags: c.post.tags, content_evidence: c.post.content_evidence })}
                           </Link>
                         </div>
                       </li>
@@ -389,11 +385,9 @@ export default async function TrendingPage({ params }: { params: Promise<{ local
                             <Link
                               href={`/tag/${encodeURIComponent(tag)}`}
                               style={{ fontSize: 13, color: 'var(--text-1)', fontWeight: 500, letterSpacing: '-0.005em' }}
-                            >
-                              {tag}
-                            </Link>
+                            >{tagLabel(tag, locale) ?? tag}</Link>
                             <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-3)' }}>
-                              {fmtViews(views)}
+                              {fmtViews(views, locale)}
                             </span>
                           </div>
                           <div style={{ height: 4, background: 'var(--bg-1)', borderRadius: 999, overflow: 'hidden' }}>
