@@ -2,7 +2,7 @@ import { isLocale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/messages';
 import { pageMetadata } from '@/i18n/metadata';
 import type { Metadata } from 'next';
-import { VENDORS, CATEGORIES, categoryLabel } from './data';
+import { VENDORS, CATEGORIES, categoryLabel, type SecurityCategory } from './data';
 import SecurityCatalog from './SecurityCatalog';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
@@ -60,7 +60,7 @@ export default async function SecurityPage({ params }: { params: Promise<{ local
             </div>
             {topCat && (
               <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-3)', letterSpacing: '0.04em' }}>
-                TOP <strong style={{ color: 'var(--text-1)' }}>{categoryLabel(topCat[0] as typeof CATEGORIES[number], locale)}</strong>
+                TOP <strong style={{ color: 'var(--text-1)' }}>{categoryLabel(topCat[0] as SecurityCategory, locale)}</strong>
                 {' '}· {topCat[1]}{locale === 'en' ? ' vendors' : '개 벤더'}
               </div>
             )}
