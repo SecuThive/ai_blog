@@ -5,6 +5,14 @@ import { useT } from '@/i18n/provider';
 import { useState, useMemo } from 'react';
 import { VENDORS, CATEGORIES, CATEGORY_TONE, categoryLabel, type SecurityCategory } from './data';
 
+function productLabel(product: string, locale: string): string {
+  if (locale !== 'en') return product;
+  let out = product.replace(/\s*[（(][^)）\uAC00-\uD7A3]*[\uAC00-\uD7A3][^)）]*[）)]/g, '');
+  out = out.replace(/[\uAC00-\uD7A3]+/g, '').replace(/[\s\/·-]{2,}/g, ' ').trim();
+  out = out.replace(/\(\s*\)/g, '').replace(/\s{2,}/g, ' ').trim();
+  return out || product;
+}
+
 export default function SecurityCatalog() {
   const { locale } = useT();
   const [active, setActive] = useState<SecurityCategory | null>(null);
@@ -162,7 +170,7 @@ export default function SecurityCatalog() {
                       fontSize: 11.5, padding: '2px 8px',
                       background: 'var(--bg-3)', border: '1px solid var(--line-2)',
                       borderRadius: 5, color: 'var(--text-2)',
-                    }}>{p}</span>
+                    }}>{productLabel(p, locale)}</span>
                   ))}
                 </div>
               </div>
