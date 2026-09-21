@@ -2,6 +2,7 @@ import Link from '@/i18n/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
+import { getHomePostIds } from '@/lib/homePosts';
 import { catTone, toneForSeries, engCatTone } from '@/lib/utils';
 import type { PostSummary, EngineerGuide } from '@/lib/types';
 import {
@@ -82,10 +83,13 @@ async function getSubscriberCount(): Promise<number> {
 }
 
 async function getPosts(locale: Locale): Promise<PostSummary[]> {
+  const ids = await getHomePostIds(20);
+  if (ids.length === 0) return [];
   const client = makeFreshClient();
   const { data: rows } = await client
     .from('posts')
     .select('id,title,slug,excerpt,cover_image,category,tags,author,agent_role,views,published_at,content,content_evidence')
+    .in('id', ids)
     .eq('status', 'published')
     .order('published_at', { ascending: false })
     .limit(20);
@@ -500,9 +504,12 @@ async function getLanePosts(locale: Locale): Promise<Record<string, PostSummary[
   const client = makeFreshClient();
   const entries = await Promise.all(
     LANE_DEFS.map(async (lane) => {
+      const ids = await getHomePostIds(3, lane.category);
+      if (ids.length === 0) return [lane.category, []] as const;
       const { data } = await client
         .from('posts')
         .select('id,title,slug,category,content,published_at,tags')
+        .in('id', ids)
         .eq('status', 'published')
         .eq('category', lane.category)
         .order('published_at', { ascending: false })
