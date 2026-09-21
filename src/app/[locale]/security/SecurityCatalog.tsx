@@ -5,28 +5,39 @@ import { useT } from '@/i18n/provider';
 import { useState, useMemo } from 'react';
 import { VENDORS, CATEGORIES, CATEGORY_TONE, categoryLabel, type SecurityCategory } from './data';
 
+/** Hangul / hybrid product chip labels for /en security catalog */
+const PRODUCT_EN: Record<string, string> = {
+  '쉘모니터': 'ShellMonitor',
+  '모의해킹': 'Penetration testing',
+  '취약점 진단': 'Vulnerability assessment',
+  '웹 취약점 진단 서비스': 'Web vulnerability assessment',
+  '알약 기업용': 'Alyac Enterprise',
+  '알약 EDR': 'Alyac EDR',
+  'IP관리 솔루션': 'IP management',
+  'MDR 서비스': 'MDR service',
+  'FIDO2 솔루션': 'FIDO2 solution',
+  'PKI 솔루션': 'PKI solution',
+  'KICA 공동인증서': 'KICA certificate',
+  'KICA 전자서명 API': 'KICA e-sign API',
+  'CrossCert 공동인증서': 'CrossCert certificate',
+  '전자서명 SDK': 'E-sign SDK',
+  'SOUL 프린트': 'SOUL Print',
+  'PCI DSS 솔루션': 'PCI DSS solution',
+  'ESRC 위협 인텔리전스': 'ESRC threat intelligence',
+  'CAVE (악성코드 분석)': 'CAVE (malware analysis)',
+  'CEREBRO-DD (단방향 전송)': 'CEREBRO-DD (one-way transfer)',
+  'CEREBRO-XTD (OT 가시성)': 'CEREBRO-XTD (OT visibility)',
+  'Mail-i (이메일 DLP)': 'Mail-i (email DLP)',
+  'Petra (DB 접근제어)': 'Petra (DB access control)',
+  'Privacy-i (네트워크 DLP)': 'Privacy-i (network DLP)',
+  'SubGate (보안스위치)': 'SubGate (security switch)',
+  'VIPER-N (VoIP 보안)': 'VIPER-N (VoIP security)',
+};
+
 function productLabel(product: string, locale: string): string | null {
   if (locale !== 'en') return product;
-  const PRODUCT_EN: Record<string, string> = {
-    '쉘모니터': 'ShellMonitor',
-    '모의해킹': 'Penetration testing',
-    '취약점 진단': 'Vulnerability assessment',
-    '웹 취약점 진단 서비스': 'Web vuln assessment',
-    '알약 기업용': 'Alyac Enterprise',
-    '알약 EDR': 'Alyac EDR',
-    'IP관리 솔루션': 'IP management',
-    'MDR 서비스': 'MDR service',
-    'FIDO2 솔루션': 'FIDO2 solution',
-    'PKI 솔루션': 'PKI solution',
-    'KICA 공동인증서': 'KICA certificate',
-    'KICA 전자서명 API': 'KICA e-sign API',
-    'CrossCert 공동인증서': 'CrossCert certificate',
-    '전자서명 SDK': 'E-sign SDK',
-    'SOUL 프린트': 'SOUL Print',
-    'PCI DSS 솔루션': 'PCI DSS solution',
-    'ESRC 위협 인텔리전스': 'ESRC threat intel',
-  };
   if (PRODUCT_EN[product]) return PRODUCT_EN[product];
+  // Strip Korean parenthetical glosses: "CAVE (악성코드 분석)" → "CAVE"
   let out = product.replace(/\s*[（(][^)）\uAC00-\uD7A3]*[\uAC00-\uD7A3][^)）]*[）)]/g, '');
   out = out.replace(/[\uAC00-\uD7A3]+/g, '').replace(/[\s\/·-]{2,}/g, ' ').trim();
   out = out.replace(/\(\s*\)/g, '').replace(/\s{2,}/g, ' ').trim();
@@ -185,13 +196,16 @@ export default function SecurityCatalog() {
                   PRODUCTS
                 </div>
                 <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                  {v.products.map(p => { const label = productLabel(p, locale); if (!label) return null; return (
-                    <span key={p} style={{
-                      fontSize: 11.5, padding: '2px 8px',
-                      background: 'var(--bg-3)', border: '1px solid var(--line-2)',
-                      borderRadius: 5, color: 'var(--text-2)',
-                    }}>{label}</span>
-                  );
+                  {v.products.map((p) => {
+                    const label = productLabel(p, locale);
+                    if (!label) return null;
+                    return (
+                      <span key={p} style={{
+                        fontSize: 11.5, padding: '2px 8px',
+                        background: 'var(--bg-3)', border: '1px solid var(--line-2)',
+                        borderRadius: 5, color: 'var(--text-2)',
+                      }}>{label}</span>
+                    );
                   })}
                 </div>
               </div>
