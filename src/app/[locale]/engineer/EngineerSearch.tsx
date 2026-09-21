@@ -4,15 +4,11 @@ import { useState, useMemo } from 'react';
 import Link from '@/i18n/link';
 import type { EngineerGuide } from '@/lib/types';
 import { engCatTone, diffLabel } from '@/lib/utils';
-
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const d = Math.floor(diff / 86400000);
-  if (d < 1) return '오늘';
-  if (d < 7) return `${d}일 전`;
-  if (d < 30) return `${Math.floor(d / 7)}주 전`;
-  return new Date(dateStr).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-}
+import { useT } from '@/i18n/provider';
+import { formatTimeAgo } from '@/i18n/format';
+import { engineerCatLabel } from '@/i18n/categories';
+import { localizeGuide } from '@/i18n/content';
+import { interpolate } from '@/i18n/messages';
 
 function normalize(s: string) {
   return s.toLowerCase().replace(/\s+/g, '');
@@ -24,6 +20,7 @@ interface Props {
 }
 
 export default function EngineerSearch({ guides, activeCat }: Props) {
+  const { locale, dict } = useT();
   const [query, setQuery] = useState('');
   const q = query.trim();
 
@@ -51,14 +48,14 @@ export default function EngineerSearch({ guides, activeCat }: Props) {
           <input
             type="search"
             className="eng-search-input"
-            placeholder="제목, 태그, 카테고리 검색…"
+            placeholder={dict.engineer.searchPlaceholder}
             value={query}
             onChange={e => setQuery(e.target.value)}
             autoComplete="off"
             spellCheck={false}
           />
           {q && (
-            <button className="eng-search-clear" onClick={() => setQuery('')} aria-label="검색 초기화">
+            <button className="eng-search-clear" onClick={() => setQuery('')} aria-label={dict.engineer.searchClear}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -71,10 +68,10 @@ export default function EngineerSearch({ guides, activeCat }: Props) {
       <div className="section-eyebrow" style={{ marginBottom: 4 }}>GUIDES</div>
       <h2 style={{ margin: '0 0 24px', fontSize: 20, letterSpacing: '-0.02em' }}>
         {isSearching
-          ? `"${q}" 검색 결과`
+          ? interpolate(dict.engineer.searchResults, { q })
           : activeCat
-            ? `${activeCat} 가이드`
-            : '최근 가이드'}
+            ? interpolate(dict.engineer.catGuides, { cat: engineerCatLabel(activeCat, locale) })
+            : dict.engineer.recentGuides}
         <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 13, fontWeight: 400, color: 'var(--text-4)', marginLeft: 10 }}>
           {filtered.length}
         </span>
@@ -84,13 +81,14 @@ export default function EngineerSearch({ guides, activeCat }: Props) {
       {filtered.length === 0 ? (
         <div className="card" style={{ padding: 48, textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-4)' }}>
-            &ldquo;{q}&rdquo; 에 해당하는 가이드가 없습니다.
+            {interpolate(dict.engineer.noGuides, { q })}
           </div>
         </div>
       ) : (
         <div className="eng-card-grid">
           {filtered.map(g => {
             const tone = engCatTone(g.category);
+            const loc = localizeGuide(g, locale);
             return (
               <Link key={g.id} href={`/engineer/${g.slug}`} className={`eng-card eng-card-${tone}`}>
                 {/* Top accent */}
@@ -99,19 +97,19 @@ export default function EngineerSearch({ guides, activeCat }: Props) {
                 {/* Header */}
                 <div className="eng-card-head">
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <span className={`badge badge-${tone}`} style={{ fontSize: 10.5 }}>{g.category}</span>
-                    <span className={`eng-diff eng-diff-${g.difficulty}`}>{diffLabel(g.difficulty)}</span>
+                    <span className={`badge badge-${tone}`} style={{ fontSize: 10.5 }}>{engineerCatLabel(g.category, locale)}</span>
+                    <span className={`eng-diff eng-diff-${g.difficulty}`}>{diffLabel(g.difficulty, locale)}</span>
                   </div>
                   <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 10.5, color: 'var(--text-5)' }}>
-                    {timeAgo(g.created_at)}
+                    {formatTimeAgo(g.created_at, locale, dict)}
                   </span>
                 </div>
 
                 {/* Title */}
-                <h3 className="eng-card-title">{g.title}</h3>
+                <h3 className="eng-card-title">{loc.title}</h3>
 
                 {/* Summary */}
-                <p className="eng-card-summary">{g.summary}</p>
+                <p className="eng-card-summary">{loc.summary}</p>
 
                 {/* Footer */}
                 <div className="eng-card-foot">

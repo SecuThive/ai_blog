@@ -7,6 +7,8 @@ import { engCatTone } from '@/lib/utils';
 import EngineerSearch from './EngineerSearch';
 import JsonLd from '@/components/JsonLd';
 import { localizeGuide } from '@/i18n/content';
+import { engineerCatLabel } from '@/i18n/categories';
+import { getDictionary } from '@/i18n/messages';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
@@ -39,7 +41,8 @@ export const revalidate = 60;
 const CATEGORIES = [
   {
     name: 'Linux / Shell',
-    desc: '명령어·파일시스템·프로세스·셸 스크립트 실무 레퍼런스',
+    descKo: '명령어·파일시스템·프로세스·셸 스크립트 실무 레퍼런스',
+    descEn: 'Commands, filesystems, processes, and shell scripting references',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
         <rect x="2" y="3" width="20" height="14" rx="2" />
@@ -50,7 +53,8 @@ const CATEGORIES = [
   },
   {
     name: 'Docker / 컨테이너',
-    desc: '이미지 빌드·Compose·네트워크·레지스트리 운영 가이드',
+    descKo: '이미지 빌드·Compose·네트워크·레지스트리 운영 가이드',
+    descEn: 'Image builds, Compose, networking, and registry operations',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
@@ -59,7 +63,8 @@ const CATEGORIES = [
   },
   {
     name: 'Git / CI·CD',
-    desc: '브랜치 전략·GitHub Actions·파이프라인 구성 방법',
+    descKo: '브랜치 전략·GitHub Actions·파이프라인 구성 방법',
+    descEn: 'Branching strategy, GitHub Actions, and pipeline setup',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
         <circle cx="18" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" />
@@ -69,7 +74,8 @@ const CATEGORIES = [
   },
   {
     name: '네트워킹 / 서버',
-    desc: 'IP·DNS·방화벽·Nginx·SSL 설정 핵심 레퍼런스',
+    descKo: 'IP·DNS·방화벽·Nginx·SSL 설정 핵심 레퍼런스',
+    descEn: 'IP, DNS, firewalls, Nginx, and SSL configuration',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
         <circle cx="12" cy="12" r="10" />
@@ -80,7 +86,8 @@ const CATEGORIES = [
   },
   {
     name: 'OS / 시스템',
-    desc: '시스템 설정·서비스 관리·부팅·성능 튜닝',
+    descKo: '시스템 설정·서비스 관리·부팅·성능 튜닝',
+    descEn: 'System config, services, boot, and performance tuning',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
         <circle cx="12" cy="12" r="3" />
@@ -91,7 +98,8 @@ const CATEGORIES = [
   },
   {
     name: '보안 설정',
-    desc: 'SSH 강화·방화벽·인증·취약점 대응 방법',
+    descKo: 'SSH 강화·방화벽·인증·취약점 대응 방법',
+    descEn: 'SSH hardening, firewalls, auth, and vulnerability response',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -100,7 +108,8 @@ const CATEGORIES = [
   },
   {
     name: '클라우드',
-    desc: 'AWS·GCP·Azure 핵심 서비스 설정과 패턴',
+    descKo: 'AWS·GCP·Azure 핵심 서비스 설정과 패턴',
+    descEn: 'Core AWS, GCP, and Azure services and patterns',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
         <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
@@ -109,7 +118,8 @@ const CATEGORIES = [
   },
   {
     name: '데이터베이스',
-    desc: 'PostgreSQL·MySQL·Redis 설치·운영·쿼리 최적화',
+    descKo: 'PostgreSQL·MySQL·Redis 설치·운영·쿼리 최적화',
+    descEn: 'PostgreSQL, MySQL, and Redis install, ops, and query tuning',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
         <ellipse cx="12" cy="5" rx="9" ry="3" />
@@ -120,7 +130,8 @@ const CATEGORIES = [
   },
   {
     name: '트러블슈팅',
-    desc: '에러 메시지별 원인 진단·SSH 오류·502·디스크·포트 충돌 해결',
+    descKo: '에러 메시지별 원인 진단·SSH 오류·502·디스크·포트 충돌 해결',
+    descEn: 'Error-message diagnosis — SSH, 502s, disks, and port conflicts',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
         <circle cx="12" cy="12" r="10" />
@@ -165,6 +176,7 @@ export default async function EngineerPage({
 }) {
   const { locale: raw } = await params;
   const locale = raw === 'en' ? 'en' : 'ko';
+  const dict = getDictionary(locale);
   const { cat: rawCat } = await searchParams;
   const activeCat = rawCat ? decodeURIComponent(rawCat) : undefined;
 
@@ -175,9 +187,13 @@ export default async function EngineerPage({
   const itemListSchema = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: activeCat ? `${activeCat} 가이드 — Nodelog Engineer` : '엔지니어 가이드 — Nodelog',
+    name: activeCat
+      ? `${engineerCatLabel(activeCat, locale)} — Nodelog Engineer`
+      : (locale === 'en' ? 'Engineer guides — Nodelog' : '엔지니어 가이드 — Nodelog'),
     description: activeCat
-      ? CATEGORIES.find(c => c.name === activeCat)?.desc
+      ? (locale === 'en'
+        ? CATEGORIES.find(c => c.name === activeCat)?.descEn
+        : CATEGORIES.find(c => c.name === activeCat)?.descKo)
       : 'Linux, Docker, Git, 네트워킹, 보안 설정 등 실무에서 바로 써먹는 기술 가이드 모음.',
     url: `${SITE_URL}/engineer${activeCat ? `?cat=${encodeURIComponent(activeCat)}` : ''}`,
     numberOfItems: guides.length,
@@ -195,12 +211,16 @@ export default async function EngineerPage({
       {/* Hero */}
       <section className="page-hero">
         <div className="container">
-          <div className="page-eyebrow">ENGINEER · 엔지니어 가이드</div>
-          <h1 className="page-title">{activeCat ?? '엔지니어 레퍼런스'}</h1>
+          <div className="page-eyebrow">{locale === 'en' ? 'ENGINEER · GUIDES' : 'ENGINEER · 엔지니어 가이드'}</div>
+          <h1 className="page-title">{activeCat ? engineerCatLabel(activeCat, locale) : (locale === 'en' ? 'Engineer reference' : '엔지니어 레퍼런스')}</h1>
           <p className="page-lead">
             {activeCat
-              ? CATEGORIES.find(c => c.name === activeCat)?.desc ?? '해당 카테고리의 가이드 모음.'
-              : 'Linux, Docker, Git, 네트워킹, 보안 설정 등 실무에서 바로 써먹는 기술 가이드 모음.'}
+              ? (locale === 'en'
+        ? CATEGORIES.find(c => c.name === activeCat)?.descEn
+        : CATEGORIES.find(c => c.name === activeCat)?.descKo) ?? (locale === 'en' ? 'Guides in this category.' : '해당 카테고리의 가이드 모음.')
+              : (locale === 'en'
+                ? dict.pages.engineerLead
+                : 'Linux, Docker, Git, 네트워킹, 보안 설정 등 실무에서 바로 써먹는 기술 가이드 모음.')}
           </p>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 14, flexWrap: 'wrap' }}>
             <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-3)', letterSpacing: '0.04em' }}>
@@ -208,7 +228,7 @@ export default async function EngineerPage({
               {' '}GUIDES · {CATEGORIES.length} CATEGORIES
             </div>
             {activeCat && (
-              <Link href="/engineer" className="btn btn-sm btn-ghost">← 전체 보기</Link>
+              <Link href="/engineer" className="btn btn-sm btn-ghost">{locale === 'en' ? '← All guides' : '← 전체 보기'}</Link>
             )}
           </div>
         </div>
@@ -219,7 +239,7 @@ export default async function EngineerPage({
         <div className="container">
           <div style={{ marginBottom: 20 }}>
             <div className="section-eyebrow">CATEGORIES</div>
-            <h2 style={{ margin: '4px 0 0', fontSize: 20, letterSpacing: '-0.02em' }}>분야별 탐색</h2>
+            <h2 style={{ margin: '4px 0 0', fontSize: 20, letterSpacing: '-0.02em' }}>{locale === 'en' ? 'Browse by topic' : '분야별 탐색'}</h2>
           </div>
           <div className="eng-cat-grid">
             {CATEGORIES.map(cat => {
@@ -233,9 +253,9 @@ export default async function EngineerPage({
                   className={`eng-cat-card eng-cat-${tone}${isActive ? ' eng-cat-active' : ''}`}
                 >
                   <div className="eng-cat-icon">{cat.icon}</div>
-                  <div className="eng-cat-name">{cat.name}</div>
-                  <div className="eng-cat-desc">{cat.desc}</div>
-                  <div className="eng-cat-count">{count} 가이드</div>
+                  <div className="eng-cat-name">{engineerCatLabel(cat.name, locale)}</div>
+                  <div className="eng-cat-desc">{locale === 'en' ? cat.descEn : cat.descKo}</div>
+                  <div className="eng-cat-count">{locale === 'en' ? `${count} guides` : `${count} 가이드`}</div>
                 </Link>
               );
             })}

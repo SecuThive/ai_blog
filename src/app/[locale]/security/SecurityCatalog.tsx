@@ -1,9 +1,12 @@
 'use client';
 
+import { useT } from '@/i18n/provider';
+
 import { useState, useMemo } from 'react';
 import { VENDORS, CATEGORIES, CATEGORY_TONE, type SecurityCategory } from './data';
 
 export default function SecurityCatalog() {
+  const { locale } = useT();
   const [active, setActive] = useState<SecurityCategory | null>(null);
   const [query, setQuery] = useState('');
 
@@ -44,7 +47,7 @@ export default function SecurityCatalog() {
           </svg>
           <input
             type="text"
-            placeholder="벤더명, 제품명, 카테고리 검색…"
+            placeholder={locale === 'en' ? 'Search vendors, products, categories…' : '벤더명, 제품명, 카테고리 검색…'}
             value={query}
             onChange={e => setQuery(e.target.value)}
             style={{
@@ -68,7 +71,7 @@ export default function SecurityCatalog() {
               transition: '150ms',
             }}
           >
-            전체 <span style={{ fontFamily: 'var(--ff-mono)', opacity: 0.7 }}>{countAll}</span>
+            {locale === 'en' ? 'All' : '전체'} <span style={{ fontFamily: 'var(--ff-mono)', opacity: 0.7 }}>{countAll}</span>
           </button>
           {CATEGORIES.map(cat => {
             const tone = CATEGORY_TONE[cat];
@@ -98,14 +101,14 @@ export default function SecurityCatalog() {
 
       {/* 결과 수 */}
       <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11.5, color: 'var(--text-4)', marginBottom: 20, letterSpacing: '0.06em' }}>
-        {filtered.length}개 벤더{active ? ` · ${active}` : ''}
+        {locale === 'en' ? `${filtered.length} vendors` : `${filtered.length}개 벤더`}{active ? ` · ${active}` : ''}
         {query ? ` · "${query}"` : ''}
       </div>
 
       {/* 벤더 카드 */}
       {filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-4)' }}>
-          일치하는 벤더가 없습니다.
+          {locale === 'en' ? 'No matching vendors.' : '일치하는 벤더가 없습니다.'}
         </div>
       ) : (
         <div className="grid-3">

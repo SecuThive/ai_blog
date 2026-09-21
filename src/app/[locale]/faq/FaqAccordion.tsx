@@ -2,21 +2,23 @@
 
 import { useState } from 'react';
 import Link from '@/i18n/link';
-import { FAQ_ITEMS, FAQ_CATEGORIES } from './data';
+import { useT } from '@/i18n/provider';
+import { getFaq } from '@/i18n/copy/faq';
 
 export default function FaqAccordion() {
+  const { locale } = useT();
+  const faq = getFaq(locale);
   const [open, setOpen] = useState<string | null>(`0-0`);
   const [activeTab, setActiveTab] = useState<string>('all');
 
-  const tabs = [{ id: 'all', label: '전체', icon: '📋' }, ...FAQ_CATEGORIES];
+  const tabs = [{ id: 'all', label: faq.allLabel, icon: '📋' }, ...faq.categories];
 
   const filtered = activeTab === 'all'
-    ? FAQ_ITEMS
-    : FAQ_ITEMS.filter(item => item.category === activeTab);
+    ? faq.items
+    : faq.items.filter(item => item.category === activeTab);
 
   return (
     <>
-      {/* Category tabs */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 32, flexWrap: 'wrap' }}>
         {tabs.map(tab => (
           <button
@@ -39,12 +41,11 @@ export default function FaqAccordion() {
         ))}
       </div>
 
-      {/* Accordion items */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {filtered.map((it, i) => {
           const key = `${activeTab}-${i}`;
           const isOpen = open === key;
-          const cat = FAQ_CATEGORIES.find(c => c.id === it.category);
+          const cat = faq.categories.find(c => c.id === it.category);
           return (
             <div key={key} className={`faq-item${isOpen ? ' open' : ''}`}>
               <button
@@ -78,10 +79,10 @@ export default function FaqAccordion() {
       </div>
 
       <div style={{ marginTop: 48, padding: 28, border: '1px dashed var(--line-2)', borderRadius: 12, textAlign: 'center' }}>
-        <h4 style={{ margin: '0 0 8px', fontSize: 16 }}>찾으시는 답이 없나요?</h4>
-        <p style={{ color: 'var(--text-3)', margin: '0 0 16px' }}>직접 문의해주시면 빠르게 답변드립니다.</p>
+        <h4 style={{ margin: '0 0 8px', fontSize: 16 }}>{faq.emptyTitle}</h4>
+        <p style={{ color: 'var(--text-3)', margin: '0 0 16px' }}>{faq.emptyLead}</p>
         <Link href="/contact" className="btn btn-primary">
-          문의하기
+          {faq.contactCta}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M7 17L17 7M7 7h10v10" />
           </svg>

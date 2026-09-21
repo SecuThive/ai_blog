@@ -2,20 +2,9 @@ import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
 import ArchiveLoadMore from '@/components/ArchiveLoadMore';
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
-
-export const metadata: Metadata = {
-  title: '아카이브',
-  description: '시간 순서로 정리된 전체 글.',
-  alternates: { canonical: `${SITE_URL}/archive` },
-  openGraph: {
-    title: '아카이브',
-    description: '시간 순서로 정리된 전체 글.',
-    url: `${SITE_URL}/archive`,
-    type: 'website',
-  },
-};
+import { isLocale } from '@/i18n/config';
+import { getDictionary } from '@/i18n/messages';
+import { pageMetadata } from '@/i18n/metadata';
 
 export const revalidate = 60;
 
@@ -25,16 +14,30 @@ interface PostRow {
   slug: string;
   category: string;
   published_at: string;
+  tags?: string[] | null;
+  content_evidence?: unknown;
 }
 
 type MonthMap = Map<string, PostRow[]>;
 type YearMap = Map<string, MonthMap>;
 
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : 'ko';
+  const dict = getDictionary(locale);
+  return pageMetadata({
+    locale,
+    path: '/archive',
+    title: dict.pages.archiveTitle,
+    description: dict.pages.archiveLead,
+  });
+}
+
 async function getAllPosts(): Promise<PostRow[]> {
   noStore();
   const { data } = await makeFreshClient()
     .from('posts')
-    .select('id,title,slug,category,published_at')
+    .select('id,title,slug,category,published_at,tags,content_evidence')
     .eq('status', 'published')
     .order('published_at', { ascending: false });
   return (data ?? []) as PostRow[];
@@ -54,11 +57,13 @@ function groupByYearMonth(posts: PostRow[]): YearMap {
   return map;
 }
 
-export default async function ArchivePage() {
+export default async function ArchivePage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : 'ko';
+  const dict = getDictionary(locale);
   const posts = await getAllPosts();
   const grouped = groupByYearMonth(posts);
 
-  // 직렬화 가능한 형태로 변환
   const groupedArr = Array.from(grouped.entries()).map(([year, months]) => ({
     year,
     months: Array.from(months.entries()).map(([month, monthPosts]) => ({
@@ -71,9 +76,9 @@ export default async function ArchivePage() {
     <div>
       <section className="page-hero">
         <div className="container">
-          <div className="page-eyebrow">ARCHIVE · 시간 축</div>
-          <h1 className="page-title">아카이브</h1>
-          <p className="page-lead">시간 순서로 정리된 전체 글. 연도·월 단위로 탐색하세요.</p>
+          <div className="page-eyebrow">ARCHIVE</div>
+          <h1 className="page-title">{dict.pages.archiveTitle}</h1>
+          <p className="page-lead">{dict.pages.archiveLead}</p>
           <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-4)', letterSpacing: '0.08em', marginTop: 16 }}>
             {posts.length} POSTS TOTAL
           </div>
@@ -84,7 +89,7 @@ export default async function ArchivePage() {
         <div className="container">
           {posts.length === 0 ? (
             <div className="card" style={{ padding: 56, textAlign: 'center' }}>
-              <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-4)' }}>아직 발행된 글이 없습니다.</div>
+              <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-4)' }}>{dict.common.noContent}</div>
             </div>
           ) : (
             <ArchiveLoadMore grouped={groupedArr} />

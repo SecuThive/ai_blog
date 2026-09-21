@@ -8,6 +8,7 @@ import { useT } from '@/i18n/provider';
 import { interpolate } from '@/i18n/messages';
 import { categoryLabel } from '@/i18n/categories';
 import { formatTimeAgo } from '@/i18n/format';
+import { tagLabel } from '@/i18n/display';
 
 /* ===== Types ===== */
 export interface TickItem  { tag: string; title: string }
@@ -107,6 +108,7 @@ export function TickerBar({ ticks }: { ticks: TickItem[] }) {
 
 /* ===== AI Control Panel ===== */
 export function ControlPanel({ feed, bars }: { feed: FeedItem[]; bars: BarItem[] }) {
+  const { dict } = useT();
   const [pulse, setPulse] = useState(0);
 
   useEffect(() => {
@@ -149,7 +151,7 @@ export function ControlPanel({ feed, bars }: { feed: FeedItem[]; bars: BarItem[]
         </div>
 
         <div className="ctrl-section">
-          <h6>TOPIC ACTIVITY · 게시물 수</h6>
+          <h6>{dict.home.topicActivity}</h6>
           <div className="topic-bars">
             {bars.map((bar, i) => (
               <div
@@ -199,7 +201,9 @@ export interface SignalData {
   color: 'blue' | 'mint' | 'purple';
 }
 
-const HEATMAP_ROWS = ['AI 자동화', '개발', '인프라', '보안', '생산성'];
+function heatmapRows(dict: { home: { heatmapAi: string; heatmapDev: string; heatmapInfra: string; heatmapSec: string; heatmapProd: string } }) {
+  return [dict.home.heatmapAi, dict.home.heatmapDev, dict.home.heatmapInfra, dict.home.heatmapSec, dict.home.heatmapProd];
+}
 
 function denseVal(i: number, j: number) {
   const seed = (i * 31 + j * 7) % 13;
@@ -208,6 +212,8 @@ function denseVal(i: number, j: number) {
 }
 
 export function SignalDashboard({ signals, heatmapDates }: { signals: SignalData[]; heatmapDates: string[] }) {
+  const { dict } = useT();
+  const rows = heatmapRows(dict);
   return (
     <section className="section">
       <div className="container">
@@ -215,11 +221,8 @@ export function SignalDashboard({ signals, heatmapDates }: { signals: SignalData
           <div className="left">
             <span className="num">02 / SIGNALS</span>
             <div>
-              <h2>오늘의 신호 분석</h2>
-              <p className="sub">
-                AI가 최근 추적한 주요 기술 소스 가운데 의미 있게 움직인 변화들.
-                단순한 빈도가 아닌 변화율 기준.
-              </p>
+              <h2>{dict.home.signalTitle}</h2>
+              <p className="sub">{dict.home.signalSub}</p>
             </div>
           </div>
         </div>
@@ -248,8 +251,8 @@ export function SignalDashboard({ signals, heatmapDates }: { signals: SignalData
         <div style={{ marginTop: 32, padding: 24, border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', background: 'var(--bg-2)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
             <div>
-              <h4 style={{ margin: '0 0 4px', fontSize: 15, letterSpacing: '-0.01em' }}>14일 토픽 히트맵</h4>
-              <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-3)' }}>각 셀은 해당 일의 토픽 활동 강도. 짙을수록 강한 신호.</p>
+              <h4 style={{ margin: '0 0 4px', fontSize: 15, letterSpacing: '-0.01em' }}>{dict.home.heatmapTitle}</h4>
+              <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-3)' }}>{dict.home.heatmapSub}</p>
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-3)' }}>
               <span>LESS</span>
@@ -260,7 +263,7 @@ export function SignalDashboard({ signals, heatmapDates }: { signals: SignalData
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {HEATMAP_ROWS.map((label, i) => (
+            {rows.map((label, i) => (
               <div key={i} className="heat">
                 <div className="day-lbl">{label}</div>
                 {Array.from({ length: 14 }, (_, j) => (
@@ -385,6 +388,7 @@ export function MagLatestSection({ posts }: { posts: MagPost[] }) {
 
 /* ===== Topic Cloud ===== */
 export function TopicCloud({ topics }: { topics: TopicItem[] }) {
+  const { dict, locale } = useT();
   return (
     <section className="section">
       <div className="container">
@@ -392,12 +396,12 @@ export function TopicCloud({ topics }: { topics: TopicItem[] }) {
           <div className="left">
             <span className="num">05 / TOPICS</span>
             <div>
-              <h2>지금 가장 많이 다루는 주제</h2>
-              <p className="sub">크기는 지난 글 수 기준. 클릭하면 해당 태그 페이지로 이동.</p>
+              <h2>{dict.home.topicsTitle}</h2>
+              <p className="sub">{dict.home.topicsSub}</p>
             </div>
           </div>
           <Link href="/tags" className="section-link">
-            모든 태그
+            {dict.home.allTags}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
@@ -405,19 +409,19 @@ export function TopicCloud({ topics }: { topics: TopicItem[] }) {
         </div>
         <div className="cloud-band">
           <div className="cloud-row">
-            {topics.filter(({ tag }) => publicTags([tag]).length > 0).map(({ tag, count, size }, i) => (
+            {topics.filter(({ tag }) => publicTags([tag]).length > 0 && tagLabel(tag, locale)).map(({ tag, count, size }, i) => (
               <Link
                 key={tag}
                 href={`/tag/${encodeURIComponent(tag)}`}
                 className={`cloud-chip s-${size}`}
                 style={{ '--i': i } as React.CSSProperties}
               >
-                {tag}
+                {tagLabel(tag, locale)}
                 <span className="n">{count}</span>
               </Link>
             ))}
             {topics.length === 0 && (
-              <span style={{ color: 'var(--text-4)', fontSize: 13 }}>태그를 준비 중입니다.</span>
+              <span style={{ color: 'var(--text-4)', fontSize: 13 }}>{dict.home.tagsEmpty}</span>
             )}
           </div>
         </div>

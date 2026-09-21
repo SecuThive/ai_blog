@@ -1,5 +1,10 @@
 import { ImageResponse } from 'next/og';
 import { makeFreshClient } from '@/lib/supabase';
+import { isLocale } from '@/i18n/config';
+import { localizePost } from '@/i18n/content';
+import { categoryLabel } from '@/i18n/categories';
+import { getDictionary, interpolate } from '@/i18n/messages';
+import { fitOgExcerpt, fitOgTitle } from '@/i18n/ogFit';
 
 export const revalidate = 86400;
 export const size = { width: 1200, height: 630 };
@@ -22,29 +27,32 @@ function catTone(cat: string): string {
   return 'blue';
 }
 
-export default async function OgImage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+export default async function OgImage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
+  const { slug, locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : 'ko';
+  const dict = getDictionary(locale);
   const decoded = decodeURIComponent(slug);
 
   const { data } = await makeFreshClient()
     .from('posts')
-    .select('title,excerpt,category,author,content')
+    .select('title,excerpt,category,author,content,tags,content_evidence')
     .eq('slug', decoded)
     .eq('status', 'published')
     .single();
 
-  const title    = data?.title    ?? 'Nodelog';
-  const category = data?.category ?? '';
-  const author   = data?.author   ?? 'AI Editorial';
-  const excerpt  = data?.excerpt  ?? '';
-  const mins = Math.max(1, Math.round(((data?.content ?? '').trim().split(/\s+/).length) / 200));
+  const localized = data ? localizePost(data, locale) : null;
+  const title    = localized?.title    ?? 'Nodelog';
+  const category = data?.category ? categoryLabel(data.category, locale) : '';
+  const author   = locale === 'en' ? dict.meta.authors : (data?.author ?? dict.meta.authors);
+  const excerpt  = localized?.excerpt  ?? '';
+  const mins = Math.max(1, Math.round(((localized?.content ?? data?.content ?? '').trim().split(/\s+/).length) / 200));
 
   const tone            = catTone(category);
   const { accent, rgb } = TONES[tone];
 
   const initials   = author.replace(/[^a-zA-Z가-힣]/g, '').slice(0, 2).toUpperCase() || 'AI';
-  const shortTitle   = title.length > 50   ? title.slice(0, 50) + '…'   : title;
-  const shortExcerpt = excerpt.length > 115 ? excerpt.slice(0, 115) + '…' : excerpt;
+  const { text: shortTitle, fontSize: titleSize } = fitOgTitle(title);
+  const shortExcerpt = fitOgExcerpt(excerpt, title.length);
 
   return new ImageResponse(
     (
@@ -96,10 +104,10 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
 
         {/* title */}
         <div style={{
-          fontSize: shortTitle.length > 36 ? 46 : 56,
+          fontSize: titleSize,
           fontWeight: 700, color: '#E8ECF4',
-          lineHeight: 1.18, letterSpacing: -1.5,
-          marginBottom: 20, maxWidth: 960,
+          lineHeight: 1.2, letterSpacing: -1.2,
+          marginBottom: 16, maxWidth: 1060,
         }}>
           {shortTitle}
         </div>
@@ -133,7 +141,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
           </div>
           <span style={{ fontSize: 14, color: '#565E72' }}>{author}</span>
           <span style={{ fontSize: 14, color: '#2E3548' }}>·</span>
-          <span style={{ fontSize: 14, color: '#565E72' }}>{mins}분 읽기</span>
+          <span style={{ fontSize: 14, color: '#565E72' }}>{interpolate(dict.blog.readingTime, { min: mins })}</span>
           <span style={{ marginLeft: 'auto', fontSize: 11, color: '#2E3548', letterSpacing: 2 }}>
             REVIEWED · UPDATED
           </span>

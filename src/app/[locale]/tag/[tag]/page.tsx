@@ -6,56 +6,56 @@ import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { TAG_REDIRECTS } from '@/lib/tagRedirects';
 import TagLoadMore from '@/components/TagLoadMore';
 import { publicTags } from '@/lib/utils';
+import { isLocale } from '@/i18n/config';
+import { getDictionary, interpolate } from '@/i18n/messages';
+import { pageMetadata, siteUrl } from '@/i18n/metadata';
+import { tagLabel } from '@/i18n/display';
+import { withLocale } from '@/i18n/path';
 
 export const revalidate = 60;
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
-
-export async function generateMetadata({ params }: { params: Promise<{ tag: string }> }): Promise<Metadata> {
-  const { tag } = await params;
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; tag: string }> }): Promise<Metadata> {
+  const { tag, locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : 'ko';
+  const dict = getDictionary(locale);
   const decoded = decodeURIComponent(tag);
-  // series:/ep:N 은 내부용 유사태그 — 색인 대상 아님.
+  const label = tagLabel(decoded, locale) ?? decoded;
   if (decoded.startsWith('series:') || /^ep:\d+$/.test(decoded)) {
-    return { title: '태그를 찾을 수 없습니다', robots: { index: false, follow: false } };
+    return { title: dict.common.notFoundTitle, robots: { index: false, follow: false } };
   }
-  // 통합으로 흡수된 변형 태그: canonical 태그로 색인 이전(noindex + canonical 지정).
   const redirectTarget = TAG_REDIRECTS[decoded];
   if (redirectTarget) {
     return {
-      title: `#${redirectTarget} — Nodelog`,
-      alternates: { canonical: `${SITE_URL}/tag/${encodeURIComponent(redirectTarget)}` },
+      title: `#${tagLabel(redirectTarget, locale) ?? redirectTarget} — Nodelog`,
+      alternates: { canonical: siteUrl(`/tag/${encodeURIComponent(redirectTarget)}`, locale) },
       robots: { index: false, follow: true },
     };
   }
-  // canonical은 encodeURIComponent로 — '&'·공백 미인코딩 깨짐 방지.
-  const url = `${SITE_URL}/tag/${encodeURIComponent(decoded)}`;
-
-  return {
-    title: `#${decoded} — Nodelog`,
-    description: `"${decoded}" 태그로 분류된 글 모음`,
-    alternates: { canonical: url },
+  const description = locale === 'en'
+    ? `Posts tagged “${label}”.`
+    : `"${decoded}" 태그로 분류된 글 모음`;
+  return pageMetadata({
+    locale,
+    path: `/tag/${encodeURIComponent(decoded)}`,
+    title: `#${label} — Nodelog`,
+    description,
     robots: { index: false, follow: true },
-    openGraph: {
-      title: `#${decoded} — Nodelog`,
-      description: `"${decoded}" 태그로 분류된 글 모음`,
-      url,
-      type: 'website',
-    },
-    twitter: { card: 'summary_large_image' },
-  };
+  });
 }
 
 interface PostRow {
   id: number; title: string; slug: string; excerpt: string;
   category: string; published_at: string; reading_time: number;
   cover_image?: string;
+  tags?: string[] | null;
+  content_evidence?: unknown;
 }
 
 async function getPostsByTag(tag: string): Promise<PostRow[]> {
   noStore();
   const { data } = await makeFreshClient()
     .from('posts')
-    .select('id,title,slug,excerpt,cover_image,category,tags,published_at,views,content')
+    .select('id,title,slug,excerpt,cover_image,category,tags,published_at,views,content,content_evidence')
     .eq('status', 'published')
     .contains('tags', [tag])
     .order('published_at', { ascending: false });
@@ -63,6 +63,8 @@ async function getPostsByTag(tag: string): Promise<PostRow[]> {
     id: p.id as number, title: p.title as string, slug: p.slug as string,
     excerpt: p.excerpt as string, category: p.category as string,
     published_at: p.published_at as string, cover_image: p.cover_image as string | undefined,
+    tags: p.tags as string[] | null,
+    content_evidence: p.content_evidence,
     reading_time: readingTime((p.content as string) ?? ''),
   }));
 }
@@ -87,37 +89,45 @@ async function getRelatedTags(tag: string): Promise<string[]> {
     .map(([t]) => t);
 }
 
-
-export default async function TagDetailPage({ params }: { params: Promise<{ tag: string }> }) {
-  const { tag: tagParam } = await params;
+export default async function TagDetailPage({ params }: { params: Promise<{ locale: string; tag: string }> }) {
+  const { tag: tagParam, locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : 'ko';
+  const dict = getDictionary(locale);
   const tag = decodeURIComponent(tagParam);
+  const label = tagLabel(tag, locale) ?? tag;
 
-  // series:/ep:N 은 내부용 유사태그 — 실제 태그 페이지가 아니므로 404.
   if (tag.startsWith('series:') || /^ep:\d+$/.test(tag)) notFound();
 
-  // 통합으로 흡수된 변형 태그 → 대표 태그로 308 영구 리다이렉트 (링크 가치 이전)
   const redirectTarget = TAG_REDIRECTS[tag];
-  if (redirectTarget) permanentRedirect(`/tag/${encodeURIComponent(redirectTarget)}`);
+  if (redirectTarget) permanentRedirect(withLocale(`/tag/${encodeURIComponent(redirectTarget)}`, locale));
 
   const [posts, relatedTags] = await Promise.all([
     getPostsByTag(tag),
     getRelatedTags(tag),
   ]);
-  // 글이 없는 태그는 실제 404 반환 — Soft 404 방지
   if (posts.length === 0) notFound();
+
+  const related = relatedTags
+    .map((t) => {
+      const lbl = tagLabel(t, locale);
+      return lbl ? { raw: t, label: lbl } : null;
+    })
+    .filter((t): t is { raw: string; label: string } => t !== null);
 
   return (
     <div>
       <section className="page-hero">
         <div className="container">
           <div className="crumbs">
-            <Link href="/">홈</Link><span className="sep">/</span>
-            <Link href="/tags">태그</Link><span className="sep">/</span>
-            <span style={{ color: 'var(--text-1)' }}>#{tag}</span>
+            <Link href="/">{dict.common.home}</Link><span className="sep">/</span>
+            <Link href="/tags">{dict.pages.tagsTitle}</Link><span className="sep">/</span>
+            <span style={{ color: 'var(--text-1)' }}>#{label}</span>
           </div>
-          <div className="page-eyebrow" style={{ marginTop: 12 }}>TAG · 태그 모음</div>
-          <h1 className="page-title" style={{ marginBottom: 12 }}>#{tag}</h1>
-          <p className="page-lead">&quot;{tag}&quot; 키워드로 분류된 글 모음.</p>
+          <div className="page-eyebrow" style={{ marginTop: 12 }}>TAG</div>
+          <h1 className="page-title" style={{ marginBottom: 12 }}>#{label}</h1>
+          <p className="page-lead">
+            {locale === 'en' ? `Posts tagged “${label}”.` : `"${tag}" 키워드로 분류된 글 모음.`}
+          </p>
           <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-3)', letterSpacing: '0.04em', marginTop: 12 }}>
             <strong style={{ color: 'var(--text-1)', fontVariantNumeric: 'tabular-nums' }}>{posts.length}</strong> POSTS
           </div>
@@ -131,7 +141,7 @@ export default async function TagDetailPage({ params }: { params: Promise<{ tag:
               {posts.length === 0 ? (
                 <div className="card" style={{ padding: 48, textAlign: 'center' }}>
                   <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-4)' }}>
-                    이 태그의 글이 없습니다.
+                    {dict.pages.tagEmpty}
                   </div>
                 </div>
               ) : (
@@ -140,17 +150,17 @@ export default async function TagDetailPage({ params }: { params: Promise<{ tag:
             </div>
 
             <aside className="aside-rail">
-              {relatedTags.length > 0 && (
+              {related.length > 0 && (
                 <div className="widget">
                   <h5>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                       <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" />
                     </svg>
-                    유사 태그
+                    {dict.pages.relatedTags}
                   </h5>
                   <div className="pill-row">
-                    {relatedTags.map(t => (
-                      <Link key={t} href={`/tag/${encodeURIComponent(t)}`} className="tag-chip">{t}</Link>
+                    {related.map(t => (
+                      <Link key={t.raw} href={`/tag/${encodeURIComponent(t.raw)}`} className="tag-chip">{t.label}</Link>
                     ))}
                   </div>
                 </div>
@@ -160,10 +170,10 @@ export default async function TagDetailPage({ params }: { params: Promise<{ tag:
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                     <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
                   </svg>
-                  태그 탐색
+                  {dict.pages.tagsTitle}
                 </h5>
                 <Link href="/tags" className="btn btn-sm" style={{ width: '100%', justifyContent: 'center' }}>
-                  전체 태그 보기
+                  {dict.home.allTags}
                 </Link>
               </div>
             </aside>

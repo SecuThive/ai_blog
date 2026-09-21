@@ -1,6 +1,9 @@
+'use client';
+
 import type { CSSProperties, ReactNode } from 'react';
 import TrackedLink from '@/components/TrackedLink';
 import PostThumb from '@/components/PostThumb';
+import { useT } from '@/i18n/provider';
 
 export interface RelatedItem {
   id: number | string;
@@ -39,6 +42,7 @@ function slugFromHref(href: string): string {
  * 클릭 시 related_post_click 이벤트를 남긴다(analytics 차단 시에도 링크는 정상 동작).
  */
 export default function RelatedContent({ title, icon, items, currentPath, viewAllHref, viewAllLabel, className, style }: Props) {
+  const { dict } = useT();
   if (items.length === 0) return null;
 
   return (
@@ -51,7 +55,7 @@ export default function RelatedContent({ title, icon, items, currentPath, viewAl
             event={{ name: 'category_click', path: currentPath, category: viewAllLabel ?? title, position: 'related-view-all' }}
             style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', letterSpacing: '0.04em', textDecoration: 'none' }}
           >
-            {viewAllLabel ?? '전체 보기'} →
+            {viewAllLabel ?? dict.common.viewAll} →
           </TrackedLink>
         )}
       </div>

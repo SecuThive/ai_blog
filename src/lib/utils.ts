@@ -20,7 +20,12 @@ export function engCatTone(cat: string): string {
   return 'blue';
 }
 
-export function diffLabel(d: string): string {
+export function diffLabel(d: string, locale: 'ko' | 'en' = 'ko'): string {
+  if (locale === 'en') {
+    if (d === 'intermediate') return 'Intermediate';
+    if (d === 'advanced') return 'Advanced';
+    return 'Beginner';
+  }
   if (d === 'intermediate') return '중급';
   if (d === 'advanced') return '고급';
   return '초급';

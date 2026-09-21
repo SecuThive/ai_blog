@@ -2,27 +2,36 @@ import Link from '@/i18n/link';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
-import { toneForSeries, SERIES_DESC } from '@/lib/utils';
+import { toneForSeries } from '@/lib/utils';
 import JsonLd from '@/components/JsonLd';
+import { isLocale } from '@/i18n/config';
+import { getDictionary, interpolate } from '@/i18n/messages';
+import { seriesDescription, seriesLabel } from '@/i18n/display';
+import { siteUrl } from '@/i18n/metadata';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
-export const metadata: Metadata = {
-  title: '시리즈',
-  description: '14개 시리즈, 100편 이상의 심층 연재. RAG부터 엔터프라이즈 AI까지 단계별로 완전 정복.',
-  alternates: { canonical: `${SITE_URL}/series` },
-  openGraph: {
-    title: '시리즈',
-    description: '14개 시리즈, 100편 이상의 심층 연재. RAG부터 엔터프라이즈 AI까지 단계별로 완전 정복.',
-    url: `${SITE_URL}/series`,
-    type: 'website',
-  },
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : 'ko';
+  const dict = getDictionary(locale);
+  const desc = locale === 'en'
+    ? '14 series and 100+ in-depth episodes. From RAG to enterprise AI, read them in order.'
+    : '14개 시리즈, 100편 이상의 심층 연재. RAG부터 엔터프라이즈 AI까지 단계별로 완전 정복.';
+  const url = siteUrl('/series', locale);
+  return {
+    title: dict.pages.seriesTitle,
+    description: desc,
+    alternates: { canonical: url },
+    openGraph: { title: dict.pages.seriesTitle, description: desc, url, type: 'website' },
+  };
+}
 
 export const revalidate = 60;
 
 interface SeriesInfo {
   name: string;
+  label: string;
   count: number;
   latestDate: string;
   firstDate: string;
@@ -30,7 +39,7 @@ interface SeriesInfo {
   desc: string;
 }
 
-async function getSeries(): Promise<SeriesInfo[]> {
+async function getSeries(locale: 'ko' | 'en'): Promise<SeriesInfo[]> {
   noStore();
   const { data } = await makeFreshClient()
     .from('posts')
@@ -56,15 +65,19 @@ async function getSeries(): Promise<SeriesInfo[]> {
   return Array.from(map.entries())
     .map(([name, v]) => ({
       name,
+      label: seriesLabel(name, locale),
       ...v,
       tone: toneForSeries(name),
-      desc: SERIES_DESC[name] ?? `${name} 시리즈의 심층 연재.`,
+      desc: seriesDescription(name, locale),
     }))
     .sort((a, b) => b.count - a.count);
 }
 
-export default async function SeriesPage() {
-  const series = await getSeries();
+export default async function SeriesPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : 'ko';
+  const dict = getDictionary(locale);
+  const series = await getSeries(locale);
 
   const featured = series.filter(s => s.count >= 8);
   const standard = series.filter(s => s.count < 8);
@@ -74,14 +87,14 @@ export default async function SeriesPage() {
   const itemListSchema = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: 'Nodelog 시리즈',
-    url: `${SITE_URL}/series`,
+    name: `Nodelog ${dict.pages.seriesTitle}`,
+    url: siteUrl('/series', locale),
     numberOfItems: series.length,
     itemListElement: series.map((s, i) => ({
       '@type': 'ListItem',
       position: i + 1,
-      name: s.name,
-      url: `${SITE_URL}/series/${encodeURIComponent(s.name)}`,
+      name: s.label,
+      url: siteUrl(`/series/${encodeURIComponent(s.name)}`, locale),
     })),
   };
 
@@ -97,12 +110,12 @@ export default async function SeriesPage() {
         }}
       >
         <div className="container">
-          <div className="page-eyebrow">SERIES · 학습 경로</div>
-          <h1 className="page-title">시리즈로 깊게 파보기</h1>
+          <div className="page-eyebrow">SERIES</div>
+          <h1 className="page-title">{dict.pages.seriesTitle}</h1>
           <p className="page-lead">
-            하나의 주제를 끝까지 따라갈 수 있도록 단계별로 구성된 연재.{' '}
+            {dict.pages.seriesLead}{' '}
             <strong style={{ color: 'var(--text-2)', fontWeight: 600 }}>
-              {series.length}개 시리즈 · {totalEps}편
+              {interpolate(dict.home.postsCount, { count: series.length })} · {totalEps}
             </strong>
           </p>
         </div>
@@ -112,7 +125,7 @@ export default async function SeriesPage() {
         <div className="container">
           {series.length === 0 ? (
             <p style={{ color: 'var(--text-3)', textAlign: 'center', padding: '60px 0' }}>
-              준비 중인 시리즈가 곧 공개됩니다.
+              {dict.home.seriesEmpty}
             </p>
           ) : (
             <>
@@ -121,15 +134,15 @@ export default async function SeriesPage() {
                   <div className="section-head" style={{ marginBottom: 24 }}>
                     <div>
                       <div className="section-eyebrow">FEATURED SERIES</div>
-                      <h2 className="section-title" style={{ fontSize: 22 }}>핵심 시리즈</h2>
+                      <h2 className="section-title" style={{ fontSize: 22 }}>{dict.home.seriesTitle}</h2>
                     </div>
                     <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-4)' }}>
-                      {featured.length}개 · {featured.reduce((a, s) => a + s.count, 0)}편
+                      {locale === 'en' ? `${featured.length} series · ${featured.reduce((a, s) => a + s.count, 0)} eps` : `${featured.length}개 · ${featured.reduce((a, s) => a + s.count, 0)}편`}
                     </span>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }}>
                     {featured.map(s => (
-                      <SeriesCard key={s.name} s={s} featured maxCount={maxCount} />
+                      <SeriesCard key={s.name} s={s} featured maxCount={maxCount} locale={locale} seriesWord={dict.blog.series} updatedWord={dict.blog.updated} />
                     ))}
                   </div>
                 </div>
@@ -140,15 +153,15 @@ export default async function SeriesPage() {
                   <div className="section-head" style={{ marginBottom: 24 }}>
                     <div>
                       <div className="section-eyebrow">SPECIALIZED</div>
-                      <h2 className="section-title" style={{ fontSize: 22 }}>심화 · 특화 시리즈</h2>
+                      <h2 className="section-title" style={{ fontSize: 22 }}>{dict.pages.seriesTitle}</h2>
                     </div>
                     <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 12, color: 'var(--text-4)' }}>
-                      {standard.length}개 · {standard.reduce((a, s) => a + s.count, 0)}편
+                      {locale === 'en' ? `${standard.length} series · ${standard.reduce((a, s) => a + s.count, 0)} eps` : `${standard.length}개 · ${standard.reduce((a, s) => a + s.count, 0)}편`}
                     </span>
                   </div>
                   <div className="grid-3">
                     {standard.map(s => (
-                      <SeriesCard key={s.name} s={s} featured={false} maxCount={maxCount} />
+                      <SeriesCard key={s.name} s={s} featured={false} maxCount={maxCount} locale={locale} seriesWord={dict.blog.series} updatedWord={dict.blog.updated} />
                     ))}
                   </div>
                 </div>
@@ -165,10 +178,16 @@ function SeriesCard({
   s,
   featured,
   maxCount,
+  locale,
+  seriesWord,
+  updatedWord,
 }: {
   s: SeriesInfo;
   featured: boolean;
   maxCount: number;
+  locale: 'ko' | 'en';
+  seriesWord: string;
+  updatedWord: string;
 }) {
   const progressPct = Math.round((s.count / maxCount) * 100);
 
@@ -259,7 +278,7 @@ function SeriesCard({
               display: 'block',
             }}
           >
-            {s.name}
+            {s.label}
           </span>
         </div>
       </div>
@@ -267,10 +286,10 @@ function SeriesCard({
       {/* ── Body ── */}
       <div className="card-body" style={{ flex: 1 }}>
         <div className="card-meta">
-          <span className={`badge badge-${s.tone}`}>시리즈</span>
+          <span className={`badge badge-${s.tone}`}>{seriesWord}</span>
         </div>
         <h3 className="card-title" style={{ fontSize: featured ? 18 : 17 }}>
-          {s.name}
+          {s.label}
         </h3>
         <p
           className="card-excerpt"
@@ -283,11 +302,11 @@ function SeriesCard({
           {s.desc}
         </p>
         <div className="card-foot">
-          <span>{s.count}편</span>
+          <span>{s.count}</span>
           <span className="dot" />
           <span>
-            업데이트{' '}
-            {new Date(s.latestDate).toLocaleDateString('ko-KR', {
+            {updatedWord}{' '}
+            {new Date(s.latestDate).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR', {
               year: 'numeric',
               month: 'short',
             })}

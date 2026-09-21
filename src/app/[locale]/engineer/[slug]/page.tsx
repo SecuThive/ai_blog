@@ -10,6 +10,7 @@ import { guideCacheTag } from '@/lib/cacheTags';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from '@/components/CodeBlock';
+import MermaidDiagram from '@/components/MermaidDiagram';
 import JsonLd from '@/components/JsonLd';
 import { findOfficialDocs } from '@/lib/officialDocs';
 import { TableOfContents, ProgressBar, ScrollToTopBtn, CopyLinkBtn, ShareBtn } from '@/app/[locale]/blog/[slug]/ArticleClient';
@@ -17,7 +18,13 @@ import Comments, { type CommentRow } from '@/components/Comments';
 import InlineSubscribeCTA from '@/components/InlineSubscribeCTA';
 import RelatedContent, { type RelatedItem } from '@/components/RelatedContent';
 import TrackedExternalLink from '@/components/TrackedExternalLink';
-import { localizeGuide } from '@/i18n/content';
+import {  localizeGuide , titleForLocale, excerptForLocale } from '@/i18n/content';
+import { isLocale } from '@/i18n/config';
+import { getDictionary, interpolate } from '@/i18n/messages';
+import { languageAlternates, siteUrl } from '@/i18n/metadata';
+import { engineerCatLabel, categoryLabel } from '@/i18n/categories';
+import { formatDate } from '@/i18n/format';
+import { containsHangul, visiblePublicTags } from '@/i18n/display';
 
 export const revalidate = 60;
 
@@ -84,18 +91,18 @@ const GUIDE_TO_POST_CAT: Record<string, string[]> = {
   '트러블슈팅':          ['인프라', '개발'],
 };
 
-async function getRelatedBlogPosts(category: string): Promise<{ id: number; title: string; slug: string; excerpt: string; category: string }[]> {
+async function getRelatedBlogPosts(category: string): Promise<{ id: number; title: string; slug: string; excerpt: string; category: string; tags?: string[] | null; content_evidence?: unknown }[]> {
   const cats = GUIDE_TO_POST_CAT[category] ?? [];
   if (cats.length === 0) return [];
   try {
     const { data } = await makeFreshClient()
       .from('posts')
-      .select('id,title,slug,excerpt,category')
+      .select('id,title,slug,excerpt,category,tags,content_evidence')
       .eq('status', 'published')
       .in('category', cats)
       .order('views', { ascending: false })
       .limit(3);
-    return (data ?? []) as { id: number; title: string; slug: string; excerpt: string; category: string }[];
+    return (data ?? []) as { id: number; title: string; slug: string; excerpt: string; category: string; tags?: string[] | null; content_evidence?: unknown }[];
   } catch (e) {
     console.error('getRelatedBlogPosts 실패:', e);
     return [];
@@ -108,14 +115,14 @@ function extractHowToSteps(md: string): { name: string }[] {
   let m;
   while ((m = regex.exec(md)) !== null) {
     const name = m[1].trim();
-    if (!name.match(/^(개요|소개|정리|마무리|요약)/)) {
+    if (!name.match(/^(개요|소개|정리|마무리|요약|Overview|Introduction|Summary|Wrap-?up|Conclusion)/i)) {
       steps.push({ name });
     }
   }
   return steps;
 }
 
-const RELATED_GUIDE_SELECT = 'id,title,slug,summary,category,difficulty,tags';
+const RELATED_GUIDE_SELECT = 'id,title,slug,summary,category,difficulty,tags,content';
 
 interface RankableGuide { id: number; category: string; tags: string[] }
 
@@ -167,26 +174,26 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
   const { slug, locale: raw } = await params;
-  const locale = raw === 'en' ? 'en' : 'ko';
+  const locale = isLocale(raw) ? raw : 'ko';
+  const dict = getDictionary(locale);
   const fetched = await getGuide(slug);
-  if (!fetched) return { title: locale === 'en' ? 'Guide not found' : '가이드를 찾을 수 없습니다', robots: { index: false, follow: false } };
+  if (!fetched) return { title: dict.common.postNotFound, robots: { index: false, follow: false } };
   const guide = localizeGuide(fetched, locale);
-  const url = `${SITE_URL}${locale === 'en' ? '/en' : ''}/engineer/${guide.slug}`;
+  const url = siteUrl(`/engineer/${guide.slug}`, locale);
   return {
-    // absolute: 루트 template('%s | Nodelog') 적용을 막아 "… — Nodelog Engineer | Nodelog"
-    // 이중 브랜드를 방지한다. (섹션 서브브랜드 "Nodelog Engineer"는 유지)
     title: { absolute: `${guide.title} — Nodelog Engineer` },
     description: guide.summary,
-    keywords: publicTags(guide.tags).join(', '),
-    authors: [{ name: guide.author }],
-    alternates: { canonical: url },
+    keywords: visiblePublicTags(guide.tags, locale).map(t => t.label).join(', '),
+    authors: [{ name: dict.meta.authors }],
+    alternates: { canonical: url, languages: languageAlternates(`/engineer/${guide.slug}`) },
     robots: DEFAULT_ROBOTS,
     openGraph: {
       title: `${guide.title} — Nodelog Engineer`,
       description: guide.summary,
       type: 'article',
       url,
-      images: [{ url: `${SITE_URL}/engineer/${guide.slug}/opengraph-image`, width: 1200, height: 630 }],
+      locale: locale === 'en' ? 'en_US' : 'ko_KR',
+      images: [{ url: siteUrl(`/engineer/${guide.slug}/opengraph-image`, locale), width: 1200, height: 630 }],
     },
     twitter: { card: 'summary_large_image', title: guide.title, description: guide.summary },
   };
@@ -204,7 +211,7 @@ function extractHeadings(md: string) {
   return out;
 }
 
-function makeMdComponents() {
+function makeMdComponents(locale: 'ko' | 'en') {
   return {
     // 코드 블록: pre를 가로채 CodeBlock으로 교체
     pre: ({ children }: { children?: React.ReactNode }) => {
@@ -214,6 +221,9 @@ function makeMdComponents() {
         const match = /language-(\w+)/.exec(className ?? '');
         const lang = match?.[1];
         const content = String(code ?? '').replace(/\n$/, '');
+        if (lang === 'mermaid') {
+          return <MermaidDiagram chart={content} locale={locale} />;
+        }
         return <CodeBlock code={content} lang={lang} />;
       }
       return <pre>{children}</pre>;
@@ -256,7 +266,8 @@ function makeMdComponents() {
 
 export default async function EngineerGuidePage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { slug, locale: raw } = await params;
-  const locale = raw === 'en' ? 'en' : 'ko';
+  const locale = isLocale(raw) ? raw : 'ko';
+  const dict = getDictionary(locale);
   const fetched = await getGuide(slug);
 
   if (!fetched) {
@@ -273,17 +284,18 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
     getRelatedBlogPosts(guide.category),
     getGuideQa(guide.slug),
   ]);
-  const mdComponents = makeMdComponents();
-  const officialDocs = findOfficialDocs(guide.title, guide.tags, guide.category);
+  const mdComponents = makeMdComponents(locale);
+  const officialDocs = findOfficialDocs(guide.title, guide.tags, guide.category, locale);
+  const displayTags = visiblePublicTags(guide.tags, locale);
+  const showBody = locale !== 'en' || !localized.isContentFallback;
 
-  const dateStr = new Date(guide.created_at).toLocaleDateString('ko-KR', {
-    year: 'numeric', month: 'long', day: 'numeric',
-  });
+  const dateStr = formatDate(guide.created_at, locale);
   const updatedStr = guide.updated_at !== guide.created_at
-    ? new Date(guide.updated_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
+    ? formatDate(guide.updated_at, locale)
     : null;
 
-  const guideUrl = `${SITE_URL}/engineer/${guide.slug}`;
+  const guideUrl = siteUrl(`/engineer/${guide.slug}`, locale);
+  const ogImageUrl = siteUrl(`/engineer/${guide.slug}/opengraph-image`, locale);
   const techArticleSchema = {
     '@context': 'https://schema.org',
     '@type': 'TechArticle',
@@ -292,7 +304,7 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
     url: guideUrl,
     datePublished: guide.created_at,
     dateModified: guide.updated_at,
-    author: { '@type': 'Organization', name: guide.author, url: SITE_URL },
+    author: { '@type': 'Organization', name: dict.meta.authors, url: SITE_URL },
     publisher: {
       '@type': 'Organization',
       name: 'Nodelog',
@@ -300,11 +312,11 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
       logo: { '@type': 'ImageObject', url: `${SITE_URL}/opengraph-image` },
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': guideUrl },
-    image: { '@type': 'ImageObject', url: `${guideUrl}/opengraph-image`, width: 1200, height: 630 },
-    keywords: publicTags(guide.tags).join(', '),
-    articleSection: guide.category,
+    image: { '@type': 'ImageObject', url: ogImageUrl, width: 1200, height: 630 },
+    keywords: displayTags.map(t => t.label).join(', '),
+    articleSection: engineerCatLabel(guide.category, locale),
     proficiencyLevel: guide.difficulty === 'beginner' ? 'Beginner' : guide.difficulty === 'advanced' ? 'Expert' : 'Intermediate',
-    inLanguage: 'ko',
+    inLanguage: locale,
     // 독자 Q&A를 구조화 데이터로 노출 — AI/검색이 실제 질문·답변을 인용 가능(GEO)
     ...(qa.length > 0 ? {
       commentCount: qa.length,
@@ -321,9 +333,9 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: '홈', item: SITE_URL },
-      { '@type': 'ListItem', position: 2, name: '엔지니어', item: `${SITE_URL}/engineer` },
-      { '@type': 'ListItem', position: 3, name: guide.category, item: `${SITE_URL}/engineer?cat=${encodeURIComponent(guide.category)}` },
+      { '@type': 'ListItem', position: 1, name: dict.common.home, item: siteUrl('/', locale) },
+      { '@type': 'ListItem', position: 2, name: dict.nav.engineer, item: siteUrl('/engineer', locale) },
+      { '@type': 'ListItem', position: 3, name: engineerCatLabel(guide.category, locale), item: `${siteUrl('/engineer', locale)}?cat=${encodeURIComponent(guide.category)}` },
       { '@type': 'ListItem', position: 4, name: guide.title, item: guideUrl },
     ],
   };
@@ -335,8 +347,8 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
     name: guide.title,
     description: guide.summary,
     url: guideUrl,
-    image: { '@type': 'ImageObject', url: `${guideUrl}/opengraph-image`, width: 1200, height: 630 },
-    inLanguage: 'ko',
+    image: { '@type': 'ImageObject', url: ogImageUrl, width: 1200, height: 630 },
+    inLanguage: locale,
     step: howToSteps.map((s, i) => ({
       '@type': 'HowToStep',
       position: i + 1,
@@ -353,27 +365,30 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
       <div className="article-hero">
         <div className="container">
           <div className="crumbs">
-            <Link href="/">홈</Link>
+            <Link href="/">{dict.common.home}</Link>
             <span className="sep">/</span>
-            <Link href="/engineer">엔지니어</Link>
+            <Link href="/engineer">{dict.nav.engineer}</Link>
             <span className="sep">/</span>
-            <Link href={`/engineer?cat=${encodeURIComponent(guide.category)}`}>{guide.category}</Link>
+            <Link href={`/engineer?cat=${encodeURIComponent(guide.category)}`}>{engineerCatLabel(guide.category, locale)}</Link>
             <span className="sep">/</span>
             <span style={{ color: 'var(--text-5)' }}>{guide.title.slice(0, 28)}…</span>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
-            <span className={`badge badge-${tone}`}>{guide.category}</span>
-            <span className={`eng-diff eng-diff-${guide.difficulty}`}>{diffLabel(guide.difficulty)}</span>
+          <div className="chip-row">
+            <span className={`badge badge-${tone}`}>{engineerCatLabel(guide.category, locale)}</span>
+            <span className={`eng-diff eng-diff-${guide.difficulty}`}>{diffLabel(guide.difficulty, locale)}</span>
             {guide.os_compat.map(os => (
               <span key={os} className="eng-os-tag">{os}</span>
             ))}
-            {guide.tags.slice(0, 3).map(t => (
-              <span key={t} className="badge">{t}</span>
+            {displayTags.slice(0, 3).map(t => (
+              <span key={t.raw} className="badge">{t.label}</span>
             ))}
           </div>
 
           <h1 className="article-title">{guide.title}</h1>
+          {localized.isEnglishFallback && (
+            <p className="i18n-fallback">{dict.common.fallbackNotice}</p>
+          )}
           {guide.summary && <p className="article-deck">{guide.summary}</p>}
 
           <div className="article-byline">
@@ -389,14 +404,14 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
             </span>
             {updatedStr && (
               <span className="meta-item" style={{ color: 'var(--text-4)' }}>
-                수정 <time dateTime={guide.updated_at}>{updatedStr}</time>
+                {dict.engineer.modified} <time dateTime={guide.updated_at}>{updatedStr}</time>
               </span>
             )}
             <span className="meta-item">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
               </svg>
-              {guide.views.toLocaleString()} 조회
+              {interpolate(dict.engineer.views, { count: guide.views.toLocaleString(locale === 'en' ? 'en-US' : 'ko-KR') })}
             </span>
           </div>
         </div>
@@ -410,24 +425,28 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
             <TableOfContents headings={headings} />
             <div style={{ marginTop: 28 }}>
               <Link href="/engineer" className="btn btn-sm btn-ghost" style={{ width: '100%', justifyContent: 'center' }}>
-                ← 가이드 목록
+                {dict.engineer.backList}
               </Link>
             </div>
           </div>
 
           {/* Prose */}
           <article className="prose">
+            {showBody ? (
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={mdComponents as Record<string, unknown>}
             >
               {guide.content}
             </ReactMarkdown>
+            ) : (
+              <p className="i18n-fallback">{dict.common.fallbackNotice}</p>
+            )}
 
-            {guide.tags.length > 0 && (
+            {displayTags.length > 0 && (
               <div className="end-tags">
-                {guide.tags.map(t => (
-                  <span key={t} className="end-tag">#{t}</span>
+                {displayTags.map(t => (
+                  <span key={t.raw} className="end-tag">#{t.label}</span>
                 ))}
               </div>
             )}
@@ -437,24 +456,23 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
                 </svg>
-                편집 안내 · Editorial Note
+                {dict.engineer.noteHead}
               </div>
               <p className="editorial-note-body">
-                이 가이드는 AI 도구를 활용해 초안을 구성하고 사람이 명령어·문맥을 검토해 발행했습니다.
-                운영체제와 도구 버전에 따라 결과가 달라질 수 있으므로 적용 전 공식 문서를 함께 확인하세요.
-                오류를 발견하시면 <a href="mailto:thive8564@gmail.com">이메일로 제보</a>해 주세요.
+                {dict.engineer.noteBody}{' '}
+                <a href="mailto:thive8564@gmail.com">{dict.blog.reportEmail}</a>
               </p>
               {officialDocs.length > 0 && (
                 <div className="editorial-note-refs">
-                  <span className="refs-label">관련 공식 문서</span>
+                  <span className="refs-label">{dict.blog.relatedOfficial}</span>
                   {officialDocs.map(doc => (
                     <TrackedExternalLink key={doc.url} href={doc.url} path={`/engineer/${guide.slug}`} target="_blank" rel="noopener noreferrer">{doc.name} ↗</TrackedExternalLink>
                   ))}
                 </div>
               )}
               <div className="editorial-note-links">
-                <Link href="/author">운영·검토 방식 →</Link>
-                <Link href="/policy">편집 정책 →</Link>
+                <Link href="/author">{dict.engineer.seeAuthor}</Link>
+                <Link href="/policy">{dict.engineer.seePolicy}</Link>
               </div>
             </div>
 
@@ -470,15 +488,15 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
-                가이드 정보
+                {dict.engineer.info}
               </h5>
-              <div className="article-info-row"><span>카테고리</span><span className={`badge badge-${tone}`}>{guide.category}</span></div>
-              <div className="article-info-row"><span>난이도</span><span className={`eng-diff eng-diff-${guide.difficulty}`}>{diffLabel(guide.difficulty)}</span></div>
-              <div className="article-info-row"><span>작성자</span><span>{guide.author}</span></div>
-              <div className="article-info-row"><span>발행일</span><span style={{ fontSize: 11 }}>{dateStr}</span></div>
+              <div className="article-info-row"><span>{dict.engineer.category}</span><span className={`badge badge-${tone}`}>{engineerCatLabel(guide.category, locale)}</span></div>
+              <div className="article-info-row"><span>{dict.engineer.difficulty}</span><span className={`eng-diff eng-diff-${guide.difficulty}`}>{diffLabel(guide.difficulty, locale)}</span></div>
+              <div className="article-info-row"><span>{dict.engineer.author}</span><span>{dict.meta.authors}</span></div>
+              <div className="article-info-row"><span>{dict.engineer.published}</span><span style={{ fontSize: 11 }}>{dateStr}</span></div>
               {guide.os_compat.length > 0 && (
                 <div style={{ marginTop: 12 }}>
-                  <div style={{ fontSize: 11, color: 'var(--text-4)', fontFamily: 'var(--ff-mono)', marginBottom: 8 }}>OS 호환</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-4)', fontFamily: 'var(--ff-mono)', marginBottom: 8 }}>{dict.engineer.osCompat}</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                     {guide.os_compat.map(os => (
                       <span key={os} className="eng-os-tag">{os}</span>
@@ -494,15 +512,18 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                   </svg>
-                  관련 가이드
+                  {dict.engineer.related}
                 </h5>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {related.map(r => (
+                  {related.map(r => {
+                    const loc = localizeGuide(r, locale);
+                    return (
                     <Link key={r.id} href={`/engineer/${r.slug}`} style={{ display: 'block' }}>
-                      <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.4, marginBottom: 3 }}>{r.title}</div>
-                      <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)' }}>{diffLabel(r.difficulty)}</div>
+                      <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.4, marginBottom: 3 }}>{loc.title}</div>
+                      <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)' }}>{diffLabel(r.difficulty, locale)}</div>
                     </Link>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -512,10 +533,10 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
                 </svg>
-                전체 카테고리
+                {dict.engineer.allCats}
               </h5>
               <Link href="/engineer" className="btn btn-sm" style={{ width: '100%', justifyContent: 'center' }}>
-                가이드 허브
+                {dict.engineer.hub}
               </Link>
             </div>
 
@@ -525,7 +546,7 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
                   <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
                   <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                 </svg>
-                공유
+                {dict.engineer.share}
               </h5>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <CopyLinkBtn />
@@ -537,7 +558,7 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
 
         {/* Related blog posts */}
         <RelatedContent
-          title="이 가이드와 연관된 블로그 글"
+          title={dict.engineer.relatedPosts}
           icon={
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 6 }}>
               <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
@@ -545,15 +566,15 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
           }
           style={{ marginTop: 0 }}
           currentPath={`/engineer/${guide.slug}`}
-          viewAllHref="/blog"
-          viewAllLabel="전체 글"
+          viewAllHref="/"
+          viewAllLabel={dict.engineer.allPosts}
           items={relatedPosts.map((p): RelatedItem => ({
             id: p.id,
             href: `/blog/${p.slug}`,
             slug: p.slug,
-            title: p.title,
-            description: p.excerpt,
-            category: p.category,
+            title: titleForLocale(locale, p.title, { tags: p.tags, content_evidence: p.content_evidence }),
+            description: excerptForLocale(locale, p.excerpt, { tags: p.tags, content_evidence: p.content_evidence }),
+            category: categoryLabel(p.category, locale),
           }))}
         />
       </div>

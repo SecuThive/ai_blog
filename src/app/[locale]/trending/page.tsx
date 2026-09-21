@@ -1,3 +1,8 @@
+import { isLocale } from '@/i18n/config';
+import { getDictionary } from '@/i18n/messages';
+import { pageMetadata } from '@/i18n/metadata';
+import { categoryLabel } from '@/i18n/categories';
+import { titleForLocale } from '@/i18n/content';
 import Link from '@/i18n/link';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
@@ -6,17 +11,12 @@ import { catTone, publicTags } from '@/lib/utils';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
-export const metadata: Metadata = {
-  title: '트렌딩',
-  description: '가장 많이 읽히고 완독된 글들.',
-  alternates: { canonical: `${SITE_URL}/trending` },
-  openGraph: {
-    title: '트렌딩',
-    description: '가장 많이 읽히고 완독된 글들.',
-    url: `${SITE_URL}/trending`,
-    type: 'website',
-  },
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : 'ko';
+  const dict = getDictionary(locale);
+  return pageMetadata({ locale, path: '/trending', title: dict.pages.trendingTitle, description: dict.pages.trendingLead });
+}
 
 export const revalidate = 30;
 
@@ -42,7 +42,7 @@ function trendingScore(p: PostRow): number {
 
 async function getTrending(): Promise<{
   hot: PostRow[];          // trending score 상위 3
-  allTime: PostRow[];      // 누적 조회수 전체 순위
+  allTime: PostRow[];      // 누적 조회수 {locale === 'en' ? 'All-time ranking' : '전체 순위'}
   recent: PostRow[];       // 최근 30일 발행, trending score 순
   byCategory: { cat: string; tone: string; post: PostRow }[];
   tagStats: { tag: string; views: number }[];
@@ -64,7 +64,7 @@ async function getTrending(): Promise<{
     .sort((a, b) => trendingScore(b) - trendingScore(a))
     .slice(0, 3);
 
-  /* 전체 순위 — 누적 조회수 순 (이미 정렬됨) */
+  /* {locale === 'en' ? 'All-time ranking' : '전체 순위'} — 누적 조회수 순 (이미 정렬됨) */
   const allTime = posts.slice(0, 20);
 
   /* 최근 30일 발행 글 — trending score 순 */
@@ -74,7 +74,7 @@ async function getTrending(): Promise<{
     .sort((a, b) => trendingScore(b) - trendingScore(a))
     .slice(0, 10);
 
-  /* 카테고리별 1위 (누적 조회수 기준 — 이미 views-sorted) */
+  /* {locale === 'en' ? 'Top per category' : '카테고리별 1위'} (누적 조회수 기준 — 이미 views-sorted) */
   const seen = new Set<string>();
   const byCategory = posts
     .filter(p => {
@@ -119,7 +119,10 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
 }
 
-export default async function TrendingPage() {
+export default async function TrendingPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : 'ko';
+  const dict = getDictionary(locale);
   const { hot, allTime, recent, byCategory, tagStats, totalViews } = await getTrending();
 
   return (
@@ -133,7 +136,7 @@ export default async function TrendingPage() {
             </svg>
             TRENDING
           </div>
-          <h1 className="page-title">트렌딩</h1>
+          <h1 className="page-title">{dict.pages.trendingTitle}</h1>
           <p className="page-lead">
             조회수 ÷ 발행 경과일로 산출한 <strong style={{ color: 'var(--text-1)' }}>실시간 상승 지수</strong> 기준.
             막 올라오는 글일수록 더 빠르게 상위에 반영됩니다.
@@ -243,12 +246,12 @@ export default async function TrendingPage() {
             </>
           )}
 
-          {/* ── 전체 순위 + 사이드바 ── */}
+          {/* ── {locale === 'en' ? 'All-time ranking' : '전체 순위'} + 사이드바 ── */}
           <div className="split">
             <div>
-              {/* 전체 순위 — 누적 조회수 */}
-              <h3 style={{ margin: '0 0 6px', fontSize: 17, letterSpacing: '-0.015em', fontWeight: 600 }}>전체 순위</h3>
-              <p style={{ margin: '0 0 20px', fontSize: 12.5, color: 'var(--text-3)', fontFamily: 'var(--ff-mono)' }}>누적 조회수 기준 · TOP {allTime.length}</p>
+              {/* {locale === 'en' ? 'All-time ranking' : '전체 순위'} — 누적 조회수 */}
+              <h3 style={{ margin: '0 0 6px', fontSize: 17, letterSpacing: '-0.015em', fontWeight: 600 }}>{locale === 'en' ? 'All-time ranking' : '전체 순위'}</h3>
+              <p style={{ margin: '0 0 20px', fontSize: 12.5, color: 'var(--text-3)', fontFamily: 'var(--ff-mono)' }}>{locale === 'en' ? 'By total views · TOP' : '누적 조회수 기준 · TOP'} {allTime.length}</p>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {allTime.map((p, i) => {
                   const tone = catTone(p.category);
@@ -287,12 +290,12 @@ export default async function TrendingPage() {
                 })}
               </div>
 
-              {/* 최근 30일 인기 */}
+              {/* {locale === 'en' ? 'Popular last 30 days' : '최근 30일 인기'} */}
               {recent.length > 0 && (
                 <>
-                  <h3 style={{ margin: '52px 0 6px', fontSize: 17, letterSpacing: '-0.015em', fontWeight: 600 }}>최근 30일 인기</h3>
+                  <h3 style={{ margin: '52px 0 6px', fontSize: 17, letterSpacing: '-0.015em', fontWeight: 600 }}>{locale === 'en' ? 'Popular last 30 days' : '최근 30일 인기'}</h3>
                   <p style={{ margin: '0 0 20px', fontSize: 12.5, color: 'var(--text-3)', fontFamily: 'var(--ff-mono)' }}>
-                    최근 발행 · 상승 지수(조회수/일) 순
+                    {locale === 'en' ? 'Recent posts · rising score (views/day)' : '최근 발행 · 상승 지수(조회수/일) 순'}
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     {recent.map((p, i) => {
@@ -345,7 +348,7 @@ export default async function TrendingPage() {
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                     </svg>
-                    카테고리별 1위
+                    {locale === 'en' ? 'Top per category' : '카테고리별 1위'}
                   </h5>
                   <ul className="widget-list">
                     {byCategory.map(c => (
@@ -374,7 +377,7 @@ export default async function TrendingPage() {
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
                     </svg>
-                    핵심 토픽 · 태그별 조회수
+                    {locale === 'en' ? 'Key topics · views by tag' : '핵심 토픽 · 태그별 조회수'}
                   </span>
                   <ul style={{ listStyle: 'none', padding: 0, margin: '14px 0 0', display: 'flex', flexDirection: 'column', gap: 0 }}>
                     {tagStats.map(({ tag, views }, i) => {
@@ -410,7 +413,7 @@ export default async function TrendingPage() {
               {allTime.length === 0 && (
                 <div className="widget" style={{ textAlign: 'center', padding: 32 }}>
                   <p style={{ color: 'var(--text-3)', fontSize: 13, margin: 0 }}>
-                    아직 트렌딩 데이터가 없습니다.
+                    아직 {/* trending */}트렌딩 데이터가 없습니다.
                   </p>
                 </div>
               )}

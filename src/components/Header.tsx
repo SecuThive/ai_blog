@@ -94,7 +94,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
       } finally { setLoading(false); }
     }, 300);
     return () => clearTimeout(t);
-  }, [q]);
+  }, [q, locale]);
 
   const saveRecent = (term: string) => {
     if (!term.trim()) return;
@@ -326,6 +326,10 @@ export default function Header() {
             </svg>
             {dict.nav.search}
           </button>
+          <div className="mobile-lang-row">
+            <span>{dict.lang.label}</span>
+            <LanguageSwitcher />
+          </div>
           <div className="mobile-nav-divider" />
           {NAV.map(n => (
             <Link key={n.href} href={n.href} className={`mobile-nav-item${isActive(n.href) ? ' active' : ''}`} onClick={() => setMobileOpen(false)}>
@@ -338,9 +342,6 @@ export default function Header() {
           <Link href="/bookmarks" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>{dict.nav.bookmarks}</Link>
           <Link href="/about" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>{dict.nav.about}</Link>
           <div className="mobile-nav-divider" />
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
-            <LanguageSwitcher />
-          </div>
           <Link href="/subscribe" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', height: 46 }} onClick={() => setMobileOpen(false)}>
             {dict.nav.subscribe}
           </Link>

@@ -3,6 +3,10 @@
 import Link from '@/i18n/link';
 import { useState } from 'react';
 import { catTone } from '@/lib/utils';
+import { useT } from '@/i18n/provider';
+import { interpolate } from '@/i18n/messages';
+import { categoryLabel } from '@/i18n/categories';
+import { titleForLocale } from '@/i18n/content';
 
 interface PostRow {
   id: number;
@@ -10,6 +14,8 @@ interface PostRow {
   slug: string;
   category: string;
   published_at: string;
+  tags?: string[] | null;
+  content_evidence?: unknown;
 }
 
 interface MonthGroup { month: string; posts: PostRow[]; }
@@ -18,6 +24,7 @@ interface YearGroup { year: string; months: MonthGroup[]; }
 const INITIAL_YEARS = 2;
 
 export default function ArchiveLoadMore({ grouped }: { grouped: YearGroup[] }) {
+  const { locale, dict } = useT();
   const [visibleYears, setVisibleYears] = useState(INITIAL_YEARS);
   const shown = grouped.slice(0, visibleYears);
   const hasMore = visibleYears < grouped.length;
@@ -49,7 +56,7 @@ export default function ArchiveLoadMore({ grouped }: { grouped: YearGroup[] }) {
                       fontSize: 26, fontWeight: 700, letterSpacing: '-0.03em',
                       fontVariantNumeric: 'tabular-nums', color: 'var(--text-1)',
                     }}>
-                      {month}월
+                      {interpolate(dict.common.monthSuffix, { month })}
                     </div>
                     <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 10, color: 'var(--text-5)', letterSpacing: '0.1em', marginTop: 4 }}>
                       {posts.length} POSTS
@@ -104,10 +111,10 @@ export default function ArchiveLoadMore({ grouped }: { grouped: YearGroup[] }) {
                           {/* Content */}
                           <div>
                             <div style={{ marginBottom: 6 }}>
-                              <span className={`badge badge-${tone}`} style={{ fontSize: 10.5 }}>{p.category}</span>
+                              <span className={`badge badge-${tone}`} style={{ fontSize: 10.5 }}>{categoryLabel(p.category, locale)}</span>
                             </div>
                             <span style={{ fontSize: 14.5, color: 'var(--text-1)', letterSpacing: '-0.015em', lineHeight: 1.4 }}>
-                              {p.title}
+                              {titleForLocale(locale, p.title, { tags: p.tags, content_evidence: p.content_evidence })}
                             </span>
                           </div>
                         </Link>
@@ -127,7 +134,7 @@ export default function ArchiveLoadMore({ grouped }: { grouped: YearGroup[] }) {
             className="btn btn-ghost"
             onClick={() => setVisibleYears(v => v + 2)}
           >
-            이전 연도 더 보기 ({shown.length}/{grouped.length}년)
+            {dict.common.loadMore} ({shown.length}/{grouped.length})
           </button>
         </div>
       )}

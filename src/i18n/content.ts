@@ -1,4 +1,5 @@
 import type { Locale } from './config';
+import { sanitizeEnglishMarkdown } from './english';
 
 export const I18N_TITLE_PREFIX = 'i18n.title:';
 export const I18N_EXCERPT_PREFIX = 'i18n.excerpt:';
@@ -71,12 +72,12 @@ export interface LocalizablePost {
   content_evidence?: unknown;
 }
 
-export function localizePost<T extends LocalizablePost>(post: T, locale: Locale): T & { isEnglishFallback: boolean } {
+export function localizePost<T extends LocalizablePost>(post: T, locale: Locale): T & { isEnglishFallback: boolean; isContentFallback: boolean } {
   const embedded = parseEmbeddedEn(post.content);
   const evidence = evidenceEn(post.content_evidence);
   const koreanContent = stripEmbeddedEn(post.content);
   if (locale !== 'en') {
-    return { ...post, content: koreanContent, isEnglishFallback: false };
+    return { ...post, content: koreanContent, isEnglishFallback: false, isContentFallback: false };
   }
   const title = pickLocalized(
     locale,
@@ -93,12 +94,14 @@ export function localizePost<T extends LocalizablePost>(post: T, locale: Locale)
     koreanContent,
     post.content_en || evidence?.content || embedded?.content,
   );
+  const englishBody = content.isFallback ? content.value : sanitizeEnglishMarkdown(content.value);
   return {
     ...post,
     title: title.value,
     excerpt: excerpt.value,
-    content: content.value,
+    content: englishBody,
     isEnglishFallback: content.isFallback && title.isFallback,
+    isContentFallback: content.isFallback,
   };
 }
 
@@ -112,11 +115,11 @@ export interface LocalizableGuide {
   tags?: string[] | null;
 }
 
-export function localizeGuide<T extends LocalizableGuide>(guide: T, locale: Locale): T & { isEnglishFallback: boolean } {
+export function localizeGuide<T extends LocalizableGuide>(guide: T, locale: Locale): T & { isEnglishFallback: boolean; isContentFallback: boolean } {
   const embedded = parseEmbeddedEn(guide.content);
   const koreanContent = stripEmbeddedEn(guide.content);
   if (locale !== 'en') {
-    return { ...guide, content: koreanContent, isEnglishFallback: false };
+    return { ...guide, content: koreanContent, isEnglishFallback: false, isContentFallback: false };
   }
   const title = pickLocalized(
     locale,
@@ -133,11 +136,59 @@ export function localizeGuide<T extends LocalizableGuide>(guide: T, locale: Loca
     koreanContent,
     guide.content_en || embedded?.content,
   );
+  const englishBody = content.isFallback ? content.value : sanitizeEnglishMarkdown(content.value);
   return {
     ...guide,
     title: title.value,
     summary: summary.value,
-    content: content.value,
+    content: englishBody,
     isEnglishFallback: content.isFallback && title.isFallback,
+    isContentFallback: content.isFallback,
   };
+}
+
+/** List/card helpers — EN titles live in tags / content_evidence (no title_en column). */
+export function titleForLocale(
+  locale: Locale,
+  title: string,
+  opts?: {
+    tags?: string[] | null;
+    content_evidence?: unknown;
+    content?: string | null;
+    title_en?: string | null;
+  },
+): string {
+  if (locale !== 'en') return title;
+  const embedded = parseEmbeddedEn(opts?.content);
+  const evidence = evidenceEn(opts?.content_evidence);
+  return (
+    opts?.title_en?.trim()
+    || tagValue(opts?.tags, I18N_TITLE_PREFIX)
+    || evidence?.title
+    || embedded?.title
+    || title
+  );
+}
+
+export function excerptForLocale(
+  locale: Locale,
+  excerpt: string | null | undefined,
+  opts?: {
+    tags?: string[] | null;
+    content_evidence?: unknown;
+    content?: string | null;
+    excerpt_en?: string | null;
+  },
+): string {
+  const src = excerpt ?? '';
+  if (locale !== 'en') return src;
+  const embedded = parseEmbeddedEn(opts?.content);
+  const evidence = evidenceEn(opts?.content_evidence);
+  return (
+    opts?.excerpt_en?.trim()
+    || tagValue(opts?.tags, I18N_EXCERPT_PREFIX)
+    || evidence?.excerpt
+    || embedded?.excerpt
+    || src
+  );
 }

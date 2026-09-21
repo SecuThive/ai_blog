@@ -3,6 +3,9 @@
 import Link from '@/i18n/link';
 import { useEffect, useState } from 'react';
 import { catTone } from '@/lib/utils';
+import { useT } from '@/i18n/provider';
+import { categoryLabel } from '@/i18n/categories';
+import { titleForLocale } from '@/i18n/content';
 
 interface BookmarkedPost {
   id: number;
@@ -15,21 +18,22 @@ interface BookmarkedPost {
 
 type SortKey = 'newest' | 'oldest' | 'title';
 
-function sortPosts(posts: BookmarkedPost[], key: SortKey): BookmarkedPost[] {
+function sortPosts(posts: BookmarkedPost[], key: SortKey, locale: string): BookmarkedPost[] {
   return [...posts].sort((a, b) => {
     if (key === 'newest') return new Date(b.published_at).getTime() - new Date(a.published_at).getTime();
     if (key === 'oldest') return new Date(a.published_at).getTime() - new Date(b.published_at).getTime();
-    return a.title.localeCompare(b.title, 'ko');
+    return a.title.localeCompare(b.title, locale === 'en' ? 'en' : 'ko');
   });
 }
 
-const SORT_LABELS: Record<SortKey, string> = {
-  newest: '최신순',
-  oldest: '오래된순',
-  title: '제목순',
-};
+function sortLabels(locale: string): Record<SortKey, string> {
+  return locale === 'en'
+    ? { newest: 'Newest', oldest: 'Oldest', title: 'Title' }
+    : { newest: '최신순', oldest: '오래된순', title: '제목순' };
+}
 
 export default function BookmarksPage() {
+  const { locale, dict } = useT();
   const [slugs, setSlugs] = useState<string[]>([]);
   const [posts, setPosts] = useState<BookmarkedPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,15 +75,15 @@ export default function BookmarksPage() {
     localStorage.removeItem('bookmarks');
   };
 
-  const sorted = sortPosts(posts, sort);
+  const sorted = sortPosts(posts, sort, locale);
 
   return (
     <div>
       <section className="page-hero">
         <div className="container">
           <div className="page-eyebrow">BOOKMARKS</div>
-          <h1 className="page-title">저장한 글</h1>
-          <p className="page-lead">북마크한 글 목록입니다. 브라우저에 저장되며 기기별로 독립적입니다.</p>
+          <h1 className="page-title">{dict.pages.bookmarksTitle}</h1>
+          <p className="page-lead">{dict.pages.bookmarksLead}</p>
         </div>
       </section>
 
@@ -94,12 +98,9 @@ export default function BookmarksPage() {
           {!loading && slugs.length === 0 && (
             <div className="card" style={{ padding: '72px 0', textAlign: 'center' }}>
               <div style={{ fontSize: 40, marginBottom: 16 }}>🔖</div>
-              <h3 style={{ margin: '0 0 10px', fontSize: 18, letterSpacing: '-0.01em' }}>저장한 글이 없습니다</h3>
-              <p style={{ color: 'var(--text-3)', marginBottom: 28, lineHeight: 1.6 }}>
-                글 읽기 화면의 &lsquo;저장&rsquo; 버튼을 눌러보세요.<br />
-                브라우저에 자동 저장됩니다.
-              </p>
-              <Link href="/" className="btn btn-primary">최신 글 보러 가기 →</Link>
+              <h3 style={{ margin: '0 0 10px', fontSize: 18, letterSpacing: '-0.01em' }}>{dict.pages.bookmarksEmpty}</h3>
+              <p style={{ color: 'var(--text-3)', marginBottom: 28, lineHeight: 1.6 }}>{dict.pages.bookmarksEmptyLead}</p>
+              <Link href="/" className="btn btn-primary">{dict.pages.goRead} →</Link>
             </div>
           )}
 
@@ -108,20 +109,20 @@ export default function BookmarksPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 12, flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11.5, color: 'var(--text-4)', letterSpacing: '0.08em' }}>
-                    {posts.length}개 저장됨
+                    {locale === 'en' ? `${posts.length} saved` : `${posts.length}개 저장됨`}
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', letterSpacing: '0.06em' }}>정렬</span>
+                  <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', letterSpacing: '0.06em' }}>{locale === 'en' ? 'Sort' : '정렬'}</span>
                   <div style={{ display: 'flex', gap: 4 }}>
-                    {(Object.keys(SORT_LABELS) as SortKey[]).map(k => (
+                    {(Object.keys(sortLabels(locale)) as SortKey[]).map(k => (
                       <button
                         key={k}
                         className={`btn btn-sm${sort === k ? ' btn-primary' : ' btn-ghost'}`}
                         onClick={() => setSort(k)}
                         style={{ fontSize: 12 }}
                       >
-                        {SORT_LABELS[k]}
+                        {sortLabels(locale)[k]}
                       </button>
                     ))}
                   </div>
@@ -130,7 +131,7 @@ export default function BookmarksPage() {
                     onClick={clearAll}
                     style={{ fontSize: 12, color: 'var(--acc-rose)', marginLeft: 4 }}
                   >
-                    전체 삭제
+                    {dict.pages.clearAll}
                   </button>
                 </div>
               </div>

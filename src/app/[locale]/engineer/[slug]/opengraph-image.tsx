@@ -1,5 +1,9 @@
 import { ImageResponse } from 'next/og';
 import { makeFreshClient } from '@/lib/supabase';
+import { isLocale } from '@/i18n/config';
+import { localizeGuide } from '@/i18n/content';
+import { engineerCatLabel } from '@/i18n/categories';
+import { fitOgExcerpt, fitOgTitle } from '@/i18n/ogFit';
 
 export const revalidate = 86400;
 export const size = { width: 1200, height: 630 };
@@ -31,26 +35,28 @@ const DIFF_LABEL: Record<string, string> = {
   advanced: 'ADVANCED',
 };
 
-export default async function OgImage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+export default async function OgImage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
+  const { slug, locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : 'ko';
 
   const { data } = await makeFreshClient()
     .from('engineer_guides')
-    .select('title,summary,category,difficulty,tags')
+    .select('title,summary,category,difficulty,tags,content')
     .eq('slug', decodeURIComponent(slug))
     .eq('status', 'published')
     .single();
 
-  const title      = data?.title      ?? 'Nodelog Engineer';
-  const category   = data?.category   ?? '';
+  const localized  = data ? localizeGuide(data, locale) : null;
+  const title      = localized?.title      ?? 'Nodelog Engineer';
+  const category   = data?.category ? engineerCatLabel(data.category, locale) : '';
   const difficulty = data?.difficulty ?? 'beginner';
-  const summary    = data?.summary    ?? '';
+  const summary    = localized?.summary    ?? '';
 
   const tone            = catTone(category);
   const { accent, rgb } = TONES[tone];
 
-  const shortTitle   = title.length > 52   ? title.slice(0, 52) + '…'   : title;
-  const shortSummary = summary.length > 110 ? summary.slice(0, 110) + '…' : summary;
+  const { text: shortTitle, fontSize: titleSize } = fitOgTitle(title);
+  const shortSummary = fitOgExcerpt(summary, title.length);
 
   return new ImageResponse(
     (
@@ -107,10 +113,10 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
 
         {/* title */}
         <div style={{
-          fontSize: shortTitle.length > 38 ? 44 : 54,
+          fontSize: titleSize,
           fontWeight: 700, color: '#E8ECF4',
-          lineHeight: 1.18, letterSpacing: -1.5,
-          marginBottom: 20, maxWidth: 980,
+          lineHeight: 1.2, letterSpacing: -1.2,
+          marginBottom: 16, maxWidth: 1060,
         }}>
           {shortTitle}
         </div>

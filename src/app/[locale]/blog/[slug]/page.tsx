@@ -23,11 +23,13 @@ import Comments, { type CommentRow } from '@/components/Comments';
 import InlineSubscribeCTA from '@/components/InlineSubscribeCTA';
 import { isLocale } from '@/i18n/config';
 import { getDictionary, interpolate } from '@/i18n/messages';
-import { localizePost, localizeGuide } from '@/i18n/content';
+import { localizePost, localizeGuide, titleForLocale, excerptForLocale } from '@/i18n/content';
 import { languageAlternates, siteUrl } from '@/i18n/metadata';
 import { withLocale } from '@/i18n/path';
-import { categoryLabel } from '@/i18n/categories';
+import { categoryLabel, engineerCatLabel } from '@/i18n/categories';
 import { formatDate } from '@/i18n/format';
+import { containsHangul, seriesLabel, visiblePublicTags } from '@/i18n/display';
+import type { Locale } from '@/i18n/config';
 
 export const revalidate = 60;
 
@@ -51,12 +53,12 @@ async function getComments(slugKey: string): Promise<CommentRow[]> {
   }
 }
 
-async function getAdjacentPosts(publishedAt: string, id: number): Promise<{ prev: { title: string; slug: string } | null; next: { title: string; slug: string } | null }> {
+async function getAdjacentPosts(publishedAt: string, id: number): Promise<{ prev: { title: string; slug: string; tags?: string[] | null; content_evidence?: unknown } | null; next: { title: string; slug: string; tags?: string[] | null; content_evidence?: unknown } | null }> {
   try {
     const client = makeFreshClient();
     const [prevResult, nextResult] = await Promise.all([
-      client.from('posts').select('title,slug').eq('status', 'published').lt('published_at', publishedAt).neq('id', id).order('published_at', { ascending: false }).limit(1),
-      client.from('posts').select('title,slug').eq('status', 'published').gt('published_at', publishedAt).neq('id', id).order('published_at', { ascending: true }).limit(1),
+      client.from('posts').select('title,slug,tags,content_evidence').eq('status', 'published').lt('published_at', publishedAt).neq('id', id).order('published_at', { ascending: false }).limit(1),
+      client.from('posts').select('title,slug,tags,content_evidence').eq('status', 'published').gt('published_at', publishedAt).neq('id', id).order('published_at', { ascending: true }).limit(1),
     ]);
     return {
       prev: prevResult.data?.[0] ?? null,
@@ -70,7 +72,7 @@ async function getAdjacentPosts(publishedAt: string, id: number): Promise<{ prev
 
 interface SeriesContext {
   seriesName: string;
-  posts: { id: number; title: string; slug: string }[];
+  posts: { id: number; title: string; slug: string; tags?: string[] | null; content_evidence?: unknown }[];
   currentIndex: number;
 }
 
@@ -82,15 +84,15 @@ async function getSeriesContext(tags: string[] | null | undefined, currentId: nu
   try {
     const { data } = await makeFreshClient()
       .from('posts')
-      .select('id,title,slug,tags,published_at')
+      .select('id,title,slug,tags,published_at,content_evidence')
       .eq('status', 'published')
       .contains('tags', [`series:${seriesName}`])
       .order('published_at', { ascending: true });
     // ep:N 태그 기준 정렬 (엔진이 부여한 에피소드 번호 존중) — /series 페이지와 일관성 유지.
-    const rows = (data ?? []) as { id: number; title: string; slug: string; tags: string[]; published_at: string }[];
+    const rows = (data ?? []) as { id: number; title: string; slug: string; tags: string[]; published_at: string; content_evidence?: unknown }[];
     const ep = (t: string[]) => { const m = (t ?? []).find(x => /^ep:\d+$/.test(x)); return m ? parseInt(m.slice(3), 10) : null; };
     rows.sort((a, b) => (ep(a.tags) ?? 1e9) - (ep(b.tags) ?? 1e9) || a.published_at.localeCompare(b.published_at));
-    const posts = rows.map(({ id, title, slug }) => ({ id, title, slug }));
+    const posts = rows.map(({ id, title, slug, tags, content_evidence }) => ({ id, title, slug, tags, content_evidence }));
     const currentIndex = posts.findIndex(p => p.id === currentId);
     if (currentIndex === -1) return null;
     return { seriesName, posts, currentIndex };
@@ -115,7 +117,7 @@ async function getRelatedGuides(category: string): Promise<import('@/lib/types')
     const client = makeFreshClient();
     const { data } = await client
       .from('engineer_guides')
-      .select('id,title,slug,summary,category,difficulty,views')
+      .select('id,title,slug,summary,category,difficulty,views,tags,content')
       .eq('status', 'published')
       .in('category', guideCats)
       .order('views', { ascending: false })
@@ -127,7 +129,7 @@ async function getRelatedGuides(category: string): Promise<import('@/lib/types')
   }
 }
 
-const RELATED_POST_SELECT = 'id,title,slug,excerpt,category,tags,author,agent_role,views,published_at,content,cover_image';
+const RELATED_POST_SELECT = 'id,title,slug,excerpt,category,tags,author,agent_role,views,published_at,content,cover_image,content_evidence';
 
 interface RankablePost { id: number; category: string; tags: string[] }
 
@@ -215,7 +217,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   if (!post) return { title: dict.common.postNotFound, robots: { index: false, follow: false } };
   const localized = localizePost(post, locale);
   const url = siteUrl(`/blog/${post.slug}`, locale);
-  const cleanTags = publicTags(post.tags);
+  const cleanTags = visiblePublicTags(post.tags, locale).map(t => t.label);
   return {
     title: localized.title,
     description: localized.excerpt,
@@ -237,7 +239,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       tags: cleanTags,
       images: post.cover_image
         ? [{ url: post.cover_image, width: 1200, height: 630 }]
-        : [{ url: `${SITE_URL}/blog/${post.slug}/opengraph-image`, width: 1200, height: 630 }],
+        : [{ url: siteUrl(`/blog/${post.slug}/opengraph-image`, locale), width: 1200, height: 630 }],
     },
     twitter: { card: 'summary_large_image', title: localized.title, description: localized.excerpt },
   };
@@ -257,7 +259,7 @@ function extractHeadings(markdown: string) {
   return headings;
 }
 
-function makeMdComponents() {
+function makeMdComponents(locale: Locale) {
   let paragraphCount = 0;
   return {
     p: ({ children }: { children?: React.ReactNode }) => {
@@ -304,7 +306,7 @@ function makeMdComponents() {
         const filename = filenamePart || undefined;
         const content = String(code ?? '').replace(/\n$/, '');
         if (lang === 'mermaid') {
-          return <MermaidDiagram chart={content} />;
+          return <MermaidDiagram chart={content} locale={locale} />;
         }
         return <CodeBlock code={content} lang={lang} filename={filename} />;
       }
@@ -316,13 +318,13 @@ function makeMdComponents() {
     },
     hr: () => <hr />,
     img: ({ src, alt }: { src?: string; alt?: string }) => {
-      // Skip empty/relative placeholder srcs (e.g. image.jpg, rag_arch.png) that 404.
       if (!src || (!src.startsWith('http') && !src.startsWith('/'))) return null;
+      const caption = locale === 'en' && containsHangul(alt) ? '' : (alt ?? '');
       return (
         <figure className="prose-figure">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={src} alt={alt ?? ''} loading="lazy" />
-          {alt && <figcaption className="prose-caption">{alt}</figcaption>}
+          <img src={src ?? ''} alt={caption} loading="lazy" />
+          {caption && <figcaption className="prose-caption">{caption}</figcaption>}
         </figure>
       );
     },
@@ -369,10 +371,13 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
     getRelatedGuides(post.category),
     getComments(post.slug),
   ]);
-  const mdComponents = makeMdComponents();
-  const officialDocs = findOfficialDocs(post.title, post.tags ?? [], post.category ?? '');
+  const mdComponents = makeMdComponents(locale);
+  const officialDocs = findOfficialDocs(post.title, post.tags ?? [], post.category ?? '', locale);
+  const displayTags = visiblePublicTags(post.tags, locale);
+  const showBody = locale !== 'en' || !localized.isContentFallback;
+  const ogImageUrl = post.cover_image || siteUrl(`/blog/${post.slug}/opengraph-image`, locale);
 
-  const postUrl = `${SITE_URL}/blog/${post.slug}`;
+  const postUrl = siteUrl(`/blog/${post.slug}`, locale);
   // 콘텐츠 성격에 맞는 스키마 타입 — 이 글들은 뉴스가 아니라 상시 참고용 기술/분석 글이므로
   // NewsArticle을 쓰지 않는다. 기술 카테고리는 TechArticle, 그 외는 일반 Article.
   const articleType = ['인프라', '개발', '보안'].includes(post.category) ? 'TechArticle' : 'Article';
@@ -386,8 +391,8 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
     dateModified: modifiedDate,
     // author를 가공의 Person으로 표기하지 않는다 — 실제 작성 주체는
     // 가공의 Person이 아닌 실제 운영 주체인 기술 편집 조직을 표시한다.
-    author: { '@type': 'Organization', name: 'Nodelog 기술 편집팀', url: `${SITE_URL}/author` },
-    editor: { '@type': 'Organization', name: 'Nodelog 기술 편집팀', url: `${SITE_URL}/author` },
+    author: { '@type': 'Organization', name: dict.meta.authors, url: siteUrl('/author', locale) },
+    editor: { '@type': 'Organization', name: dict.meta.authors, url: siteUrl('/author', locale) },
     publisher: {
       '@type': 'Organization',
       name: 'Nodelog',
@@ -395,12 +400,10 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
       logo: { '@type': 'ImageObject', url: `${SITE_URL}/opengraph-image` },
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl },
-    image: post.cover_image
-      ? { '@type': 'ImageObject', url: post.cover_image, width: 1200, height: 630 }
-      : { '@type': 'ImageObject', url: `${SITE_URL}/blog/${post.slug}/opengraph-image`, width: 1200, height: 630 },
-    keywords: publicTags(post.tags).join(', '),
-    articleSection: post.category,
-    inLanguage: 'ko',
+    image: { '@type': 'ImageObject', url: ogImageUrl, width: 1200, height: 630 },
+    keywords: displayTags.map(t => t.label).join(', '),
+    articleSection: categoryLabel(post.category, locale),
+    inLanguage: locale,
     wordCount,
     timeRequired: `PT${mins}M`,
     speakable: {
@@ -423,8 +426,8 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: '홈', item: SITE_URL },
-      { '@type': 'ListItem', position: 2, name: post.category, item: `${SITE_URL}/category/${encodeURIComponent(post.category)}` },
+      { '@type': 'ListItem', position: 1, name: dict.common.home, item: siteUrl('/', locale) },
+      { '@type': 'ListItem', position: 2, name: categoryLabel(post.category, locale), item: siteUrl(`/category/${encodeURIComponent(post.category)}`, locale) },
       { '@type': 'ListItem', position: 3, name: post.title, item: postUrl },
     ],
   };
@@ -442,17 +445,17 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
       <div className="article-hero">
         <div className="container">
           <div className="crumbs">
-            <Link href="/">홈</Link>
+            <Link href="/">{dict.common.home}</Link>
             <span className="sep">/</span>
-            <Link href={`/category/${post.category}`}>{post.category}</Link>
+            <Link href={`/category/${post.category}`}>{categoryLabel(post.category, locale)}</Link>
             <span className="sep">/</span>
             <span style={{ color: 'var(--text-5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px', display: 'inline-block', verticalAlign: 'bottom' }}>{post.title}</span>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
+          <div className="chip-row">
             <span className={`badge badge-${tone}`}>{categoryLabel(post.category, locale)}</span>
-            {publicTags(post.tags).slice(0, 2).map(tag => (
-              <span key={tag} className="badge">{tag}</span>
+            {displayTags.slice(0, 2).map(tag => (
+              <span key={tag.raw} className="badge">{tag.label}</span>
             ))}
           </div>
 
@@ -463,7 +466,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
           <p className="article-deck">{post.excerpt}</p>
 
           <div className="article-byline">
-            <Link href="/author" className="meta-item" title="작성·검토 방식 보기">
+            <Link href="/author" className="meta-item" title={dict.blog.viewAuthorTitle}>
               <span className="author-pip">{authorInitials}</span>
               {dict.meta.authors}
             </Link>
@@ -475,7 +478,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
             </span>
             {hasMeaningfulUpdate && (
               <span className="meta-item">
-                업데이트 <time dateTime={post.updated_at ?? undefined}>{modifiedDateStr}</time>
+                {dict.blog.updated} <time dateTime={post.updated_at ?? undefined}>{modifiedDateStr}</time>
               </span>
             )}
             <span className="meta-item">
@@ -496,9 +499,9 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
 
           {/* 핵심 요약(TL;DR) — content_evidence처럼 선택적 필드(key_points)가 실제로 있을 때만 노출.
               데이터가 없으면 임의로 채우지 않고 섹션 자체를 렌더링하지 않는다. */}
-          {post.key_points && post.key_points.length > 0 && (
+          {post.key_points && post.key_points.length > 0 && !(locale === 'en' && post.key_points.some(containsHangul)) && (
             <div className="key-points">
-              <div className="key-points-head">핵심 요약</div>
+              <div className="key-points-head">{dict.blog.keyPoints}</div>
               <ul>
                 {post.key_points.map((point, i) => <li key={i}>{point}</li>)}
               </ul>
@@ -508,9 +511,10 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
           {/* Cover image — real image or auto-generated OG image as cover */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={post.cover_image || `/blog/${post.slug}/opengraph-image`}
+            src={post.cover_image || withLocale(`/blog/${post.slug}/opengraph-image`, locale)}
             alt={post.title}
-            style={{ marginTop: 32, width: '100%', borderRadius: 'var(--r-lg)', border: '1px solid var(--line-1)', aspectRatio: '16/7', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+            className="article-cover"
+            style={{ marginTop: 32, width: '100%', borderRadius: 'var(--r-lg)', border: '1px solid var(--line-1)', display: 'block' }}
           />
         </div>
       </div>
@@ -519,13 +523,13 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
       {seriesCtx && (
         <div style={{ borderBottom: '1px solid var(--line-1)', background: 'var(--bg-2)' }}>
           <div className="container" style={{ paddingTop: 16, paddingBottom: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <div className="series-banner-row">
               <Link
                 href={`/series/${encodeURIComponent(seriesCtx.seriesName)}`}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}
+                className="series-banner-link"
               >
-                <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 10, letterSpacing: '0.08em', color: 'var(--text-4)', textTransform: 'uppercase' }}>시리즈</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)' }}>{seriesCtx.seriesName}</span>
+                <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 10, letterSpacing: '0.08em', color: 'var(--text-4)', textTransform: 'uppercase' }}>{dict.blog.series}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)' }}>{seriesLabel(seriesCtx.seriesName, locale)}</span>
                 <span className="badge" style={{ fontFamily: 'var(--ff-mono)', fontSize: 11 }}>
                   {seriesCtx.currentIndex + 1} / {seriesCtx.posts.length}
                 </span>
@@ -554,7 +558,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
                 <Link
                   key={ep.id}
                   href={`/blog/${ep.slug}`}
-                  title={ep.title}
+                  title={titleForLocale(locale, ep.title, { tags: ep.tags, content_evidence: ep.content_evidence })}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -588,13 +592,13 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
             {/* 실제로 강하게 연관된 글이 있을 때만 노출 — 모든 글에 기계적으로 삽입하지 않는다. */}
             {relatedPosts[0] && isStronglyRelated(post, relatedPosts[0]) && (
               <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px dashed var(--line-1)' }}>
-                <div className="toc-title">바로 이어보기</div>
+                <div className="toc-title">{dict.blog.readNext}</div>
                 <TrackedLink
                   href={`/blog/${relatedPosts[0].slug}`}
                   event={{ name: 'related_post_click', path: `/blog/${post.slug}`, target_slug: relatedPosts[0].slug, position: -1 }}
                   style={{ display: 'block', fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}
                 >
-                  → {relatedPosts[0].title}
+                  → {titleForLocale(locale, relatedPosts[0].title, { tags: relatedPosts[0].tags, content_evidence: (relatedPosts[0] as { content_evidence?: unknown }).content_evidence })}
                 </TrackedLink>
               </div>
             )}
@@ -602,25 +606,29 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
 
           {/* Prose */}
           <article className="prose">
+            {showBody ? (
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={mdComponents as Record<string, unknown>}
             >
               {content}
             </ReactMarkdown>
+            ) : (
+              <p className="i18n-fallback">{dict.common.fallbackNotice}</p>
+            )}
 
             {post.content_evidence && (
               <section className="editorial-note" aria-labelledby="verification-evidence-title">
-                <div className="editorial-note-head" id="verification-evidence-title">확인 정보</div>
+                <div className="editorial-note-head" id="verification-evidence-title">{dict.blog.verification}</div>
                 {post.content_evidence.testEnvironment && (
                   <div>
-                    <strong>테스트 환경</strong>
+                    <strong>{dict.blog.testEnv}</strong>
                     <p className="editorial-note-body">
                       {[
                         post.content_evidence.testEnvironment.os,
                         ...(post.content_evidence.testEnvironment.software ?? []),
                         post.content_evidence.testEnvironment.testedAt
-                          ? `확인일 ${post.content_evidence.testEnvironment.testedAt}`
+                          ? `${dict.blog.testedOn} ${post.content_evidence.testEnvironment.testedAt}`
                           : null,
                       ].filter(Boolean).join(' · ')}
                     </p>
@@ -628,35 +636,37 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
                 )}
                 {post.content_evidence.verification?.commands?.length ? (
                   <div>
-                    <strong>직접 확인한 명령</strong>
+                    <strong>{dict.blog.commands}</strong>
                     <CodeBlock code={post.content_evidence.verification.commands.join('\n')} lang="shell" />
-                    {post.content_evidence.verification.result && <p>{post.content_evidence.verification.result}</p>}
+                    {post.content_evidence.verification.result && !(locale === 'en' && containsHangul(post.content_evidence.verification.result)) && (
+                      <p>{post.content_evidence.verification.result}</p>
+                    )}
                   </div>
                 ) : null}
-                {(post.content_evidence.beforeAfter?.before || post.content_evidence.beforeAfter?.after) && (
+                {(post.content_evidence.beforeAfter?.before || post.content_evidence.beforeAfter?.after) && !(locale === 'en' && containsHangul(`${post.content_evidence.beforeAfter.before ?? ''} ${post.content_evidence.beforeAfter.after ?? ''}`)) && (
                   <div className="grid-2">
-                    <div><strong>해결 전</strong><p>{post.content_evidence.beforeAfter.before}</p></div>
-                    <div><strong>해결 후</strong><p>{post.content_evidence.beforeAfter.after}</p></div>
+                    <div><strong>{dict.blog.before}</strong><p>{post.content_evidence.beforeAfter.before}</p></div>
+                    <div><strong>{dict.blog.after}</strong><p>{post.content_evidence.beforeAfter.after}</p></div>
                   </div>
                 )}
-                {post.content_evidence.cautions?.length ? (
-                  <div><strong>주의사항</strong><ul>{post.content_evidence.cautions.map(item => <li key={item}>{item}</li>)}</ul></div>
+                {post.content_evidence.cautions?.length && !(locale === 'en' && post.content_evidence.cautions.some(containsHangul)) ? (
+                  <div><strong>{dict.blog.cautions}</strong><ul>{post.content_evidence.cautions.map(item => <li key={item}>{item}</li>)}</ul></div>
                 ) : null}
                 {post.content_evidence.officialSources?.length ? (
                   <div className="editorial-note-refs">
-                    <span className="refs-label">공식 문서</span>
+                    <span className="refs-label">{dict.blog.officialDocs}</span>
                     {post.content_evidence.officialSources.map(source => (
-                      <TrackedExternalLink key={source.url} href={source.url} path={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer">{source.label} ↗</TrackedExternalLink>
+                      <TrackedExternalLink key={source.url} href={source.url} path={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer">{locale === 'en' && containsHangul(source.label) ? source.url.replace(/^https?:\/\//, '').split('/')[0] : source.label} ↗</TrackedExternalLink>
                     ))}
                   </div>
                 ) : null}
               </section>
             )}
 
-            {publicTags(post.tags).length > 0 && (
+            {displayTags.length > 0 && (
               <div className="end-tags">
-                {publicTags(post.tags).map(tag => (
-                  <Link key={tag} href={`/tag/${encodeURIComponent(tag)}`} className="end-tag">#{tag}</Link>
+                {displayTags.map(tag => (
+                  <Link key={tag.raw} href={`/tag/${encodeURIComponent(tag.raw)}`} className="end-tag">#{tag.label}</Link>
                 ))}
               </div>
             )}
@@ -669,30 +679,31 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
                 </svg>
-                편집 검토 · Editorial Review
+                {dict.blog.editorialReview}
               </div>
               <p className="editorial-note-body">
-                Nodelog는 모든 콘텐츠의 내용과 출처를 공개 전에 검토합니다.
-                환경(OS·버전)에 따라 결과가 달라질 수 있는 기술 정보는 공식 문서와 함께 확인하며, 검토 기준과 정정 원칙은 <Link href="/policy">편집 정책</Link>에서 안내합니다.
-                오류를 발견하시면 <a href="mailto:thive8564@gmail.com">이메일로 제보</a>해 주세요 — 확인 후 신속히 정정합니다.
+                {dict.blog.editorialBody}{' '}
+                <Link href="/policy">{dict.footer.policy}</Link>
+                {' · '}
+                <a href="mailto:thive8564@gmail.com">{dict.blog.reportEmail}</a>
               </p>
               <div className="editorial-note-meta">
-                <span>편집 책임 · {post.reviewed_by || 'Nodelog 기술 편집팀'}</span>
+                <span>{dict.blog.editorialOwner} · {post.reviewed_by || dict.meta.authors}</span>
                 <span className="sep">·</span>
-                <span>발행 · <time dateTime={post.published_at ?? undefined}>{dateStr}</time></span>
-                {hasMeaningfulUpdate && <><span className="sep">·</span><span>업데이트 · <time dateTime={post.updated_at ?? undefined}>{modifiedDateStr}</time></span></>}
+                <span>{dict.blog.published} · <time dateTime={post.published_at ?? undefined}>{dateStr}</time></span>
+                {hasMeaningfulUpdate && <><span className="sep">·</span><span>{dict.blog.updated} · <time dateTime={post.updated_at ?? undefined}>{modifiedDateStr}</time></span></>}
               </div>
               {officialDocs.length > 0 && (
                 <div className="editorial-note-refs">
-                  <span className="refs-label">관련 공식 문서</span>
+                  <span className="refs-label">{dict.blog.relatedOfficial}</span>
                   {officialDocs.map(d => (
                     <TrackedExternalLink key={d.url} href={d.url} path={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer">{d.name} ↗</TrackedExternalLink>
                   ))}
                 </div>
               )}
               <div className="editorial-note-links">
-                <Link href="/author">운영·검토 방식 자세히 보기 →</Link>
-                <Link href="/policy">편집 정책 →</Link>
+                <Link href="/author">{dict.blog.seeAuthor}</Link>
+                <Link href="/policy">{dict.blog.seePolicy}</Link>
               </div>
             </div>
 
@@ -706,14 +717,14 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
               <nav className="article-nav">
                 {adjacent.prev ? (
                   <Link href={`/blog/${adjacent.prev.slug}`} className="article-nav-link prev">
-                    <div className="article-nav-dir">← 이전 글</div>
-                    <div className="article-nav-title">{adjacent.prev.title}</div>
+                    <div className="article-nav-dir">{dict.blog.prevPost}</div>
+                    <div className="article-nav-title">{titleForLocale(locale, adjacent.prev.title, { tags: adjacent.prev.tags, content_evidence: adjacent.prev.content_evidence })}</div>
                   </Link>
                 ) : <div />}
                 {adjacent.next ? (
                   <Link href={`/blog/${adjacent.next.slug}`} className="article-nav-link next">
-                    <div className="article-nav-dir">다음 글 →</div>
-                    <div className="article-nav-title">{adjacent.next.title}</div>
+                    <div className="article-nav-dir">{dict.blog.nextPost}</div>
+                    <div className="article-nav-title">{titleForLocale(locale, adjacent.next.title, { tags: adjacent.next.tags, content_evidence: adjacent.next.content_evidence })}</div>
                   </Link>
                 ) : <div />}
               </nav>
@@ -724,18 +735,18 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
           <aside className="aside-rail">
             <div className="author-card">
               <div className="author-avatar">{authorInitials}</div>
-              <div className="author-h">편집 책임</div>
-              <div className="author-name">Nodelog 기술 편집팀</div>
-              <p className="author-bio">공식 문서 대조 · 명령어 검증 · 편집 검토. 오류 제보와 문서 변경을 반영해 콘텐츠를 정정·보강합니다.</p>
+              <div className="author-h">{dict.blog.authorRole}</div>
+              <div className="author-name">{dict.meta.authors}</div>
+              <p className="author-bio">{dict.blog.authorBio}</p>
             </div>
 
             <div className="article-info">
-              <div className="article-info-h">이 글에 대해</div>
-              <div className="article-info-row"><span>읽기 시간</span><span>{mins}분</span></div>
-              <div className="article-info-row"><span>단어 수</span><span>{wordCount.toLocaleString()}</span></div>
-              <div className="article-info-row"><span>섹션</span><span>{headings.filter(h => h.level === 2).length}</span></div>
-              <div className="article-info-row"><span>발행일</span><span style={{ fontSize: 11 }}>{dateStr}</span></div>
-              {hasMeaningfulUpdate && <div className="article-info-row"><span>업데이트</span><span style={{ fontSize: 11 }}>{modifiedDateStr}</span></div>}
+              <div className="article-info-h">{dict.blog.aboutThis}</div>
+              <div className="article-info-row"><span>{dict.blog.readTime}</span><span>{interpolate(dict.blog.minutesShort, { min: mins })}</span></div>
+              <div className="article-info-row"><span>{dict.blog.wordCount}</span><span>{wordCount.toLocaleString(locale === 'en' ? 'en-US' : 'ko-KR')}</span></div>
+              <div className="article-info-row"><span>{dict.blog.sections}</span><span>{headings.filter(h => h.level === 2).length}</span></div>
+              <div className="article-info-row"><span>{dict.blog.publishedDate}</span><span style={{ fontSize: 11 }}>{dateStr}</span></div>
+              {hasMeaningfulUpdate && <div className="article-info-row"><span>{dict.blog.updated}</span><span style={{ fontSize: 11 }}>{modifiedDateStr}</span></div>}
             </div>
 
             <div className="actions-rail">
@@ -748,7 +759,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
 
         {/* Related engineer guides */}
         <RelatedContent
-          title="관련 엔지니어 가이드"
+          title={dict.blog.relatedGuidesTitle}
           icon={
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 6 }}>
               <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
@@ -758,32 +769,35 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
           style={{ marginBottom: 24 }}
           currentPath={`/blog/${post.slug}`}
           viewAllHref="/engineer"
-          viewAllLabel="전체 가이드"
-          items={relatedGuides.map((g): RelatedItem => ({
-            id: g.id,
-            href: `/engineer/${g.slug}`,
-            slug: g.slug,
-            title: g.title,
-            description: g.summary,
-            category: g.category,
-            meta: 'GUIDE · 실전 레퍼런스',
-          }))}
+          viewAllLabel={dict.blog.allGuides}
+          items={relatedGuides.map((g): RelatedItem => {
+            const loc = localizeGuide(g, locale);
+            return {
+              id: g.id,
+              href: `/engineer/${g.slug}`,
+              slug: g.slug,
+              title: loc.title,
+              description: loc.summary,
+              category: engineerCatLabel(g.category, locale),
+              meta: dict.blog.guideMeta,
+            };
+          })}
         />
 
         {/* Related posts */}
         <RelatedContent
-          title="같은 주제의 글"
+          title={dict.blog.relatedPostsTitle}
           icon={<span className="num" style={{ marginRight: 8 }}>✦</span>}
           currentPath={`/blog/${post.slug}`}
           items={relatedPosts.map((p): RelatedItem => ({
             id: p.id,
             href: `/blog/${p.slug}`,
             slug: p.slug,
-            title: p.title,
-            description: p.excerpt,
-            category: p.category,
+            title: titleForLocale(locale, p.title, { tags: p.tags, content_evidence: (p as { content_evidence?: unknown }).content_evidence }),
+            description: excerptForLocale(locale, p.excerpt, { tags: p.tags, content_evidence: (p as { content_evidence?: unknown }).content_evidence }),
+            category: categoryLabel(p.category, locale),
             badgeTone: catTone(p.category),
-            meta: `${p.reading_time}분 읽기`,
+            meta: interpolate(dict.blog.readingTime, { min: p.reading_time }),
             thumb: { coverImage: p.cover_image },
           }))}
         />

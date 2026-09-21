@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useId, useState } from 'react';
+import { translateMermaid } from '@/i18n/english';
+import type { Locale } from '@/i18n/config';
 
 function fitMermaidSvg(svg: string): string {
   let out = svg.replace(/\s(width|height)="[^"]*"/g, '');
@@ -8,9 +10,10 @@ function fitMermaidSvg(svg: string): string {
   return out.replace('<svg ', '<svg width="100%" preserveAspectRatio="xMidYMid meet" ');
 }
 
-export default function MermaidDiagram({ chart }: { chart: string }) {
+export default function MermaidDiagram({ chart, locale }: { chart: string; locale: Locale }) {
   const reactId = useId().replace(/:/g, '');
   const [svg, setSvg] = useState('');
+  const source = locale === 'en' ? translateMermaid(chart) : chart;
 
   useEffect(() => {
     let cancelled = false;
@@ -29,18 +32,18 @@ export default function MermaidDiagram({ chart }: { chart: string }) {
           rankSpacing: 36,
         },
       });
-      const { svg: rendered } = await mermaid.render(`mermaid-${reactId}`, chart);
+      const { svg: rendered } = await mermaid.render(`mermaid-${reactId}`, source);
       if (!cancelled) setSvg(fitMermaidSvg(rendered));
     }).catch((err) => {
       console.error('mermaid render failed', err);
       if (!cancelled) setSvg('');
     });
     return () => { cancelled = true; };
-  }, [chart, reactId]);
+  }, [source, reactId]);
 
   if (!svg) {
     return (
-      <pre className="mermaid-fallback"><code>{chart}</code></pre>
+      <pre className="mermaid-fallback"><code>{source}</code></pre>
     );
   }
 

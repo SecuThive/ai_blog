@@ -19,6 +19,7 @@ import { pageMetadata } from '@/i18n/metadata';
 import { localizePost, localizeGuide } from '@/i18n/content';
 import { categoryLabel, engineerCatLabel } from '@/i18n/categories';
 import { formatTimeAgo } from '@/i18n/format';
+import { seriesLabel } from '@/i18n/display';
 
 // 홈은 DB 쿼리 6개를 병렬로 조합하므로 매분 콜드 재생성하면 최초 응답이 길어진다.
 // 발행 웹훅이 목록·sitemap을 별도로 무효화하므로 5분 캐시로 최신 글 반영과 응답 안정성을
@@ -246,7 +247,7 @@ function DailyBriefing({ posts, locale, dict }: { posts: PostSummary[]; locale: 
           <div className="brief-side">
             {sub.map((p, i) => (
               <Link key={p.id} className="brief-card" href={`/blog/${p.slug}`}>
-                <div className="num">02.{i + 1} · {p.category.toUpperCase()}</div>
+                <div className="num">02.{i + 1} · {categoryLabel(p.category, locale).toUpperCase()}</div>
                 <h4>{p.title}</h4>
                 <p>{p.excerpt}</p>
               </Link>
@@ -421,7 +422,7 @@ function EditorQuote({ dict }: { dict: Messages }) {
 }
 
 /* ===== Series Showcase ===== */
-function SeriesShowcase({ series, dict }: { series: SeriesInfo[]; dict: Messages }) {
+function SeriesShowcase({ series, dict, locale }: { series: SeriesInfo[]; dict: Messages; locale: Locale }) {
   const featuredSeries = series.slice(0, 3);
   return (
     <section className="section" style={{ background: 'linear-gradient(180deg, transparent, rgba(20,24,36,0.4) 30%, transparent)' }}>
@@ -447,7 +448,7 @@ function SeriesShowcase({ series, dict }: { series: SeriesInfo[]; dict: Messages
             {featuredSeries.map((s) => (
               <Link key={s.name} href={`/series/${encodeURIComponent(s.name)}`} className="card card-link">
                 <div className={`card-thumb thumb-${s.tone}`} style={{ aspectRatio: '16/7' }}>
-                  {s.name}
+                  {seriesLabel(s.name, locale)}
                 </div>
                 <div className="card-body">
                   <div className="card-meta">
@@ -456,7 +457,7 @@ function SeriesShowcase({ series, dict }: { series: SeriesInfo[]; dict: Messages
                       {interpolate(dict.home.postsCount, { count: s.count })}
                     </span>
                   </div>
-                  <h3 className="card-title">{s.name}</h3>
+                  <h3 className="card-title">{seriesLabel(s.name, locale)}</h3>
                   <p className="card-excerpt">
                     {interpolate(dict.home.seriesCardLead, { count: s.count })}
                   </p>
@@ -642,7 +643,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {/* DailyBriefing이 이미 posts[0..6](리드+서브+퀵리즈)을 노출했으므로, "최신 글" 섹션은
           그 뒤를 이어 posts[7..]부터 보여준다 — 같은 글이 두 섹션에 중복 노출되는 것을 방지. */}
       <MagLatestSection posts={posts.slice(7) as MagPost[]} />
-      <SeriesShowcase series={series} dict={dict} />
+      <SeriesShowcase series={series} dict={dict} locale={locale} />
       <EditorQuote dict={dict} />
       <NewsletterBand subscriberCount={subscriberCount} dict={dict} />
     </HomeScrollReveal>

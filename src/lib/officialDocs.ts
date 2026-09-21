@@ -3,9 +3,65 @@
  * 글 하단 "관련 공식 문서" 박스에서 사용 — 독자가 확정적 판단 전에 반드시
  * 확인해야 할 공식 출처를 연결한다. (검증된 공식 URL만 등록할 것.)
  */
+import type { Locale } from '@/i18n/config';
+
 export interface OfficialDoc {
   name: string;
   url: string;
+}
+
+const DOC_EN: Record<string, { name: string; url?: string }> = {
+  'Kubernetes 공식 문서': { name: 'Kubernetes documentation', url: 'https://kubernetes.io/docs/home/' },
+  'Docker 공식 문서': { name: 'Docker documentation' },
+  'Git 공식 문서': { name: 'Git documentation' },
+  'Redis 공식 문서': { name: 'Redis documentation' },
+  'PostgreSQL 공식 문서': { name: 'PostgreSQL documentation' },
+  'MySQL 공식 매뉴얼': { name: 'MySQL manual' },
+  'MongoDB 공식 매뉴얼': { name: 'MongoDB manual', url: 'https://www.mongodb.com/docs/' },
+  'Terraform 공식 문서': { name: 'Terraform documentation' },
+  'AWS 공식 문서': { name: 'AWS documentation' },
+  'Microsoft Azure 공식 문서': { name: 'Microsoft Azure documentation', url: 'https://learn.microsoft.com/azure/' },
+  'Google Cloud 공식 문서': { name: 'Google Cloud documentation', url: 'https://cloud.google.com/docs' },
+  'NGINX 공식 문서': { name: 'NGINX documentation' },
+  'GNU/Linux man 페이지': { name: 'Linux man pages' },
+  'Python 공식 문서': { name: 'Python documentation', url: 'https://docs.python.org/3/' },
+  'Node.js 공식 문서': { name: 'Node.js documentation' },
+  'Oracle Java 공식 문서': { name: 'Oracle Java documentation' },
+  'Spring Boot 공식 문서': { name: 'Spring Boot documentation' },
+  'OpenAI 공식 문서': { name: 'OpenAI documentation' },
+  'Anthropic 공식 문서': { name: 'Anthropic documentation' },
+  'LangChain 공식 문서': { name: 'LangChain documentation' },
+  'pgvector 공식 저장소': { name: 'pgvector repository' },
+  'OWASP 공식 문서': { name: 'OWASP documentation' },
+  'KISA ISMS-P 안내': { name: 'KISA ISMS-P guide' },
+  'OpenSSL 공식 문서': { name: 'OpenSSL documentation' },
+  'EU AI Act (유럽집행위 공식)': { name: 'EU AI Act (European Commission)' },
+  'EU 데이터보호(GDPR) 공식': { name: 'EU GDPR' },
+  '개인정보보호위원회': { name: 'Personal Information Protection Commission (Korea)' },
+  'KISA 보호나라': { name: 'KISA Boho Nara' },
+  '국가법령정보센터': { name: 'Korean Law Information Center' },
+  'NIST CSRC (보안 표준)': { name: 'NIST CSRC' },
+  'CISA SBOM (미 사이버보안청)': { name: 'CISA SBOM' },
+  'Apache Spark 공식 문서': { name: 'Apache Spark documentation' },
+  'Apache Airflow 공식 문서': { name: 'Apache Airflow documentation' },
+};
+
+function englishDocUrl(url: string): string {
+  return url
+    .replace('https://kubernetes.io/ko/', 'https://kubernetes.io/')
+    .replace('https://docs.python.org/ko/3/', 'https://docs.python.org/3/')
+    .replace('https://www.mongodb.com/ko-kr/docs/', 'https://www.mongodb.com/docs/')
+    .replace('/ko-kr/', '/')
+    .replace('?hl=ko', '?hl=en');
+}
+
+export function localizeOfficialDoc(doc: OfficialDoc, locale: Locale): OfficialDoc {
+  if (locale !== 'en') return doc;
+  const hit = DOC_EN[doc.name];
+  return {
+    name: hit?.name ?? doc.name.replace(/ 공식 문서$/, ' documentation').replace(/ 공식 매뉴얼$/, ' manual'),
+    url: hit?.url ?? englishDocUrl(doc.url),
+  };
 }
 
 const DOCS: { match: RegExp; docs: OfficialDoc[] }[] = [
@@ -175,7 +231,7 @@ const DOCS: { match: RegExp; docs: OfficialDoc[] }[] = [
 ];
 
 /** 제목·태그·카테고리에서 매칭되는 공식 문서 목록(최대 4개, 중복 제거) */
-export function findOfficialDocs(title: string, tags: string[], category: string): OfficialDoc[] {
+export function findOfficialDocs(title: string, tags: string[], category: string, locale: Locale = 'ko'): OfficialDoc[] {
   const hay = `${title} ${tags.join(' ')} ${category}`;
   const seen = new Set<string>();
   const out: OfficialDoc[] = [];
@@ -184,7 +240,7 @@ export function findOfficialDocs(title: string, tags: string[], category: string
     for (const d of docs) {
       if (seen.has(d.url)) continue;
       seen.add(d.url);
-      out.push(d);
+      out.push(localizeOfficialDoc(d, locale));
       if (out.length >= 4) return out;
     }
   }

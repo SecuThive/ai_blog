@@ -5,6 +5,8 @@ import type { ReactNode } from 'react';
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import { trackEvent } from '@/lib/analytics';
+import { useT } from '@/i18n/provider';
+import { translateCodeForEnglish } from '@/i18n/english';
 
 const LANG_LABELS: Record<string, string> = {
   bash: 'Bash', sh: 'Shell', shell: 'Shell',
@@ -85,16 +87,18 @@ function highlightLine(line: string, lang?: string): ReactNode {
 }
 
 export default function CodeBlock({ code, lang, filename }: { code: string; lang?: string; filename?: string }) {
+  const { dict, locale } = useT();
+  const displayCode = locale === 'en' ? translateCodeForEnglish(code) : code;
   const [copied, setCopied] = useState(false);
   const pathname = usePathname() ?? '';
   const label = lang ? (LANG_LABELS[lang] ?? lang.toUpperCase()) : 'CODE';
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(code);
+      await navigator.clipboard.writeText(displayCode);
     } catch {
       const el = document.createElement('textarea');
-      el.value = code;
+      el.value = displayCode;
       document.body.appendChild(el);
       el.select();
       document.execCommand('copy');
@@ -105,7 +109,7 @@ export default function CodeBlock({ code, lang, filename }: { code: string; lang
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const lines = code.split('\n');
+  const lines = displayCode.split('\n');
   const shouldHighlight = !!lang;
 
   return (
@@ -124,25 +128,25 @@ export default function CodeBlock({ code, lang, filename }: { code: string; lang
         <button
           className={`code-copy-btn${copied ? ' copied' : ''}`}
           onClick={handleCopy}
-          title="코드 복사"
+          title={dict.common.copyCode}
         >
           {copied ? (
             <>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-              복사됨
+              {dict.common.copied}
             </>
           ) : (
             <>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
               </svg>
-              복사
+              {dict.common.copy}
             </>
           )}
         </button>
-        <span className="sr-only" role="status" aria-live="polite">{copied ? '코드가 클립보드에 복사되었습니다' : ''}</span>
+        <span className="sr-only" role="status" aria-live="polite">{copied ? dict.common.copiedAria : ''}</span>
       </div>
       <pre>
         <code>

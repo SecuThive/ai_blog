@@ -3,6 +3,7 @@
 import Link from '@/i18n/link';
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useT } from '@/i18n/provider';
 
 interface SearchResult {
   id: number;
@@ -32,6 +33,7 @@ function highlight(text: string, q: string) {
 }
 
 function SearchContent() {
+  const { locale, dict } = useT();
   const searchParams = useSearchParams();
   const initialQ = searchParams.get('q') ?? '';
   const [q, setQ] = useState(initialQ);
@@ -44,24 +46,26 @@ function SearchContent() {
     setLoading(true);
     setSearched(true);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&locale=${locale}`);
       setResults(await res.json());
     } finally { setLoading(false); }
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (initialQ) doSearch(initialQ);
   }, [initialQ, doSearch]);
 
-  const SUGGESTED = ['MCP', 'GPT-5', 'Cursor', 'React 19', 'Postgres', 'Passkey', '에이전트', 'WASM'];
+  const SUGGESTED = locale === 'en'
+    ? ['MCP', 'GPT-5', 'Cursor', 'React 19', 'Postgres', 'Passkey', 'agents', 'WASM']
+    : ['MCP', 'GPT-5', 'Cursor', 'React 19', 'Postgres', 'Passkey', '에이전트', 'WASM'];
 
   return (
     <div>
       <section className="page-hero">
         <div className="container">
           <div className="page-eyebrow">SEARCH</div>
-          <h1 className="page-title" style={{ marginBottom: 24 }}>검색</h1>
+          <h1 className="page-title" style={{ marginBottom: 24 }}>{dict.pages.searchTitle}</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', border: '1px solid var(--line-2)', borderRadius: 12, background: 'var(--bg-2)', maxWidth: 720 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ color: 'var(--text-3)', flexShrink: 0 }}>
               <circle cx="11" cy="11" r="7" /><line x1="16.5" y1="16.5" x2="22" y2="22" />
@@ -70,7 +74,7 @@ function SearchContent() {
               value={q}
               onChange={e => setQ(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') doSearch(q); }}
-              placeholder="궁금한 IT 주제나 AI 도구를 검색해보세요"
+              placeholder={dict.pages.searchPlaceholder}
               style={{ flex: 1, background: 'transparent', border: 0, color: 'var(--text-1)', fontSize: 16, outline: 'none' }}
               autoFocus
             />

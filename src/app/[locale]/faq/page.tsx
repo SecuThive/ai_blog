@@ -1,36 +1,44 @@
 import type { Metadata } from 'next';
 import JsonLd from '@/components/JsonLd';
 import FaqAccordion from './FaqAccordion';
-import { FAQ_ITEMS } from './data';
+import { isLocale } from '@/i18n/config';
+import { getDictionary } from '@/i18n/messages';
+import { pageMetadata } from '@/i18n/metadata';
+import { getFaq } from '@/i18n/copy/faq';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : 'ko';
+  const dict = getDictionary(locale);
+  const faq = getFaq(locale);
+  return pageMetadata({
+    locale,
+    path: '/faq',
+    title: dict.pages.faqTitle,
+    description: faq.lead,
+  });
+}
 
-export const metadata: Metadata = {
-  title: 'FAQ',
-  description: 'Nodelog의 AI 보조 도구 활용, 사람의 편집 검토, 콘텐츠 업데이트, 뉴스레터와 문의 방법을 안내합니다.',
-  alternates: { canonical: `${SITE_URL}/faq` },
-  openGraph: {
-    title: 'FAQ | Nodelog',
-    description: 'Nodelog의 AI 보조 도구 활용, 사람의 편집 검토, 콘텐츠 업데이트와 이용 방법을 안내합니다.',
-    url: `${SITE_URL}/faq`,
-    type: 'website',
-  },
-};
+export default async function FAQPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : 'ko';
+  const dict = getDictionary(locale);
+  const faq = getFaq(locale);
 
-const faqSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: FAQ_ITEMS.map(item => ({
-    '@type': 'Question',
-    name: item.q,
-    acceptedAnswer: {
-      '@type': 'Answer',
-      text: item.a,
-    },
-  })),
-};
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    inLanguage: locale,
+    mainEntity: faq.items.map(item => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.a,
+      },
+    })),
+  };
 
-export default function FAQPage() {
   return (
     <div>
       <JsonLd data={faqSchema} />
@@ -38,8 +46,8 @@ export default function FAQPage() {
       <section className="page-hero">
         <div className="container">
           <div className="page-eyebrow">FAQ</div>
-          <h1 className="page-title">자주 묻는 질문</h1>
-          <p className="page-lead">Nodelog 운영 방식과 사용법에 대해 가장 많이 받는 질문들을 정리했습니다.</p>
+          <h1 className="page-title">{dict.pages.faqTitle}</h1>
+          <p className="page-lead">{faq.lead}</p>
         </div>
       </section>
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useT } from '@/i18n/provider';
 import { formatTimeAgo } from '@/i18n/format';
+import { interpolate } from '@/i18n/messages';
 
 export interface CommentRow {
   id: number;
@@ -63,6 +64,7 @@ export default function Comments({
   initialComments?: CommentRow[];
 }) {
   const t = useCopy(variant);
+  const { dict } = useT();
   const [comments, setComments] = useState<CommentRow[]>(initialComments);
   const [name, setName] = useState('');
   const [content, setContent] = useState('');
@@ -112,13 +114,13 @@ export default function Comments({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         post_slug: slugKey,
-        name: author.trim() || '익명',
+        name: author.trim() || dict.comments.anonymous,
         content: body.trim(),
         parent_id: parentId,
       }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? '오류가 발생했습니다');
+    if (!res.ok) throw new Error(data.error ?? dict.comments.errorGeneric);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -134,7 +136,7 @@ export default function Comments({
       setName('');
       loadComments();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '오류가 발생했습니다');
+      setError(err instanceof Error ? err.message : dict.comments.errorGeneric);
     } finally {
       setSubmitting(false);
     }
@@ -218,16 +220,16 @@ export default function Comments({
         </ul>
       )}
 
-      <form className="comment-form" onSubmit={handleSubmit} aria-label={`${t.heading} 작성 폼`}>
+      <form className="comment-form" onSubmit={handleSubmit} aria-label={interpolate(dict.comments.formAria, { heading: t.heading })}>
         <input
           type="text"
           id="comment-name"
-          placeholder="이름 (선택 · 기본: 익명)"
+          placeholder={dict.comments.namePlaceholder}
           value={name}
           onChange={e => setName(e.target.value)}
           maxLength={50}
           className="comment-input"
-          aria-label="작성자 이름 (선택)"
+          aria-label={dict.comments.nameAria}
           autoComplete="name"
         />
         <textarea
@@ -293,7 +295,7 @@ function CommentBody({
           onClick={onLike}
           disabled={liked}
           aria-pressed={liked}
-          aria-label={liked ? '좋아요 취소 불가' : '좋아요'}
+          aria-label={liked ? dict.comments.liked : dict.comments.like}
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
@@ -328,6 +330,7 @@ function ReplyForm({
   onCancel: () => void;
 }) {
   const t = useCopy(variant);
+  const { dict } = useT();
   const [name, setName] = useState('');
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
@@ -341,21 +344,21 @@ function ReplyForm({
     try {
       await onSubmit(body, name);
     } catch (e2) {
-      setErr(e2 instanceof Error ? e2.message : '오류가 발생했습니다');
+      setErr(e2 instanceof Error ? e2.message : dict.comments.errorGeneric);
       setBusy(false);
     }
   }
 
   return (
-    <form className="comment-form comment-reply-form" onSubmit={submit} aria-label={`${t.replyVerb} 작성 폼`}>
+    <form className="comment-form comment-reply-form" onSubmit={submit} aria-label={interpolate(dict.comments.formAria, { heading: t.replyVerb })}>
       <input
         type="text"
-        placeholder="이름 (선택 · 기본: 익명)"
+        placeholder={dict.comments.namePlaceholder}
         value={name}
         onChange={e => setName(e.target.value)}
         maxLength={50}
         className="comment-input"
-        aria-label="작성자 이름 (선택)"
+        aria-label={dict.comments.nameAria}
         autoComplete="name"
       />
       <textarea
@@ -372,9 +375,9 @@ function ReplyForm({
       {err && <p role="alert" style={{ color: 'var(--danger)', fontSize: 13, margin: 0 }}>{err}</p>}
       <div style={{ display: 'flex', gap: 8 }}>
         <button type="submit" disabled={busy || !body.trim()} className="btn btn-primary btn-sm">
-          {busy ? t.submitting : `${t.replyVerb} 등록`}
+          {busy ? t.submitting : interpolate(dict.comments.replySubmit, { verb: t.replyVerb })}
         </button>
-        <button type="button" className="btn btn-sm btn-ghost" onClick={onCancel}>취소</button>
+        <button type="button" className="btn btn-sm btn-ghost" onClick={onCancel}>{dict.comments.cancel}</button>
       </div>
     </form>
   );

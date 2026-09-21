@@ -3,8 +3,15 @@ import { notFound } from 'next/navigation';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
-import { toneForSeries, SERIES_DESC } from '@/lib/utils';
+import { toneForSeries } from '@/lib/utils';
 import JsonLd from '@/components/JsonLd';
+import { isLocale } from '@/i18n/config';
+import { getDictionary } from '@/i18n/messages';
+import { seriesDescription, seriesLabel } from '@/i18n/display';
+import { titleForLocale, excerptForLocale } from '@/i18n/content';
+import { siteUrl } from '@/i18n/metadata';
+import { categoryLabel } from '@/i18n/categories';
+import { formatDate } from '@/i18n/format';
 
 export const revalidate = 60;
 
@@ -17,6 +24,7 @@ interface PostRow {
   published_at: string;
   tags: string[];
   episode: number;   // ep:N 태그에서 파싱한 에피소드 번호 (없으면 발행순 기준)
+  content_evidence?: unknown;
 }
 
 function parseEpisode(tags: string[]): number | null {
@@ -28,7 +36,7 @@ async function getSeriesPosts(seriesName: string): Promise<PostRow[]> {
   noStore();
   const { data } = await makeFreshClient()
     .from('posts')
-    .select('id,title,slug,category,excerpt,published_at,tags')
+    .select('id,title,slug,category,excerpt,published_at,tags,content_evidence')
     .eq('status', 'published')
     .contains('tags', [`series:${seriesName}`])
     .order('published_at', { ascending: true });
@@ -69,25 +77,25 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ locale: string; id: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
+  const { id, locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : 'ko';
+  const dict = getDictionary(locale);
   const seriesName = decodeURIComponent(id);
-  // canonical은 sitemap(encodeURIComponent)과 동일 인코딩으로 — '&'·공백 미인코딩 깨짐 방지.
-  const url = `${SITE_URL}/series/${encodeURIComponent(seriesName)}`;
-  const desc =
-    SERIES_DESC[seriesName] ??
-    `${seriesName} 시리즈의 모든 에피소드를 순서대로 탐색하세요.`;
+  const label = seriesLabel(seriesName, locale);
+  const url = siteUrl(`/series/${encodeURIComponent(seriesName)}`, locale);
+  const desc = seriesDescription(seriesName, locale);
   // 에피소드가 2편 미만인 시리즈(강등 등으로 빈 페이지)는 색인 제외 — low-value/빈 페이지 방지.
   const episodeCount = (await getSeriesPosts(seriesName)).length;
   const isThin = episodeCount < 2;
   return {
-    title: `${seriesName} — Nodelog 시리즈`,
+    title: `${label} — ${dict.pages.seriesTitle}`,
     description: desc,
     alternates: { canonical: url },
     robots: isThin ? { index: false, follow: true } : undefined,
     openGraph: {
-      title: `${seriesName} — Nodelog 시리즈`,
+      title: `${label} — ${dict.pages.seriesTitle}`,
       description: desc,
       url,
       type: 'website',
@@ -99,28 +107,31 @@ export async function generateMetadata({
 export default async function SeriesDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ locale: string; id: string }>;
 }) {
-  const { id } = await params;
+  const { id, locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : 'ko';
+  const dict = getDictionary(locale);
   const seriesName = decodeURIComponent(id);
   const posts = await getSeriesPosts(seriesName);
   // 에피소드가 없는 시리즈(강등 등)는 실제 404 반환 — Soft 404 방지
   if (posts.length === 0) notFound();
   const tone = toneForSeries(seriesName);
-  const desc = SERIES_DESC[seriesName] ?? `${seriesName} 시리즈의 심층 연재.`;
+  const label = seriesLabel(seriesName, locale);
+  const desc = seriesDescription(seriesName, locale);
   const readingMinutes = posts.length * 5;
 
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: '홈', item: SITE_URL },
-      { '@type': 'ListItem', position: 2, name: '시리즈', item: `${SITE_URL}/series` },
+      { '@type': 'ListItem', position: 1, name: dict.common.home, item: siteUrl('/', locale) },
+      { '@type': 'ListItem', position: 2, name: dict.pages.seriesTitle, item: siteUrl('/series', locale) },
       {
         '@type': 'ListItem',
         position: 3,
-        name: seriesName,
-        item: `${SITE_URL}/series/${id}`,
+        name: label,
+        item: siteUrl(`/series/${encodeURIComponent(seriesName)}`, locale),
       },
     ],
   };
@@ -128,15 +139,15 @@ export default async function SeriesDetailPage({
   const itemListSchema = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: seriesName,
+    name: label,
     description: desc,
-    url: `${SITE_URL}/series/${id}`,
+    url: siteUrl(`/series/${encodeURIComponent(seriesName)}`, locale),
     numberOfItems: posts.length,
     itemListElement: posts.map((p, i) => ({
       '@type': 'ListItem',
       position: i + 1,
-      name: p.title,
-      url: `${SITE_URL}/blog/${p.slug}`,
+      name: titleForLocale(locale, p.title, { tags: p.tags, content_evidence: p.content_evidence }),
+      url: siteUrl(`/blog/${p.slug}`, locale),
     })),
   };
 
@@ -153,25 +164,25 @@ export default async function SeriesDetailPage({
       >
         <div className="container">
           <div className="crumbs">
-            <Link href="/">홈</Link>
+            <Link href="/">{dict.common.home}</Link>
             <span className="sep">/</span>
-            <Link href="/series">시리즈</Link>
+            <Link href="/series">{dict.pages.seriesTitle}</Link>
             <span className="sep">/</span>
-            <span style={{ color: 'var(--text-1)' }}>{seriesName}</span>
+            <span style={{ color: 'var(--text-1)' }}>{label}</span>
           </div>
 
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8, marginBottom: 14 }}>
-            <span className={`badge badge-${tone}`}>시리즈</span>
-            <span className="badge">{posts.length}편</span>
+            <span className={`badge badge-${tone}`}>{dict.blog.series}</span>
+            <span className="badge">{posts.length}</span>
             <span
               className="badge"
               style={{ fontFamily: 'var(--ff-mono)', fontSize: 11 }}
             >
-              약 {readingMinutes}분
+              {locale === 'en' ? `~${readingMinutes} min` : `약 ${readingMinutes}분`}
             </span>
           </div>
 
-          <h1 className="article-title">{seriesName}</h1>
+          <h1 className="article-title">{label}</h1>
           <p className="article-deck">{desc}</p>
 
           {/* 편 수 진행 도트 */}
@@ -204,7 +215,7 @@ export default async function SeriesDetailPage({
           {posts.length > 0 && (
             <div style={{ display: 'flex', gap: 12 }}>
               <Link href={`/blog/${posts[0].slug}`} className="btn btn-primary btn-lg">
-                처음부터 읽기
+                {locale === 'en' ? 'Start from the beginning' : '처음부터 읽기'}
                 <svg
                   width="14"
                   height="14"
@@ -217,7 +228,7 @@ export default async function SeriesDetailPage({
                 </svg>
               </Link>
               <Link href={`/blog/${posts[posts.length - 1].slug}`} className="btn btn-lg">
-                최신 편 보기
+                {locale === 'en' ? 'Latest episode' : '최신 편 보기'}
               </Link>
             </div>
           )}
@@ -240,10 +251,10 @@ export default async function SeriesDetailPage({
               >
                 <div>
                   <h3 style={{ margin: '0 0 4px', fontSize: 20, letterSpacing: '-0.02em' }}>
-                    학습 경로
+                    {locale === 'en' ? 'Learning path' : '학습 경로'}
                   </h3>
                   <p style={{ margin: 0, color: 'var(--text-3)', fontSize: 13.5 }}>
-                    순서대로 따라가면 더 큰 그림이 보입니다
+                    {locale === 'en' ? 'Follow in order to see the bigger picture' : '순서대로 따라가면 더 큰 그림이 보입니다'}
                   </p>
                 </div>
                 <span
@@ -257,7 +268,7 @@ export default async function SeriesDetailPage({
                     padding: '4px 10px',
                   }}
                 >
-                  {posts.length}편
+                  {locale === 'en' ? `${posts.length} eps` : `${posts.length}편`}
                 </span>
               </div>
 
@@ -358,11 +369,7 @@ export default async function SeriesDetailPage({
                                 color: 'var(--text-5)',
                               }}
                             >
-                              {new Date(ep.published_at).toLocaleDateString('ko-KR', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                              })}
+                              {formatDate(ep.published_at, locale)}
                             </span>
                           </div>
                           <div
@@ -374,7 +381,7 @@ export default async function SeriesDetailPage({
                               lineHeight: 1.4,
                             }}
                           >
-                            {ep.title}
+                            {titleForLocale(locale, ep.title, { tags: ep.tags, content_evidence: ep.content_evidence })}
                           </div>
                           {ep.excerpt && (
                             <div
@@ -385,7 +392,7 @@ export default async function SeriesDetailPage({
                                 lineHeight: 1.55,
                               }}
                             >
-                              {ep.excerpt.slice(0, 100)}…
+                              {excerptForLocale(locale, ep.excerpt, { tags: ep.tags, content_evidence: ep.content_evidence }).slice(0, 100)}…
                             </div>
                           )}
                         </div>
@@ -426,34 +433,34 @@ export default async function SeriesDetailPage({
                     <line x1="12" y1="8" x2="12" y2="12" />
                     <line x1="12" y1="16" x2="12.01" y2="16" />
                   </svg>
-                  시리즈 정보
+                  {locale === 'en' ? 'Series info' : '시리즈 정보'}
                 </h5>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 11, fontSize: 13.5 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--text-3)' }}>총 편 수</span>
-                    <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{posts.length}편</strong>
+                    <span style={{ color: 'var(--text-3)' }}>{locale === 'en' ? 'Episodes' : '총 편 수'}</span>
+                    <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{locale === 'en' ? `${posts.length} eps` : `${posts.length}편`}</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--text-3)' }}>예상 읽기 시간</span>
-                    <strong>약 {readingMinutes}분</strong>
+                    <span style={{ color: 'var(--text-3)' }}>{locale === 'en' ? 'Est. reading time' : '예상 읽기 시간'}</span>
+                    <strong>{locale === 'en' ? `~${readingMinutes} min` : `약 ${readingMinutes}분`}</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--text-3)' }}>형식</span>
-                    <span className={`badge badge-${tone}`}>연재 시리즈</span>
+                    <span style={{ color: 'var(--text-3)' }}>{locale === 'en' ? 'Format' : '형식'}</span>
+                    <span className={`badge badge-${tone}`}>{locale === 'en' ? 'Series' : '연재 시리즈'}</span>
                   </div>
                   {posts.length > 0 && (
                     <>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: 'var(--text-3)' }}>시작일</span>
+                        <span style={{ color: 'var(--text-3)' }}>{locale === 'en' ? 'Started' : '시작일'}</span>
                         <strong style={{ fontSize: 12 }}>
-                          {new Date(posts[0].published_at).toLocaleDateString('ko-KR', {
+                          {new Date(posts[0].published_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR', {
                             year: 'numeric',
                             month: 'short',
                           })}
                         </strong>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: 'var(--text-3)' }}>최근 업데이트</span>
+                        <span style={{ color: 'var(--text-3)' }}>{locale === 'en' ? 'Last updated' : '최근 업데이트'}</span>
                         <strong style={{ fontSize: 12 }}>
                           {new Date(posts[posts.length - 1].published_at).toLocaleDateString(
                             'ko-KR',
@@ -484,7 +491,7 @@ export default async function SeriesDetailPage({
                         marginBottom: 8,
                       }}
                     >
-                      에피소드 맵
+                      {locale === 'en' ? 'Episode map' : '에피소드 맵'}
                     </div>
                     <div
                       style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}
@@ -529,7 +536,7 @@ export default async function SeriesDetailPage({
                     >
                       <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                     </svg>
-                    빠른 이동
+                    {locale === 'en' ? 'Jump to' : '빠른 이동'}
                   </h5>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <Link
@@ -537,14 +544,14 @@ export default async function SeriesDetailPage({
                       className="btn btn-sm"
                       style={{ width: '100%', justifyContent: 'center' }}
                     >
-                      1편부터 시작
+                      {locale === 'en' ? 'Start at episode 1' : '1편부터 시작'}
                     </Link>
                     <Link
                       href={`/blog/${posts[posts.length - 1].slug}`}
                       className="btn btn-sm"
                       style={{ width: '100%', justifyContent: 'center' }}
                     >
-                      최신 편 ({posts.length}편)
+                      최신 편 ({locale === 'en' ? `${posts.length} eps` : `${posts.length}편`})
                     </Link>
                   </div>
                 </div>
@@ -566,14 +573,14 @@ export default async function SeriesDetailPage({
                     <rect x="14" y="14" width="7" height="7" />
                     <rect x="3" y="14" width="7" height="7" />
                   </svg>
-                  다른 시리즈
+                  {locale === 'en' ? 'Other series' : '다른 시리즈'}
                 </h5>
                 <Link
                   href="/series"
                   className="btn btn-sm"
                   style={{ width: '100%', justifyContent: 'center' }}
                 >
-                  전체 시리즈 보기
+                  {locale === 'en' ? 'All series' : '전체 시리즈 보기'}
                 </Link>
               </div>
             </aside>

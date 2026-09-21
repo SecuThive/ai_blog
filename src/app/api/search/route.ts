@@ -1,5 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { isLocale } from '@/i18n/config';
+import { I18N_TITLE_PREFIX, I18N_EXCERPT_PREFIX, tagValue } from '@/i18n/content';
+import { categoryLabel, engineerCatLabel } from '@/i18n/categories';
+import { containsHangul } from '@/i18n/display';
 
 function escape(q: string) {
   return q.replace(/[%_\\]/g, c => `\\${c}`);
@@ -9,6 +13,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const raw = searchParams.get('q')?.trim() ?? '';
   const source = searchParams.get('source') ?? 'all';
+  const localeRaw = searchParams.get('locale');
+  const locale = isLocale(localeRaw) ? localeRaw : 'ko';
   if (raw.length < 1) return NextResponse.json([]);
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
@@ -63,24 +69,51 @@ export async function GET(request: Request) {
   }
 
   const posts = (postsResult.data ?? [])
-    .map((p) => ({ ...p, source: 'post', _score: scorePost(String(p.title ?? '')) }))
+    .map((p) => {
+      const tags = (p.tags as string[] | null) ?? [];
+      const title = locale === 'en'
+        ? (tagValue(tags, I18N_TITLE_PREFIX) || String(p.title ?? ''))
+        : String(p.title ?? '');
+      const excerpt = locale === 'en'
+        ? (tagValue(tags, I18N_EXCERPT_PREFIX) || String(p.excerpt ?? ''))
+        : String(p.excerpt ?? '');
+      return {
+        ...p,
+        title,
+        excerpt,
+        category: categoryLabel(String(p.category ?? ''), locale),
+        source: 'post',
+        _score: scorePost(title),
+      };
+    })
+    .filter((p) => locale !== 'en' || !containsHangul(String(p.title)))
     .sort((a, b) => (b._score as number) - (a._score as number))
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     .map(({ _score, ...p }) => p);
 
   const guides = (guidesResult.data ?? [])
-    .map((g) => ({
-      id: g.id,
-      title: g.title,
-      slug: g.slug,
-      excerpt: g.summary,
-      category: g.category,
-      tags: g.tags,
-      published_at: g.created_at,
-      views: g.views,
-      source: 'guide',
-      _score: scorePost(String(g.title ?? '')),
-    }))
+    .map((g) => {
+      const tags = (g.tags as string[] | null) ?? [];
+      const title = locale === 'en'
+        ? (tagValue(tags, I18N_TITLE_PREFIX) || String(g.title ?? ''))
+        : String(g.title ?? '');
+      const excerpt = locale === 'en'
+        ? (tagValue(tags, I18N_EXCERPT_PREFIX) || String(g.summary ?? ''))
+        : String(g.summary ?? '');
+      return {
+        id: g.id,
+        title,
+        slug: g.slug,
+        excerpt,
+        category: engineerCatLabel(String(g.category ?? ''), locale),
+        tags: g.tags,
+        published_at: g.created_at,
+        views: g.views,
+        source: 'guide',
+        _score: scorePost(title),
+      };
+    })
+    .filter((g) => locale !== 'en' || !containsHangul(String(g.title)))
     .sort((a, b) => b._score - a._score)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     .map(({ _score, ...g }) => g);

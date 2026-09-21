@@ -1,18 +1,19 @@
 import type { Metadata } from 'next';
+import { isLocale } from '@/i18n/config';
+import { pageMetadata } from '@/i18n/metadata';
+import { getContact } from '@/i18n/copy/contact';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
-
-export const metadata: Metadata = {
-  title: '문의 · 제휴',
-  description: '기사 제보·정정 요청, 콘텐츠 제휴, 광고 문의를 받습니다.',
-  alternates: { canonical: `${SITE_URL}/contact` },
-  openGraph: {
-    title: '문의 · 제휴 | Nodelog',
-    description: '기사 제보·정정 요청, 콘텐츠 제휴, 광고 문의를 받습니다.',
-    url: `${SITE_URL}/contact`,
-    type: 'website',
-  },
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : 'ko';
+  const copy = getContact(locale);
+  return pageMetadata({
+    locale,
+    path: '/contact',
+    title: copy.title,
+    description: copy.lead,
+  });
+}
 
 export default function ContactLayout({ children }: { children: React.ReactNode }) {
   return children;
