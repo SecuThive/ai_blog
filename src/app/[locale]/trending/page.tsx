@@ -352,7 +352,7 @@ export default async function TrendingPage({ params }: { params: Promise<{ local
                         <span style={{ color: `var(--acc-${c.tone})`, flexShrink: 0, fontSize: 10 }}>◆</span>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                            <span className="widget-item-meta">{c.cat}</span>
+                            <span className="widget-item-meta">{categoryLabel(c.cat, locale)}</span>
                             <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 10.5, color: 'var(--text-4)' }}>
                               {fmtViews(c.post.views, locale)}
                             </span>

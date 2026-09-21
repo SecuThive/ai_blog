@@ -130,7 +130,7 @@ export default function SecurityCatalog() {
                     {locale === 'en' ? v.nameEn : v.name}
                   </div>
                   <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 10.5, color: 'var(--text-4)', marginTop: 3, letterSpacing: '0.06em' }}>
-                    {locale === 'en' ? `${v.name} · Est. ${v.founded}` : `${v.nameEn} · Est. ${v.founded}`}
+                    {locale === 'en' ? `Est. ${v.founded}` : `${v.nameEn} · Est. ${v.founded}`}
                   </div>
                 </div>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
