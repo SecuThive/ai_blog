@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const dict = getDictionary(locale);
   const desc = locale === 'en'
     ? '14 series and 100+ in-depth episodes. From RAG to enterprise AI, read them in order.'
-    : '14개 시리즈, 100편 이상의 심층 연재. RAG부터 엔터프라이즈 AI까지 단계별로 완전 정복.';
+    : '14개 시리즈, 100편 이상의 심층 연재. RAG부터 엔터프라이즈 AI까지 순서대로 읽으면 됩니다.';
   const url = siteUrl('/series', locale);
   return {
     title: dict.pages.seriesTitle,
