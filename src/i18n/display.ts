@@ -1,5 +1,5 @@
 import type { Locale } from './config';
-import { publicTags, SERIES_DESC } from '@/lib/utils';
+import { publicTags, SERIES_DESC, SERIES_DISPLAY } from '@/lib/utils';
 
 export function containsHangul(value: string | null | undefined): boolean {
   return /[가-힣]/.test(value ?? '');
@@ -118,7 +118,7 @@ const TAG_LABELS: Record<string, string> = {
 
 const SERIES_LABELS: Record<string, string> = {
   'RAG 완전 정복': 'RAG, end to end',
-  'LLM 에이전트 마스터 가이드': 'LLM agents master guide',
+  'LLM 에이전트 마스터 가이드': 'LLM agents',
   '엔터프라이즈 AI 아키텍처 가이드': 'Enterprise AI architecture',
   'LLM 애플리케이션 아키텍처 심화': 'LLM application architecture',
   'AI 시스템 경제성 마스터 가이드': 'AI systems economics',
@@ -127,7 +127,7 @@ const SERIES_LABELS: Record<string, string> = {
   'AI 도입 성공을 위한 비즈니스 프레임워크': 'Business framework for AI adoption',
   '엣지 AI 배포 마스터 가이드': 'Edge AI deployment',
   'AI 에이전트 신뢰성 검증 가이드': 'AI agent reliability',
-  'Vector DB 마스터 클래스': 'Vector DB master class',
+  'Vector DB 마스터 클래스': 'Vector DB',
   '산업 현장 AI 통합 아키텍처 가이드': 'Industrial AI architecture',
   'LLM 프롬프트 엔지니어링 마스터': 'LLM prompt engineering',
   'AI 데이터 아키텍처 마스터 가이드': 'AI data architecture',
@@ -170,7 +170,7 @@ export function visiblePublicTags(
 }
 
 export function seriesLabel(name: string, locale: Locale): string {
-  if (locale !== 'en') return name;
+  if (locale !== 'en') return SERIES_DISPLAY[name] ?? name;
   return SERIES_LABELS[name] ?? (containsHangul(name) ? 'Series' : name);
 }
 
