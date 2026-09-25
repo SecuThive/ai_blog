@@ -245,6 +245,58 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
       </div>
 
       <div className="container">
+        {cat === 'AI & 자동화' && (
+          <section className="project-showcase" aria-labelledby="project-showcase-title">
+            <div className="project-showcase-heading">
+              <div>
+                <div className="section-eyebrow">{locale === 'en' ? 'Nodelog projects' : 'Nodelog 프로젝트'}</div>
+                <h2 id="project-showcase-title" className="section-title">
+                  {locale === 'en' ? 'Services in the works' : '곧 만나볼 서비스'}
+                </h2>
+                <p className="section-sub">
+                  {locale === 'en'
+                    ? 'We are preparing these projects for public use. You can explore what is coming next.'
+                    : '직접 사용할 수 있는 서비스를 준비하고 있습니다. 먼저 어떤 서비스가 공개될지 살펴보세요.'}
+                </p>
+              </div>
+              <span className="project-showcase-count">02 PROJECTS</span>
+            </div>
+            <div className="project-showcase-grid">
+              <article className="project-showcase-card project-showcase-card--moa">
+                <div className="project-showcase-top">
+                  <span className="project-showcase-mark" aria-hidden="true">M</span>
+                  <span className="project-showcase-status">{locale === 'en' ? 'Coming soon' : '준비 중'}</span>
+                </div>
+                <div className="project-showcase-type">CREATIVE WORKSPACE</div>
+                <h3>MOA <span>{locale === 'en' ? 'Creative portal' : '작은 가게의 크리에이티브 포털'}</span></h3>
+                <p>
+                  {locale === 'en'
+                    ? 'Create and manage promotional graphics, menus, coupons, and review replies for your business in one workspace.'
+                    : '가게의 홍보물, 메뉴판, 쿠폰, 리뷰 답변을 한곳에서 만들고 관리하는 작업 공간입니다.'}
+                </p>
+                <div className="project-showcase-foot">
+                  <span>{locale === 'en' ? 'For small businesses' : '소상공인을 위한 제작 도구'}</span>
+                </div>
+              </article>
+              <article className="project-showcase-card project-showcase-card--vault">
+                <div className="project-showcase-top">
+                  <span className="project-showcase-mark" aria-hidden="true">V</span>
+                  <span className="project-showcase-status">{locale === 'en' ? 'Coming soon' : '준비 중'}</span>
+                </div>
+                <div className="project-showcase-type">PUZZLE ADVENTURE</div>
+                <h3>CIPHER / VAULT <span>{locale === 'en' ? 'Puzzle adventure' : '단계별 문제 풀이'}</span></h3>
+                <p>
+                  {locale === 'en'
+                    ? 'Solve clues and progress through a seven-stage digital treasure hunt. A playable demo is being prepared.'
+                    : '단서를 풀며 7단계 탐험을 진행하는 디지털 보물찾기입니다. 체험판 공개를 준비하고 있습니다.'}
+                </p>
+                <div className="project-showcase-foot">
+                  <span>{locale === 'en' ? 'For curious problem solvers' : '문제 풀이를 즐기는 탐험가를 위한 게임'}</span>
+                </div>
+              </article>
+            </div>
+          </section>
+        )}
         {/* Filter tabs */}
         <div className="filter-row" style={{ marginTop: 0 }}>
           <span className="label">{locale === 'en' ? 'Category' : '카테고리'}</span>
