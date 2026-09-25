@@ -200,6 +200,41 @@ function HeroV2({ posts, seriesCount, guideCount, subscriberCount, dict }: {
   );
 }
 
+function ServiceLaunchBanner({ locale }: { locale: Locale }) {
+  return (
+    <section className="service-launch" aria-labelledby="service-launch-title">
+      <div className="container">
+        <div className="service-launch-panel">
+          <div className="service-launch-heading">
+            <div>
+              <span className="service-launch-eyebrow"><span className="live-dot" /> NOW OPEN · NODELOG PROJECTS</span>
+              <h2 id="service-launch-title">{locale === 'en' ? 'Go beyond reading. Try our services.' : '읽는 데서 그치지 말고, 직접 써보세요.'}</h2>
+              <p>{locale === 'en' ? 'A creative workspace for small businesses and a puzzle adventure are now open.' : '작은 가게를 위한 제작 도구와 단계별 문제 풀이 게임을 공개했습니다.'}</p>
+            </div>
+            <Link href="/category/AI & 자동화" className="section-link">
+              {locale === 'en' ? 'Explore all projects' : '프로젝트 살펴보기'} <ArrowIcon />
+            </Link>
+          </div>
+          <div className="service-launch-grid">
+            <a className="service-launch-item service-launch-item--moa" href="https://moa.thivelab.com/" target="_blank" rel="noopener noreferrer" aria-label={locale === 'en' ? 'Open MOA in a new tab' : 'MOA 새 탭에서 열기'}>
+              <span className="service-launch-item-label">CREATIVE WORKSPACE · MOA</span>
+              <strong>{locale === 'en' ? 'Make your next promotion with MOA' : '가게 홍보물 제작, MOA에서 시작하세요'}</strong>
+              <span className="service-launch-item-desc">{locale === 'en' ? 'Posters, menus, coupons, and review replies in one place.' : '홍보물·메뉴판·쿠폰·리뷰 답변을 한곳에서 만드세요.'}</span>
+              <span className="service-launch-item-action">{locale === 'en' ? 'Try MOA' : 'MOA 바로가기'} <span aria-hidden="true">↗</span></span>
+            </a>
+            <a className="service-launch-item service-launch-item--vault" href="https://game.thivelab.com/" target="_blank" rel="noopener noreferrer" aria-label={locale === 'en' ? 'Open CIPHER / VAULT in a new tab' : 'CIPHER / VAULT 새 탭에서 열기'}>
+              <span className="service-launch-item-label">PUZZLE ADVENTURE · CIPHER / VAULT</span>
+              <strong>{locale === 'en' ? 'Can you solve all seven stages?' : '7단계의 단서를 모두 풀 수 있나요?'}</strong>
+              <span className="service-launch-item-desc">{locale === 'en' ? 'Follow the clues through a digital treasure hunt.' : '단서를 따라가는 디지털 보물찾기에 도전하세요.'}</span>
+              <span className="service-launch-item-action">{locale === 'en' ? 'Start playing' : '게임 바로가기'} <span aria-hidden="true">↗</span></span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ===== Daily Briefing ===== */
 function DailyBriefing({ posts, locale, dict }: { posts: PostSummary[]; locale: Locale; dict: Messages }) {
   const lead = posts[0];
@@ -637,6 +672,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   return (
     <HomeScrollReveal>
       <HeroV2 posts={posts} seriesCount={activeSeriesCount} guideCount={guideCount} subscriberCount={subscriberCount} dict={dict} />
+      <ServiceLaunchBanner locale={locale} />
       <DailyBriefing posts={posts} locale={locale} dict={dict} />
       <EngineerGuidesSection guides={recentGuides} total={guideCount} locale={locale} dict={dict} />
       <ReadingLanes lanePosts={lanePosts} locale={locale} dict={dict} />

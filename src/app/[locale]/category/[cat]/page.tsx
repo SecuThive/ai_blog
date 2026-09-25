@@ -251,21 +251,21 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
               <div>
                 <div className="section-eyebrow">{locale === 'en' ? 'Nodelog projects' : 'Nodelog 프로젝트'}</div>
                 <h2 id="project-showcase-title" className="section-title">
-                  {locale === 'en' ? 'Services in the works' : '곧 만나볼 서비스'}
+                  {locale === 'en' ? 'Explore our services' : '직접 써볼 서비스'}
                 </h2>
                 <p className="section-sub">
                   {locale === 'en'
-                    ? 'We are preparing these projects for public use. You can explore what is coming next.'
-                    : '직접 사용할 수 있는 서비스를 준비하고 있습니다. 먼저 어떤 서비스가 공개될지 살펴보세요.'}
+                    ? 'Our projects are open. Pick a service and give it a try.'
+                    : '직접 만든 서비스를 공개했습니다. 필요한 서비스를 골라 사용해 보세요.'}
                 </p>
               </div>
               <span className="project-showcase-count">02 PROJECTS</span>
             </div>
             <div className="project-showcase-grid">
-              <article className="project-showcase-card project-showcase-card--moa">
+              <a className="project-showcase-card project-showcase-card--moa" href="https://moa.thivelab.com/" target="_blank" rel="noopener noreferrer" aria-label={locale === 'en' ? 'Open MOA in a new tab' : 'MOA 새 탭에서 열기'}>
                 <div className="project-showcase-top">
                   <span className="project-showcase-mark" aria-hidden="true">M</span>
-                  <span className="project-showcase-status">{locale === 'en' ? 'Coming soon' : '준비 중'}</span>
+                  <span className="project-showcase-status project-showcase-status--live">{locale === 'en' ? 'Open now' : '서비스 오픈'}</span>
                 </div>
                 <div className="project-showcase-type">CREATIVE WORKSPACE</div>
                 <h3>MOA <span>{locale === 'en' ? 'Creative portal' : '작은 가게의 크리에이티브 포털'}</span></h3>
@@ -275,25 +275,25 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
                     : '가게의 홍보물, 메뉴판, 쿠폰, 리뷰 답변을 한곳에서 만들고 관리하는 작업 공간입니다.'}
                 </p>
                 <div className="project-showcase-foot">
-                  <span>{locale === 'en' ? 'For small businesses' : '소상공인을 위한 제작 도구'}</span>
+                  <span>{locale === 'en' ? 'Try MOA' : 'MOA 사용하기'}</span><span aria-hidden="true">↗</span>
                 </div>
-              </article>
-              <article className="project-showcase-card project-showcase-card--vault">
+              </a>
+              <a className="project-showcase-card project-showcase-card--vault" href="https://game.thivelab.com/" target="_blank" rel="noopener noreferrer" aria-label={locale === 'en' ? 'Open CIPHER / VAULT in a new tab' : 'CIPHER / VAULT 새 탭에서 열기'}>
                 <div className="project-showcase-top">
                   <span className="project-showcase-mark" aria-hidden="true">V</span>
-                  <span className="project-showcase-status">{locale === 'en' ? 'Coming soon' : '준비 중'}</span>
+                  <span className="project-showcase-status project-showcase-status--live">{locale === 'en' ? 'Open now' : '서비스 오픈'}</span>
                 </div>
                 <div className="project-showcase-type">PUZZLE ADVENTURE</div>
                 <h3>CIPHER / VAULT <span>{locale === 'en' ? 'Puzzle adventure' : '단계별 문제 풀이'}</span></h3>
                 <p>
                   {locale === 'en'
-                    ? 'Solve clues and progress through a seven-stage digital treasure hunt. A playable demo is being prepared.'
-                    : '단서를 풀며 7단계 탐험을 진행하는 디지털 보물찾기입니다. 체험판 공개를 준비하고 있습니다.'}
+                    ? 'Solve clues and progress through a seven-stage digital treasure hunt.'
+                    : '단서를 풀며 7단계 탐험을 진행하는 디지털 보물찾기입니다.'}
                 </p>
                 <div className="project-showcase-foot">
-                  <span>{locale === 'en' ? 'For curious problem solvers' : '문제 풀이를 즐기는 탐험가를 위한 게임'}</span>
+                  <span>{locale === 'en' ? 'Start the adventure' : '문제 풀러 가기'}</span><span aria-hidden="true">↗</span>
                 </div>
-              </article>
+              </a>
             </div>
           </section>
         )}
