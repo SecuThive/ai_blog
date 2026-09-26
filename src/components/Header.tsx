@@ -10,6 +10,7 @@ import { stripLocale, withLocale } from '@/i18n/path';
 import { toKoreanCategory } from '@/i18n/categories';
 import { interpolate } from '@/i18n/messages';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import TrackedExternalLink from '@/components/TrackedExternalLink';
 
 function useNav() {
   const { dict } = useT();
@@ -257,6 +258,7 @@ export default function Header() {
             <Link href="/" className="global-nav-parent">THIVELAB</Link>
             <Link href="/" className="global-nav-current" aria-current="page">NODELOG</Link>
             <a href="https://game.thivelab.com/" target="_blank" rel="noopener noreferrer">CIPHER <span aria-hidden="true">↗</span></a>
+            <TrackedExternalLink href="https://moa.thivelab.com/" path={decoded} target="_blank" rel="noopener noreferrer">MOA <span aria-hidden="true">↗</span></TrackedExternalLink>
             <span className="global-nav-pending" title="Coming soon">LABS <small>SOON</small></span>
             <span className="global-nav-pending" title="Coming soon">ENTERPRISE <small>SOON</small></span>
           </nav>
@@ -342,6 +344,7 @@ export default function Header() {
           <div className="mobile-nav-divider" />
           <div className="mobile-nav-heading">THIVELAB</div>
           <a href="https://game.thivelab.com/" className="mobile-nav-item" target="_blank" rel="noopener noreferrer" onClick={() => setMobileOpen(false)}>CIPHER ↗</a>
+          <TrackedExternalLink href="https://moa.thivelab.com/" path={decoded} className="mobile-nav-item" target="_blank" rel="noopener noreferrer" onClick={() => setMobileOpen(false)}>MOA ↗</TrackedExternalLink>
           <div className="mobile-nav-item mobile-nav-pending">LABS <span>SOON</span></div>
           <div className="mobile-nav-item mobile-nav-pending">ENTERPRISE <span>SOON</span></div>
           <div className="mobile-nav-divider" />
