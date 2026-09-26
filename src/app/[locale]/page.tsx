@@ -166,7 +166,7 @@ function HeroV2({ posts, seriesCount, guideCount, subscriberCount, dict, locale 
               <TrackedLink href="/#nodelog-latest" event={{ name: 'home_nodelog_click', path: '/' }} className="btn btn-primary btn-lg">
                 Explore NODELOG <ArrowIcon />
               </TrackedLink>
-              <TrackedExternalLink href="https://game.thivelab.com/" path="/" event={{ name: 'home_cipher_click', path: '/' }} className="btn btn-lg" target="_blank" rel="noopener noreferrer">
+              <TrackedExternalLink href="https://game.thivelab.com/" path="/" event={{ name: 'home_cipher_click', path: '/' }} className="btn btn-lg">
                 Explore CIPHER <span aria-hidden="true">↗</span>
               </TrackedExternalLink>
               {posts[0] && (
@@ -221,7 +221,7 @@ function ServiceLaunchBanner({ locale }: { locale: Locale }) {
               <span className="service-launch-item-desc">{locale === 'en' ? 'Practical IT knowledge and engineer guides.' : '실무 IT 지식과 엔지니어 가이드.'}</span>
               <span className="service-launch-item-action">{locale === 'en' ? 'Read NODELOG' : '콘텐츠 보기'} <ArrowIcon /></span>
             </TrackedLink>
-            <TrackedExternalLink className="service-launch-item service-launch-item--vault" href="https://game.thivelab.com/" path="/" event={{ name: 'product_card_click', path: '/', product: 'cipher' }} target="_blank" rel="noopener noreferrer">
+            <TrackedExternalLink className="service-launch-item service-launch-item--vault" href="https://game.thivelab.com/" path="/" event={{ name: 'product_card_click', path: '/', product: 'cipher' }}>
               <span className="service-launch-item-label">COMPETE · CIPHER / VAULT</span>
               <strong>CIPHER</strong>
               <span className="service-launch-item-desc">{locale === 'en' ? 'A seven-stage digital puzzle demo.' : '단서를 따라 풀어가는 7단계 디지털 문제 체험판.'}</span>
@@ -233,7 +233,7 @@ function ServiceLaunchBanner({ locale }: { locale: Locale }) {
               <span className="service-launch-item-desc">{locale === 'en' ? 'Hands-on technology labs are in preparation.' : '직접 다뤄보는 기술 실습 환경을 준비 중입니다.'}</span>
               <span className="service-launch-item-action">COMING SOON</span>
             </div>
-            <TrackedExternalLink className="service-launch-item service-launch-item--moa" href="https://moa.thivelab.com/" path="/" event={{ name: 'product_card_click', path: '/', product: 'moa' }} target="_blank" rel="noopener noreferrer" aria-label={locale === 'en' ? 'Open MOA in a new tab' : 'MOA 새 탭에서 열기'}>
+            <TrackedExternalLink className="service-launch-item service-launch-item--moa" href="https://moa.thivelab.com/" path="/" event={{ name: 'product_card_click', path: '/', product: 'moa' }} aria-label={locale === 'en' ? 'Open MOA' : 'MOA 열기'}>
               <span className="service-launch-item-label">CREATIVE WORKSPACE · MOA</span>
               <strong>MOA</strong>
               <span className="service-launch-item-desc">{locale === 'en' ? 'Posters, menus, coupons, and review replies in one place.' : '홍보물·메뉴판·쿠폰·리뷰 답변을 한곳에서 만드세요.'}</span>
@@ -704,7 +704,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <h2 id="cipher-feature-title">{locale === 'en' ? 'Put your reasoning to the test.' : '읽은 다음, 직접 풀어보세요.'}</h2>
             <p>{locale === 'en' ? 'A seven-stage digital puzzle demo. Follow clues and try the current challenge experience.' : '단서를 따라 진행하는 7단계 디지털 문제 체험판에서 직접 도전해 보세요.'}</p>
           </div>
-          <TrackedExternalLink href="https://game.thivelab.com/" path="/" event={{ name: 'home_cipher_click', path: '/' }} className="btn btn-primary btn-lg" target="_blank" rel="noopener noreferrer">
+          <TrackedExternalLink href="https://game.thivelab.com/" path="/" event={{ name: 'home_cipher_click', path: '/' }} className="btn btn-primary btn-lg">
             {locale === 'en' ? 'Start the demo' : '체험판 시작하기'} <span aria-hidden="true">↗</span>
           </TrackedExternalLink>
         </div>

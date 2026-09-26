@@ -263,7 +263,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
               <span className="project-showcase-count">02 PROJECTS</span>
             </div>
             <div className="project-showcase-grid">
-              <TrackedExternalLink className="project-showcase-card project-showcase-card--moa" href="https://moa.thivelab.com/" path="/category/AI & 자동화" target="_blank" rel="noopener noreferrer" aria-label={locale === 'en' ? 'Open MOA in a new tab' : 'MOA 새 탭에서 열기'}>
+              <TrackedExternalLink className="project-showcase-card project-showcase-card--moa" href="https://moa.thivelab.com/" path="/category/AI & 자동화" aria-label={locale === 'en' ? 'Open MOA' : 'MOA 열기'}>
                 <div className="project-showcase-top">
                   <span className="project-showcase-mark" aria-hidden="true">M</span>
                   <span className="project-showcase-status project-showcase-status--live">{locale === 'en' ? 'Open now' : '서비스 오픈'}</span>
@@ -279,7 +279,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
                   <span>{locale === 'en' ? 'Try MOA' : 'MOA 사용하기'}</span><span aria-hidden="true">↗</span>
                 </div>
               </TrackedExternalLink>
-              <TrackedExternalLink className="project-showcase-card project-showcase-card--vault" href="https://game.thivelab.com/" path="/category/AI & 자동화" target="_blank" rel="noopener noreferrer" aria-label={locale === 'en' ? 'Open CIPHER / VAULT demo in a new tab' : 'CIPHER / VAULT 체험판 새 탭에서 열기'}>
+              <TrackedExternalLink className="project-showcase-card project-showcase-card--vault" href="https://game.thivelab.com/" path="/category/AI & 자동화" aria-label={locale === 'en' ? 'Open CIPHER / VAULT demo' : 'CIPHER / VAULT 체험판 열기'}>
                 <div className="project-showcase-top">
                   <span className="project-showcase-mark" aria-hidden="true">V</span>
                   <span className="project-showcase-status project-showcase-status--demo">{locale === 'en' ? 'Demo open' : '체험판 공개'}</span>
