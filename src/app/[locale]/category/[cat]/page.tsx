@@ -1,4 +1,5 @@
 import Link from '@/i18n/link';
+import TrackedExternalLink from '@/components/TrackedExternalLink';
 import { unstable_noStore as noStore } from 'next/cache';
 import { notFound } from 'next/navigation';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
@@ -255,14 +256,14 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
                 </h2>
                 <p className="section-sub">
                   {locale === 'en'
-                    ? 'Our projects are open. Pick a service and give it a try.'
-                    : '직접 만든 서비스를 공개했습니다. 필요한 서비스를 골라 사용해 보세요.'}
+                    ? 'Try MOA or play the CIPHER / VAULT demo.'
+                    : 'MOA를 사용하거나 CIPHER / VAULT 체험판을 플레이해 보세요.'}
                 </p>
               </div>
               <span className="project-showcase-count">02 PROJECTS</span>
             </div>
             <div className="project-showcase-grid">
-              <a className="project-showcase-card project-showcase-card--moa" href="https://moa.thivelab.com/" target="_blank" rel="noopener noreferrer" aria-label={locale === 'en' ? 'Open MOA in a new tab' : 'MOA 새 탭에서 열기'}>
+              <TrackedExternalLink className="project-showcase-card project-showcase-card--moa" href="https://moa.thivelab.com/" path="/category/AI & 자동화" target="_blank" rel="noopener noreferrer" aria-label={locale === 'en' ? 'Open MOA in a new tab' : 'MOA 새 탭에서 열기'}>
                 <div className="project-showcase-top">
                   <span className="project-showcase-mark" aria-hidden="true">M</span>
                   <span className="project-showcase-status project-showcase-status--live">{locale === 'en' ? 'Open now' : '서비스 오픈'}</span>
@@ -277,11 +278,11 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
                 <div className="project-showcase-foot">
                   <span>{locale === 'en' ? 'Try MOA' : 'MOA 사용하기'}</span><span aria-hidden="true">↗</span>
                 </div>
-              </a>
-              <a className="project-showcase-card project-showcase-card--vault" href="https://game.thivelab.com/" target="_blank" rel="noopener noreferrer" aria-label={locale === 'en' ? 'Open CIPHER / VAULT in a new tab' : 'CIPHER / VAULT 새 탭에서 열기'}>
+              </TrackedExternalLink>
+              <TrackedExternalLink className="project-showcase-card project-showcase-card--vault" href="https://game.thivelab.com/" path="/category/AI & 자동화" target="_blank" rel="noopener noreferrer" aria-label={locale === 'en' ? 'Open CIPHER / VAULT demo in a new tab' : 'CIPHER / VAULT 체험판 새 탭에서 열기'}>
                 <div className="project-showcase-top">
                   <span className="project-showcase-mark" aria-hidden="true">V</span>
-                  <span className="project-showcase-status project-showcase-status--live">{locale === 'en' ? 'Open now' : '서비스 오픈'}</span>
+                  <span className="project-showcase-status project-showcase-status--demo">{locale === 'en' ? 'Demo open' : '체험판 공개'}</span>
                 </div>
                 <div className="project-showcase-type">PUZZLE ADVENTURE</div>
                 <h3>CIPHER / VAULT <span>{locale === 'en' ? 'Puzzle adventure' : '단계별 문제 풀이'}</span></h3>
@@ -291,9 +292,9 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
                     : '단서를 풀며 7단계 탐험을 진행하는 디지털 보물찾기입니다.'}
                 </p>
                 <div className="project-showcase-foot">
-                  <span>{locale === 'en' ? 'Start the adventure' : '문제 풀러 가기'}</span><span aria-hidden="true">↗</span>
+                  <span>{locale === 'en' ? 'Try the demo' : '체험판 시작하기'}</span><span aria-hidden="true">↗</span>
                 </div>
-              </a>
+              </TrackedExternalLink>
             </div>
           </section>
         )}
