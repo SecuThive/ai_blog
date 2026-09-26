@@ -1,0 +1,176 @@
+[
+  {
+    "url": "https://www.thivelab.com/",
+    "status": 200,
+    "final_url": "https://www.thivelab.com/",
+    "title": "Nodelog — IT·개발·보안 테크 미디어",
+    "description": "공식 문서와 기술 자료를 확인하고, 검토·정정·업데이트를 이어가는 IT·개발·보안·인프라 실무 미디어.",
+    "robots": "index, follow",
+    "canonical": "https://www.thivelab.com",
+    "og_url": "https://www.thivelab.com",
+    "twitter_card": "summary_large_image",
+    "schema_types": [
+      "WebSite",
+      "Organization"
+    ],
+    "schema_core": []
+  },
+  {
+    "url": "https://www.thivelab.com/en",
+    "status": 200,
+    "final_url": "https://www.thivelab.com/en",
+    "title": "Nodelog — IT, engineering, and security media",
+    "description": "Practical IT, development, security, and infrastructure media. We verify official docs and keep content reviewed, corrected, and updated.",
+    "robots": "index, follow",
+    "canonical": "https://www.thivelab.com/en",
+    "og_url": "https://www.thivelab.com/en",
+    "twitter_card": "summary_large_image",
+    "schema_types": [
+      "WebSite",
+      "Organization"
+    ],
+    "schema_core": []
+  },
+  {
+    "url": "https://www.thivelab.com/blog/llm-%EC%97%90%EC%9D%B4%EC%A0%84%ED%8A%B8%EC%9D%98-%EC%A7%84%ED%99%94-%EB%8B%A8%EC%88%9C-%ED%98%B8%EC%B6%9C%EC%9D%84-%EB%84%98%EC%96%B4%EC%84%A0-%EC%9E%90%EC%9C%A8%EC%A0%81-%EB%B9%84%EC%A6%88%EB%8B%88%EC%8A%A4-%EC%9B%8C%ED%81%AC%ED%94%8C%EB%A1%9C%EC%9A%B0-%EC%84%A4%EA%B3%84-%ED%8C%A8%ED%84%B4-%EA%B0%80%EC%9D%B4%EB%93%9C",
+    "status": 200,
+    "final_url": "https://www.thivelab.com/blog/llm-%EC%97%90%EC%9D%B4%EC%A0%84%ED%8A%B8%EC%9D%98-%EC%A7%84%ED%99%94-%EB%8B%A8%EC%88%9C-%ED%98%B8%EC%B6%9C%EC%9D%84-%EB%84%98%EC%96%B4%EC%84%A0-%EC%9E%90%EC%9C%A8%EC%A0%81-%EB%B9%84%EC%A6%88%EB%8B%88%EC%8A%A4-%EC%9B%8C%ED%81%AC%ED%94%8C%EB%A1%9C%EC%9A%B0-%EC%84%A4%EA%B3%84-%ED%8C%A8%ED%84%B4-%EA%B0%80%EC%9D%B4%EB%93%9C",
+    "title": "LLM 에이전트의 진화: 단순 호출을 넘어선 자율적 비즈니스 워크플로우 설계 패턴 가이드 | Nodelog",
+    "description": "LLM 에이전트가 복잡한 기업 비즈니스 로직을 자율적으로 처리하려면 단순 Tool Calling을 넘어선 체계적인 오케스트레이션 설계가 필수입니다. 본 가이드는 상태 머신, 에이전트 라우터 등 검증된 아키텍처 패턴과 LangGraph를 활용한 실질적인 워크플로우 구축 전략을 제시합니다.",
+    "robots": "index, follow",
+    "canonical": "https://www.thivelab.com/blog/llm-%EC%97%90%EC%9D%B4%EC%A0%84%ED%8A%B8%EC%9D%98-%EC%A7%84%ED%99%94-%EB%8B%A8%EC%88%9C-%ED%98%B8%EC%B6%9C%EC%9D%84-%EB%84%98%EC%96%B4%EC%84%A0-%EC%9E%90%EC%9C%A8%EC%A0%81-%EB%B9%84%EC%A6%88%EB%8B%88%EC%8A%A4-%EC%9B%8C%ED%81%AC%ED%94%8C%EB%A1%9C%EC%9A%B0-%EC%84%A4%EA%B3%84-%ED%8C%A8%ED%84%B4-%EA%B0%80%EC%9D%B4%EB%93%9C",
+    "og_url": "https://www.thivelab.com/blog/llm-%EC%97%90%EC%9D%B4%EC%A0%84%ED%8A%B8%EC%9D%98-%EC%A7%84%ED%99%94-%EB%8B%A8%EC%88%9C-%ED%98%B8%EC%B6%9C%EC%9D%84-%EB%84%98%EC%96%B4%EC%84%A0-%EC%9E%90%EC%9C%A8%EC%A0%81-%EB%B9%84%EC%A6%88%EB%8B%88%EC%8A%A4-%EC%9B%8C%ED%81%AC%ED%94%8C%EB%A1%9C%EC%9A%B0-%EC%84%A4%EA%B3%84-%ED%8C%A8%ED%84%B4-%EA%B0%80%EC%9D%B4%EB%93%9C",
+    "twitter_card": "summary_large_image",
+    "schema_types": [
+      "WebSite",
+      "Organization",
+      "Article",
+      "BreadcrumbList"
+    ],
+    "schema_core": [
+      {
+        "@type": "Article",
+        "headline": "LLM 에이전트의 진화: 단순 호출을 넘어선 자율적 비즈니스 워크플로우 설계 패턴 가이드",
+        "datePublished": "2026-06-07T15:21:58.701+00:00",
+        "dateModified": "2026-09-17T17:55:47.899129+00:00",
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "https://www.thivelab.com/blog/llm-에이전트의-진화-단순-호출을-넘어선-자율적-비즈니스-워크플로우-설계-패턴-가이드"
+        }
+      }
+    ]
+  },
+  {
+    "url": "https://www.thivelab.com/category/AI%20%26%20%EC%9E%90%EB%8F%99%ED%99%94",
+    "status": 200,
+    "final_url": "https://www.thivelab.com/category/AI%20%26%20%EC%9E%90%EB%8F%99%ED%99%94",
+    "title": "AI 자동화 | Nodelog",
+    "description": "AI 자동화 분야의 실무 문제, 기술 선택과 운영 방법을 검토해 정리한 글입니다.",
+    "robots": "index, follow",
+    "canonical": "https://www.thivelab.com/category/AI%20&%20%EC%9E%90%EB%8F%99%ED%99%94",
+    "og_url": "https://www.thivelab.com/category/AI%20&%20%EC%9E%90%EB%8F%99%ED%99%94",
+    "twitter_card": "summary_large_image",
+    "schema_types": [
+      "WebSite",
+      "Organization",
+      "CollectionPage"
+    ],
+    "schema_core": []
+  },
+  {
+    "url": "https://www.thivelab.com/series/LLM%20%EC%97%90%EC%9D%B4%EC%A0%84%ED%8A%B8%20%EB%A7%88%EC%8A%A4%ED%84%B0%20%EA%B0%80%EC%9D%B4%EB%93%9C",
+    "status": 200,
+    "final_url": "https://www.thivelab.com/series/LLM%20%EC%97%90%EC%9D%B4%EC%A0%84%ED%8A%B8%20%EB%A7%88%EC%8A%A4%ED%84%B0%20%EA%B0%80%EC%9D%B4%EB%93%9C",
+    "title": "LLM 에이전트 — 시리즈 | Nodelog",
+    "description": "챗봇을 넘어 도구를 쓰는 에이전트 시스템. 설계·평가·보안·오케스트레이션.",
+    "robots": "",
+    "canonical": "https://www.thivelab.com/series/LLM%20%EC%97%90%EC%9D%B4%EC%A0%84%ED%8A%B8%20%EB%A7%88%EC%8A%A4%ED%84%B0%20%EA%B0%80%EC%9D%B4%EB%93%9C",
+    "og_url": "https://www.thivelab.com/series/LLM%20%EC%97%90%EC%9D%B4%EC%A0%84%ED%8A%B8%20%EB%A7%88%EC%8A%A4%ED%84%B0%20%EA%B0%80%EC%9D%B4%EB%93%9C",
+    "twitter_card": "summary_large_image",
+    "schema_types": [
+      "WebSite",
+      "Organization",
+      "BreadcrumbList",
+      "ItemList"
+    ],
+    "schema_core": []
+  },
+  {
+    "url": "https://www.thivelab.com/engineer/too-many-open-files-fix",
+    "status": 200,
+    "final_url": "https://www.thivelab.com/engineer/too-many-open-files-fix",
+    "title": "Too many open files — ulimit 파일 디스크립터 한계 해결 — Nodelog Engineer",
+    "description": "EMFILE: too many open files, accept4() failed (24: Too many open files) 등 파일 디스크립터 한계 오류를 ulimit, limits.conf, systemd LimitNOFILE로 해결하는 가이드.",
+    "robots": "index, follow",
+    "canonical": "https://www.thivelab.com/engineer/too-many-open-files-fix",
+    "og_url": "https://www.thivelab.com/engineer/too-many-open-files-fix",
+    "twitter_card": "summary_large_image",
+    "schema_types": [
+      "WebSite",
+      "Organization",
+      "TechArticle",
+      "BreadcrumbList",
+      "HowTo"
+    ],
+    "schema_core": [
+      {
+        "@type": "TechArticle",
+        "headline": "Too many open files — ulimit 파일 디스크립터 한계 해결",
+        "datePublished": "2026-05-19T03:55:09.27305+00:00",
+        "dateModified": "2026-05-19T03:55:09.27305+00:00",
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "https://www.thivelab.com/engineer/too-many-open-files-fix"
+        }
+      }
+    ]
+  },
+  {
+    "url": "https://www.thivelab.com/search?q=jwt",
+    "status": 200,
+    "final_url": "https://www.thivelab.com/search?q=jwt",
+    "title": "검색 | Nodelog",
+    "description": "공식 문서와 기술 자료를 확인하고, 검토·정정·업데이트를 이어가는 IT·개발·보안·인프라 실무 미디어.",
+    "robots": "noindex, follow",
+    "canonical": "https://www.thivelab.com",
+    "og_url": "https://www.thivelab.com",
+    "twitter_card": "summary_large_image",
+    "schema_types": [
+      "WebSite",
+      "Organization"
+    ],
+    "schema_core": []
+  },
+  {
+    "url": "https://www.thivelab.com/tags",
+    "status": 200,
+    "final_url": "https://www.thivelab.com/tags",
+    "title": "태그 목록 | Nodelog",
+    "description": "전체 개 태그",
+    "robots": "index, follow",
+    "canonical": "https://www.thivelab.com/tags",
+    "og_url": "https://www.thivelab.com/tags",
+    "twitter_card": "summary_large_image",
+    "schema_types": [
+      "WebSite",
+      "Organization"
+    ],
+    "schema_core": []
+  },
+  {
+    "url": "https://www.thivelab.com/about",
+    "status": 200,
+    "final_url": "https://www.thivelab.com/about",
+    "title": "About | Nodelog",
+    "description": "Nodelog는 공식 문서와 기술 자료를 확인하고, 실무자가 판단에 활용할 수 있도록 내용을 검토·정리하는 IT·개발·보안 실무 미디어입니다.",
+    "robots": "index, follow",
+    "canonical": "https://www.thivelab.com/about",
+    "og_url": "https://www.thivelab.com/about",
+    "twitter_card": "summary_large_image",
+    "schema_types": [
+      "WebSite",
+      "Organization"
+    ],
+    "schema_core": []
+  }
+]
