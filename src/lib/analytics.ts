@@ -13,7 +13,10 @@ export type AnalyticsEvent =
   | { name: 'toc_click'; path: string; heading_id: string }
   | { name: 'code_copy'; path: string; language: string }
   | { name: 'category_click'; path: string; category: string; position?: string }
-  | { name: 'outbound_link_click'; path: string; domain: string };
+  | { name: 'outbound_link_click'; path: string; domain: string }
+  | { name: 'home_nodelog_click'; path: string }
+  | { name: 'home_cipher_click'; path: string }
+  | { name: 'product_card_click'; path: string; product: string };
 
 type Gtag = (...args: unknown[]) => void;
 

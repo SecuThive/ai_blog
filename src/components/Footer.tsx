@@ -23,7 +23,7 @@ export default function Footer() {
                 </radialGradient>
               </defs>
             </svg>
-            NODELOG
+            <span>NODELOG <span className="brand-by">by THIVELAB</span></span>
           </div>
           <p>{dict.footer.description}</p>
           <div className="footer-social">
@@ -90,7 +90,7 @@ export default function Footer() {
         <div className="footer-bottom" style={{ gridColumn: '1 / -1' }}>
           <div className="footer-status">
             <span className="live-dot" />
-            © 2026 NODELOG · EDITORIAL REVIEW
+            © 2026 NODELOG by THIVELAB · EDITORIAL REVIEW
           </div>
           <div>SEOUL · CONTINUOUSLY UPDATED</div>
         </div>

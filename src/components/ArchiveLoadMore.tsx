@@ -51,7 +51,7 @@ export default function ArchiveLoadMore({ grouped }: { grouped: YearGroup[] }) {
               <div key={month} style={{ marginBottom: 40 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: 32, alignItems: 'start' }}>
                   {/* Month label (sticky) */}
-                  <div style={{ position: 'sticky', top: 'calc(var(--header-h) + 24px)' }}>
+                  <div style={{ position: 'sticky', top: 'calc(var(--header-h) + var(--global-nav-h) + 24px)' }}>
                     <div style={{
                       fontSize: 26, fontWeight: 700, letterSpacing: '-0.03em',
                       fontVariantNumeric: 'tabular-nums', color: 'var(--text-1)',

@@ -252,13 +252,22 @@ export default function Header() {
   return (
     <>
       <header className="site-header">
+        <div className="global-nav-row">
+          <nav className="container global-nav" aria-label="THIVELAB products">
+            <Link href="/" className="global-nav-parent">THIVELAB</Link>
+            <Link href="/" className="global-nav-current" aria-current="page">NODELOG</Link>
+            <a href="https://game.thivelab.com/" target="_blank" rel="noopener noreferrer">CIPHER <span aria-hidden="true">↗</span></a>
+            <span className="global-nav-pending" title="Coming soon">LABS <small>SOON</small></span>
+            <span className="global-nav-pending" title="Coming soon">ENTERPRISE <small>SOON</small></span>
+          </nav>
+        </div>
         <div className="container">
-          <Link href="/" className="brand">
+          <Link href="/" className="brand" aria-label="NODELOG by THIVELAB home">
             <span className="brand-mark"><BrandMark /></span>
-            NODELOG
+            <span>NODELOG <span className="brand-by">by THIVELAB</span></span>
           </Link>
 
-          <nav className="nav-primary">
+          <nav className="nav-primary" aria-label="NODELOG topics">
             {NAV.map(n => (
               <Link key={n.href} href={n.href} className={isActive(n.href) ? 'active' : ''}>
                 {n.label}
@@ -312,7 +321,7 @@ export default function Header() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <Link href="/" className="brand" onClick={() => setMobileOpen(false)}>
               <span className="brand-mark"><BrandMark /></span>
-              NODELOG
+              <span>NODELOG <span className="brand-by">by THIVELAB</span></span>
             </Link>
             <button className="icon-btn" onClick={() => setMobileOpen(false)} aria-label={dict.nav.close}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -331,6 +340,12 @@ export default function Header() {
             <LanguageSwitcher />
           </div>
           <div className="mobile-nav-divider" />
+          <div className="mobile-nav-heading">THIVELAB</div>
+          <a href="https://game.thivelab.com/" className="mobile-nav-item" target="_blank" rel="noopener noreferrer" onClick={() => setMobileOpen(false)}>CIPHER ↗</a>
+          <div className="mobile-nav-item mobile-nav-pending">LABS <span>SOON</span></div>
+          <div className="mobile-nav-item mobile-nav-pending">ENTERPRISE <span>SOON</span></div>
+          <div className="mobile-nav-divider" />
+          <div className="mobile-nav-heading">NODELOG</div>
           {NAV.map(n => (
             <Link key={n.href} href={n.href} className={`mobile-nav-item${isActive(n.href) ? ' active' : ''}`} onClick={() => setMobileOpen(false)}>
               {n.label}

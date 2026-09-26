@@ -124,12 +124,13 @@ function ArrowIcon({ size = 14 }: { size?: number }) {
 }
 
 /* ===== Hero v2 ===== */
-function HeroV2({ posts, seriesCount, guideCount, subscriberCount, dict }: {
+function HeroV2({ posts, seriesCount, guideCount, subscriberCount, dict, locale }: {
   posts: PostSummary[];
   seriesCount: number;
   guideCount: number;
   subscriberCount: number;
   dict: Messages;
+  locale: Locale;
 }) {
   // 허영 지표(누적 발행 수·조회수·미달 구독자)는 노출하지 않는다 — 자동생성 인상 완화(#8).
   // 대신 실질 신호(시리즈·큐레이션 가이드·검토 방식)만 남긴다.
@@ -143,39 +144,38 @@ function HeroV2({ posts, seriesCount, guideCount, subscriberCount, dict }: {
       : []),
   ];
   return (
-    <section className="heroX">
+    <section className="heroX heroX--brand">
       <div className="container">
         <div className="heroX-grid heroX-grid--solo">
           <div>
             <span className="hero-status">
               <span className="live-dot" />
-              <span>REVIEWED · CURATED · UPDATED</span>
+              <span>THIVELAB · NODELOG</span>
             </span>
             <h1>
-              <span className="grad">{dict.home.heroLine1}</span>
+              <span className="grad">THIVELAB</span>
               <br />
-              {dict.home.heroLine2}
+              Learn. Practice. Compete. Build.
             </h1>
             <p className="heroX-lead">
-              {dict.home.heroLead}
+              {locale === 'en'
+                ? 'Read practical engineering guides in NODELOG, then explore hands-on challenges in CIPHER. One technology lab for learning and trying ideas.'
+                : 'NODELOG에서 실무 기술을 읽고, CIPHER에서 직접 문제를 풀어보세요. 배우고 실습하며 아이디어를 검증하는 Technology Lab입니다.'}
             </p>
             <div className="heroX-actions">
+              <TrackedLink href="/#nodelog-latest" event={{ name: 'home_nodelog_click', path: '/' }} className="btn btn-primary btn-lg">
+                Explore NODELOG <ArrowIcon />
+              </TrackedLink>
+              <TrackedExternalLink href="https://game.thivelab.com/" path="/" event={{ name: 'home_cipher_click', path: '/' }} className="btn btn-lg" target="_blank" rel="noopener noreferrer">
+                Explore CIPHER <span aria-hidden="true">↗</span>
+              </TrackedExternalLink>
               {posts[0] && (
-                <Link href={`/blog/${posts[0].slug}`} className="btn btn-primary btn-lg">
+                <Link href={`/blog/${posts[0].slug}`} className="btn btn-lg btn-ghost">
                   {dict.home.latestPost} <ArrowIcon />
                 </Link>
               )}
-              <Link href="/engineer" className="btn btn-lg">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
-                </svg>
-                {dict.home.engineerGuides}
-              </Link>
-              <Link href="/about" className="btn btn-lg btn-ghost">
-                {dict.home.howWeWork}
-              </Link>
             </div>
-            <div className="heroX-meta" style={{ gridTemplateColumns: `repeat(${stats.length}, 1fr)` }}>
+            <div className="heroX-meta">
               {stats.map((s, i) => (
                 <div key={i}>
                   {s.badge ? (
@@ -208,27 +208,43 @@ function ServiceLaunchBanner({ locale }: { locale: Locale }) {
         <div className="service-launch-panel">
           <div className="service-launch-heading">
             <div>
-              <span className="service-launch-eyebrow"><span className="live-dot" /> NOW OPEN · NODELOG PROJECTS</span>
-              <h2 id="service-launch-title">{locale === 'en' ? 'Go beyond reading. Try our services.' : '읽는 데서 그치지 말고, 직접 써보세요.'}</h2>
-              <p>{locale === 'en' ? 'Try MOA for small businesses and the CIPHER / VAULT puzzle demo.' : '작은 가게를 위한 MOA와 단계별 문제 풀이 게임 체험판을 공개했습니다.'}</p>
+              <span className="service-launch-eyebrow">THIVELAB PRODUCTS</span>
+              <h2 id="service-launch-title">{locale === 'en' ? 'Learn, compete, and create.' : '배우고, 도전하고, 만들어보세요.'}</h2>
+              <p>{locale === 'en' ? 'Explore our live products and what is coming next.' : '지금 사용할 수 있는 서비스와 준비 중인 프로젝트를 소개합니다.'}</p>
             </div>
-            <Link href="/category/AI & 자동화" className="section-link">
-              {locale === 'en' ? 'Explore all projects' : '프로젝트 살펴보기'} <ArrowIcon />
-            </Link>
+            <Link href="/about" className="section-link">{locale === 'en' ? 'About THIVELAB' : 'THIVELAB 소개'} <ArrowIcon /></Link>
           </div>
           <div className="service-launch-grid">
-            <TrackedExternalLink className="service-launch-item service-launch-item--moa" href="https://moa.thivelab.com/" path="/" target="_blank" rel="noopener noreferrer" aria-label={locale === 'en' ? 'Open MOA in a new tab' : 'MOA 새 탭에서 열기'}>
+            <TrackedLink className="service-launch-item" href="/#nodelog-latest" event={{ name: 'product_card_click', path: '/', product: 'nodelog' }}>
+              <span className="service-launch-item-label">LEARN · NODELOG</span>
+              <strong>NODELOG</strong>
+              <span className="service-launch-item-desc">{locale === 'en' ? 'Practical IT knowledge and engineer guides.' : '실무 IT 지식과 엔지니어 가이드.'}</span>
+              <span className="service-launch-item-action">{locale === 'en' ? 'Read NODELOG' : '콘텐츠 보기'} <ArrowIcon /></span>
+            </TrackedLink>
+            <TrackedExternalLink className="service-launch-item service-launch-item--vault" href="https://game.thivelab.com/" path="/" event={{ name: 'product_card_click', path: '/', product: 'cipher' }} target="_blank" rel="noopener noreferrer">
+              <span className="service-launch-item-label">COMPETE · CIPHER / VAULT</span>
+              <strong>CIPHER</strong>
+              <span className="service-launch-item-desc">{locale === 'en' ? 'A seven-stage digital puzzle demo.' : '단서를 따라 풀어가는 7단계 디지털 문제 체험판.'}</span>
+              <span className="service-launch-item-action">{locale === 'en' ? 'Try the demo' : '체험판 시작'} <span aria-hidden="true">↗</span></span>
+            </TrackedExternalLink>
+            <div className="service-launch-item service-launch-item--pending" aria-label="LABS coming soon">
+              <span className="service-launch-item-label">PRACTICE · LABS</span>
+              <strong>LABS</strong>
+              <span className="service-launch-item-desc">{locale === 'en' ? 'Hands-on technology labs are in preparation.' : '직접 다뤄보는 기술 실습 환경을 준비 중입니다.'}</span>
+              <span className="service-launch-item-action">COMING SOON</span>
+            </div>
+            <TrackedExternalLink className="service-launch-item service-launch-item--moa" href="https://moa.thivelab.com/" path="/" event={{ name: 'product_card_click', path: '/', product: 'moa' }} target="_blank" rel="noopener noreferrer" aria-label={locale === 'en' ? 'Open MOA in a new tab' : 'MOA 새 탭에서 열기'}>
               <span className="service-launch-item-label">CREATIVE WORKSPACE · MOA</span>
-              <strong>{locale === 'en' ? 'Make your next promotion with MOA' : '가게 홍보물 제작, MOA에서 시작하세요'}</strong>
+              <strong>MOA</strong>
               <span className="service-launch-item-desc">{locale === 'en' ? 'Posters, menus, coupons, and review replies in one place.' : '홍보물·메뉴판·쿠폰·리뷰 답변을 한곳에서 만드세요.'}</span>
               <span className="service-launch-item-action">{locale === 'en' ? 'Try MOA' : 'MOA 바로가기'} <span aria-hidden="true">↗</span></span>
             </TrackedExternalLink>
-            <TrackedExternalLink className="service-launch-item service-launch-item--vault" href="https://game.thivelab.com/" path="/" target="_blank" rel="noopener noreferrer" aria-label={locale === 'en' ? 'Open CIPHER / VAULT demo in a new tab' : 'CIPHER / VAULT 체험판 새 탭에서 열기'}>
-              <span className="service-launch-item-label">PUZZLE DEMO · CIPHER / VAULT</span>
-              <strong>{locale === 'en' ? 'Can you solve all seven stages?' : '7단계의 단서를 모두 풀 수 있나요?'}</strong>
-              <span className="service-launch-item-desc">{locale === 'en' ? 'Follow the clues through a digital treasure hunt.' : '단서를 따라가는 디지털 보물찾기에 도전하세요.'}</span>
-              <span className="service-launch-item-action">{locale === 'en' ? 'Try the demo' : '체험판 시작하기'} <span aria-hidden="true">↗</span></span>
-            </TrackedExternalLink>
+            <div className="service-launch-item service-launch-item--pending" aria-label="ENTERPRISE coming soon">
+              <span className="service-launch-item-label">BUSINESS · ENTERPRISE</span>
+              <strong>ENTERPRISE</strong>
+              <span className="service-launch-item-desc">{locale === 'en' ? 'Security, AI and private challenge solutions are in preparation.' : '기업용 보안·AI·Private CTF 서비스를 준비 중입니다.'}</span>
+              <span className="service-launch-item-action">COMING SOON</span>
+            </div>
           </div>
         </div>
       </div>
@@ -247,7 +263,7 @@ function DailyBriefing({ posts, locale, dict }: { posts: PostSummary[]; locale: 
   const leadTone = catTone(lead.category);
 
   return (
-    <section className="section">
+    <section className="section" id="nodelog-latest">
       <div className="container">
         <div className="sec-head2">
           <div className="left">
@@ -672,7 +688,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <HomeScrollReveal>
-      <HeroV2 posts={posts} seriesCount={activeSeriesCount} guideCount={guideCount} subscriberCount={subscriberCount} dict={dict} />
+      <HeroV2 posts={posts} seriesCount={activeSeriesCount} guideCount={guideCount} subscriberCount={subscriberCount} dict={dict} locale={locale} />
       <ServiceLaunchBanner locale={locale} />
       <DailyBriefing posts={posts} locale={locale} dict={dict} />
       <EngineerGuidesSection guides={recentGuides} total={guideCount} locale={locale} dict={dict} />
@@ -681,6 +697,18 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           그 뒤를 이어 posts[7..]부터 보여준다 — 같은 글이 두 섹션에 중복 노출되는 것을 방지. */}
       <MagLatestSection posts={posts.slice(7) as MagPost[]} />
       <SeriesShowcase series={series} dict={dict} locale={locale} />
+      <section className="cipher-feature" aria-labelledby="cipher-feature-title">
+        <div className="container cipher-feature-inner">
+          <div>
+            <span className="service-launch-eyebrow">CIPHER / VAULT · NOW OPEN</span>
+            <h2 id="cipher-feature-title">{locale === 'en' ? 'Put your reasoning to the test.' : '읽은 다음, 직접 풀어보세요.'}</h2>
+            <p>{locale === 'en' ? 'A seven-stage digital puzzle demo. Follow clues and try the current challenge experience.' : '단서를 따라 진행하는 7단계 디지털 문제 체험판에서 직접 도전해 보세요.'}</p>
+          </div>
+          <TrackedExternalLink href="https://game.thivelab.com/" path="/" event={{ name: 'home_cipher_click', path: '/' }} className="btn btn-primary btn-lg" target="_blank" rel="noopener noreferrer">
+            {locale === 'en' ? 'Start the demo' : '체험판 시작하기'} <span aria-hidden="true">↗</span>
+          </TrackedExternalLink>
+        </div>
+      </section>
       <EditorQuote dict={dict} />
       <NewsletterBand subscriberCount={subscriberCount} dict={dict} />
     </HomeScrollReveal>
