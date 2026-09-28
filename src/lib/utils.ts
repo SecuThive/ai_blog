@@ -55,6 +55,7 @@ export const SERIES_DESC: Record<string, string> = {
   '산업 현장 AI 통합 아키텍처 가이드': 'AI-OT 게이트웨이, 이상 감지, 엣지-클라우드 하이브리드.',
   'LLM 프롬프트 엔지니어링 마스터': 'CoT·ToT·ReAct, A/B 테스트, 버전 관리 — 프롬프트를 엔지니어링으로.',
   'AI 데이터 아키텍처 마스터 가이드': '데이터 제품화, Data Mesh, 품질 자동화.',
+  'K8s_Troubleshooting_Guide': 'Kubernetes에서 자주 만나는 장애를 증상별로 진단하는 연재.',
 };
 
 /** Homepage/series UI display names (DB series: tags stay unchanged). */
@@ -68,6 +69,7 @@ export const SERIES_DISPLAY: Record<string, string> = {
   'Vector DB 마스터 클래스': 'Vector DB',
   'LLM 프롬프트 엔지니어링 마스터': 'LLM 프롬프트 엔지니어링',
   'AI 데이터 아키텍처 마스터 가이드': 'AI 데이터 아키텍처',
+  'K8s_Troubleshooting_Guide': 'K8s 트러블슈팅',
 };
 
 // 기사(상세) 페이지가 generateMetadata로 루트 metadata를 덮어쓸 때 robots가

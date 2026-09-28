@@ -101,7 +101,7 @@
     "allSeries": "All series",
     "seriesEmpty": "Series are on the way.",
     "postsCount": "{count} posts",
-    "seriesCardLead": "A {count}-part deep dive. Follow it from the first episode to the last.",
+    "seriesCardLead": "A {count}-part series. Reading from part 1 in order makes it easiest to follow.",
     "newsletterEyebrow": "NEWSLETTER · WEEKLY · TUESDAYS",
     "newsletterTitle": "One week's IT, chosen by the editors.",
     "newsletterLead": "Five meaningful changes, three tools you can actually use, and one in-depth series. {sub}",

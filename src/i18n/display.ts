@@ -131,6 +131,7 @@ const SERIES_LABELS: Record<string, string> = {
   '산업 현장 AI 통합 아키텍처 가이드': 'Industrial AI architecture',
   'LLM 프롬프트 엔지니어링 마스터': 'LLM prompt engineering',
   'AI 데이터 아키텍처 마스터 가이드': 'AI data architecture',
+  'K8s_Troubleshooting_Guide': 'Kubernetes troubleshooting',
 };
 
 const SERIES_DESC_EN: Record<string, string> = {
@@ -148,6 +149,7 @@ const SERIES_DESC_EN: Record<string, string> = {
   '산업 현장 AI 통합 아키텍처 가이드': 'AI-OT gateways, realtime anomaly detection, and edge-cloud hybrids for IIoT.',
   'LLM 프롬프트 엔지니어링 마스터': 'CoT, ToT, ReAct, A/B tests, and versioning — treating prompts as engineering.',
   'AI 데이터 아키텍처 마스터 가이드': 'Data products, Data Mesh, and automated quality for AI-ready infrastructure.',
+  'K8s_Troubleshooting_Guide': 'Symptom-by-symptom diagnosis of common Kubernetes failures.',
 };
 
 export function tagLabel(tag: string, locale: Locale): string | null {

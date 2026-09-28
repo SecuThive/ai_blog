@@ -101,7 +101,7 @@
     "allSeries": "전체 시리즈",
     "seriesEmpty": "시리즈를 준비 중입니다.",
     "postsCount": "{count}편",
-    "seriesCardLead": "{count}편으로 구성된 심층 연재. 처음부터 끝까지 따라가며 주제를 완전히 이해하세요.",
+    "seriesCardLead": "{count}편으로 구성된 연재. 1편부터 순서대로 읽으면 흐름을 따라가기 쉽습니다.",
     "newsletterEyebrow": "NEWSLETTER · WEEKLY · 매주 화요일",
     "newsletterTitle": "한 주의 IT를, 편집팀이 골라 보냅니다.",
     "newsletterLead": "가장 의미 있는 변화 5개, 실무에 적용 가능한 도구 3개, 그리고 가장 깊이 있는 시리즈 1편. {sub}",

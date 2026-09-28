@@ -561,7 +561,7 @@ async function getLanePosts(locale: Locale): Promise<Record<string, PostSummary[
       if (ids.length === 0) return [lane.category, []] as const;
       const { data } = await client
         .from('posts')
-        .select('id,title,slug,category,content,published_at,tags')
+        .select('id,title,slug,category,content,published_at,tags,content_evidence')
         .in('id', ids)
         .eq('status', 'published')
         .eq('category', lane.category)
@@ -572,11 +572,13 @@ async function getLanePosts(locale: Locale): Promise<Record<string, PostSummary[
           title: String(p.title ?? ''),
           tags: p.tags as string[] | null,
           content: String(p.content ?? ''),
+          content_evidence: p.content_evidence,
         }, locale);
         return {
           ...p,
           title: localized.title,
           content: undefined,
+          content_evidence: undefined,
           reading_time: readingTime((p.content as string) ?? ''),
         };
       }) as unknown as PostSummary[];
