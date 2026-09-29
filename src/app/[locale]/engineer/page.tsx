@@ -1,8 +1,9 @@
 import Link from '@/i18n/link';
-import { unstable_noStore as noStore } from 'next/cache';
+import { unstable_cache } from 'next/cache';
 import type { Metadata } from 'next';
 import type { EngineerGuide } from '@/lib/types';
 import { makeFreshClient } from '@/lib/supabase';
+import { withEnFallbackContent } from '@/lib/enFallback';
 import { engCatTone } from '@/lib/utils';
 import EngineerSearch from './EngineerSearch';
 import JsonLd from '@/components/JsonLd';
@@ -36,7 +37,10 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   };
 }
 
-export const revalidate = 60;
+// 이 페이지는 searchParams(?cat=) 때문에 요청마다 동적 렌더된다(route 수준 ISR 불가).
+// 대신 아래 DB 조회를 unstable_cache(30분)로 감싸 요청마다 Supabase를 치지 않게 한다.
+export const revalidate = 1800;
+const LIST_CACHE_SECONDS = 1800;
 
 const CATEGORIES = [
   {
@@ -142,29 +146,63 @@ const CATEGORIES = [
   },
 ];
 
-async function getGuides(category?: string): Promise<EngineerGuide[]> {
-  noStore();
-  let q = makeFreshClient()
-    .from('engineer_guides')
-    .select('*')
-    .eq('status', 'published')
-    .order('created_at', { ascending: false });
-  if (category) q = q.eq('category', category);
-  const { data } = await q;
-  return (data ?? []) as EngineerGuide[];
+// 목록 카드(EngineerSearch)는 제목·요약·태그·카테고리·난이도·OS·작성일만 쓴다 — 본문(content)은
+// 조회하지 않는다(기존 select('*')는 전 가이드 본문을 매 요청 가져오고 클라이언트로 직렬화까지 했다).
+// 영문 제목/요약 태그가 없는 예외 행만 en 렌더에서 content를 보충해 localizeGuide에 넘긴 뒤 버린다.
+// 조회 에러는 throw해서 빈 목록이 캐시되지 않게 한다(바깥에서 [] 폴백).
+const GUIDE_LIST_SELECT = 'id,title,slug,summary,category,tags,difficulty,os_compat,created_at';
+
+const getGuidesCached = unstable_cache(
+  async (category: string, locale: 'ko' | 'en'): Promise<EngineerGuide[]> => {
+    const client = makeFreshClient();
+    let q = client
+      .from('engineer_guides')
+      .select(GUIDE_LIST_SELECT)
+      .eq('status', 'published')
+      .order('created_at', { ascending: false });
+    if (category) q = q.eq('category', category);
+    const { data, error } = await q;
+    if (error) throw new Error(`engineer list fetch failed: ${error.code ?? ''} ${error.message}`);
+    const rows = await withEnFallbackContent(client, 'engineer_guides', (data ?? []) as unknown as EngineerGuide[], locale);
+    return rows.map((g) => ({ ...localizeGuide(g, locale), content: '' }));
+  },
+  ['engineer-list-v2'],
+  { revalidate: LIST_CACHE_SECONDS, tags: ['engineer-list'] },
+);
+
+async function getGuides(category: string | undefined, locale: 'ko' | 'en'): Promise<EngineerGuide[]> {
+  try {
+    return await getGuidesCached(category ?? '', locale);
+  } catch (e) {
+    console.error('getGuides 실패:', e);
+    return [];
+  }
 }
 
+const getCategoryCountsCached = unstable_cache(
+  async (): Promise<Record<string, number>> => {
+    const { data, error } = await makeFreshClient()
+      .from('engineer_guides')
+      .select('category')
+      .eq('status', 'published');
+    if (error) throw new Error(`engineer counts fetch failed: ${error.code ?? ''} ${error.message}`);
+    const counts: Record<string, number> = {};
+    for (const row of (data ?? []) as { category: string }[]) {
+      counts[row.category] = (counts[row.category] ?? 0) + 1;
+    }
+    return counts;
+  },
+  ['engineer-category-counts-v1'],
+  { revalidate: LIST_CACHE_SECONDS, tags: ['engineer-list'] },
+);
+
 async function getCategoryCounts(): Promise<Record<string, number>> {
-  noStore();
-  const { data } = await makeFreshClient()
-    .from('engineer_guides')
-    .select('category')
-    .eq('status', 'published');
-  const counts: Record<string, number> = {};
-  for (const row of (data ?? [])) {
-    counts[row.category] = (counts[row.category] ?? 0) + 1;
+  try {
+    return await getCategoryCountsCached();
+  } catch (e) {
+    console.error('getCategoryCounts 실패:', e);
+    return {};
   }
-  return counts;
 }
 
 export default async function EngineerPage({
@@ -180,8 +218,7 @@ export default async function EngineerPage({
   const { cat: rawCat } = await searchParams;
   const activeCat = rawCat ? decodeURIComponent(rawCat) : undefined;
 
-  const [rawGuides, counts] = await Promise.all([getGuides(activeCat), getCategoryCounts()]);
-  const guides = rawGuides.map((g) => localizeGuide(g, locale));
+  const [guides, counts] = await Promise.all([getGuides(activeCat, locale), getCategoryCounts()]);
   const totalGuides = Object.values(counts).reduce((a, b) => a + b, 0);
 
   const itemListSchema = {

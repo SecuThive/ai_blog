@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin, readingTime, toSlug } from '@/lib/supabase';
+import { supabaseAdmin, toSlug } from '@/lib/supabase';
+import { withEnFallbackContent } from '@/lib/enFallback';
 import { localizePost } from '@/i18n/content';
 import type { Locale } from '@/i18n/config';
 
@@ -56,7 +57,8 @@ export async function GET(req: NextRequest) {
   const rangeTo = page * limit - 1;
   let q = sb
     .from('posts')
-    .select('id,title,slug,excerpt,cover_image,category,tags,author,agent_role,views,published_at,content,content_evidence')
+    // 본문(content) 미조회(egress) — LoadMore 카드는 제목/요약/메타만 쓴다. reading_time은 더 이상 내려주지 않음(카드는 있을 때만 표시).
+    .select('id,title,slug,excerpt,cover_image,category,tags,author,agent_role,views,published_at,content_evidence')
     .eq('status', 'published')
     .order('published_at', { ascending: false })
     .range(rangeFrom, rangeTo);
@@ -66,11 +68,12 @@ export async function GET(req: NextRequest) {
   const { data, error } = await q;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const posts = (data ?? []).map(p => {
+  const rows = await withEnFallbackContent(sb, 'posts', (data ?? []) as (NonNullable<typeof data>[number] & { content?: string | null })[], locale);
+  const posts = rows.map(p => {
     const localized = localizePost({
       title: p.title,
       excerpt: p.excerpt,
-      content: p.content,
+      content: p.content ?? null,
       tags: p.tags,
       content_evidence: p.content_evidence,
     }, locale);
@@ -80,7 +83,6 @@ export async function GET(req: NextRequest) {
       excerpt: localized.excerpt,
       content: undefined,
       content_evidence: undefined,
-      reading_time: readingTime(p.content ?? ''),
     };
   });
 
@@ -183,11 +185,12 @@ export async function POST(req: NextRequest) {
     }, { status: 200 });
   }
 
-  // Revalidate blog pages
+  // Revalidate list pages + this post's detail (slug 지정: /api/revalidate는 더 이상 전 상세를 무효화하지 않음)
   try {
     await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/revalidate`, {
       method: 'POST',
-      headers: { 'x-api-key': process.env.BLOG_API_KEY! },
+      headers: { 'x-api-key': process.env.BLOG_API_KEY!, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'post', slug: data?.slug }),
     });
   } catch { /* non-critical */ }
 

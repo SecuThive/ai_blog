@@ -76,7 +76,8 @@ export interface PostSummary {
   views: number;
   published_at: string;
   updated_at?: string | null;
-  reading_time: number;     // estimated minutes
+  /** estimated minutes — 목록/관련글 쿼리는 egress 절감을 위해 본문을 조회하지 않으므로 대개 비어 있음. 있을 때만 표시. */
+  reading_time?: number;
   title_en?: string | null;
   excerpt_en?: string | null;
 }

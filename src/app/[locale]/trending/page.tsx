@@ -7,7 +7,6 @@ import { formatTimeAgo } from '@/i18n/format';
 import { tagLabel } from '@/i18n/display';
 import type { Locale } from '@/i18n/config';
 import Link from '@/i18n/link';
-import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
 import { catTone, publicTags } from '@/lib/utils';
@@ -21,7 +20,9 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return pageMetadata({ locale, path: '/trending', title: dict.pages.trendingTitle, description: dict.pages.trendingLead });
 }
 
-export const revalidate = 30;
+// egress 절감: 예전엔 noStore()로 매 요청 DB를 조회했다. 경로가 ASCII라 ISR이 정상 동작하므로
+// 시간 기반 재생성으로 전환한다. 조회 에러는 throw → ISR이 빈 페이지를 캐시하지 않고 직전 정상본 유지.
+export const revalidate = 900;
 
 interface PostRow {
   id: number;
@@ -52,13 +53,13 @@ async function getTrending(): Promise<{
   tagStats: { tag: string; views: number }[];
   totalViews: number;
 }> {
-  noStore();
-  const { data } = await makeFreshClient()
+  const { data, error } = await makeFreshClient()
     .from('posts')
     .select('id,title,slug,excerpt,category,tags,views,published_at,content_evidence')
     .eq('status', 'published')
     .order('views', { ascending: false })
     .limit(50);
+  if (error) throw new Error(`trending fetch failed: ${error.code ?? ''} ${error.message}`);
 
   const posts = (data ?? []) as PostRow[];
   const totalViews = posts.reduce((s, p) => s + p.views, 0);

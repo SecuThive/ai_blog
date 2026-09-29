@@ -2,7 +2,7 @@ import Link from '@/i18n/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
-import { readingTime, makeFreshClient } from '@/lib/supabase';
+import { makeFreshClient } from '@/lib/supabase';
 import { TAG_REDIRECTS } from '@/lib/tagRedirects';
 import TagLoadMore from '@/components/TagLoadMore';
 import { publicTags } from '@/lib/utils';
@@ -12,7 +12,9 @@ import { pageMetadata, siteUrl } from '@/i18n/metadata';
 import { tagLabel } from '@/i18n/display';
 import { withLocale } from '@/i18n/path';
 
-export const revalidate = 60;
+// 참고: 이 페이지는 한글 경로 파라미터라 noStore()로 동적 렌더를 유지한다(한글 경로 ISR 정지 이슈,
+// lib/cacheTags.ts 참고). 아래 값은 noStore 제거 시의 상한이며, egress 절감은 본문 미조회로 확보.
+export const revalidate = 900;
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; tag: string }> }): Promise<Metadata> {
   const { tag, locale: raw } = await params;
@@ -45,7 +47,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 interface PostRow {
   id: number; title: string; slug: string; excerpt: string;
-  category: string; published_at: string; reading_time: number;
+  category: string; published_at: string; reading_time?: number;
   cover_image?: string;
   tags?: string[] | null;
   content_evidence?: unknown;
@@ -55,7 +57,8 @@ async function getPostsByTag(tag: string): Promise<PostRow[]> {
   noStore();
   const { data } = await makeFreshClient()
     .from('posts')
-    .select('id,title,slug,excerpt,cover_image,category,tags,published_at,views,content,content_evidence')
+    // 본문(content) 미조회 — 카드 제목/요약은 tags·content_evidence로 영문화(titleForLocale), 읽기시간은 미표시.
+    .select('id,title,slug,excerpt,cover_image,category,tags,published_at,content_evidence')
     .eq('status', 'published')
     .contains('tags', [tag])
     .order('published_at', { ascending: false });
@@ -65,7 +68,6 @@ async function getPostsByTag(tag: string): Promise<PostRow[]> {
     published_at: p.published_at as string, cover_image: p.cover_image as string | undefined,
     tags: p.tags as string[] | null,
     content_evidence: p.content_evidence,
-    reading_time: readingTime((p.content as string) ?? ''),
   }));
 }
 

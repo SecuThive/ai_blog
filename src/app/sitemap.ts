@@ -6,9 +6,12 @@ import { withLocale } from '@/i18n/path';
 
 // sitemap.ts는 이 Next 버전에서 "기본 캐시되는 특수 Route Handler"라
 // revalidate ISR이 프로덕션에서 신뢰되게 동작하지 않았다(7/6 이후 신규 글 미반영 사고).
-// 매 요청 동적 생성으로 전환 — 크롤러 요청량이 적고 쿼리가 가벼워 비용이 미미하며,
-// 신규 발행·강등이 sitemap에 즉시 반영되는 것이 색인 신호 일관성에 더 중요하다.
-export const dynamic = 'force-dynamic';
+// 그래서 한때 매 요청 동적 생성(force-dynamic)으로 전환했었다.
+// 2026-09: Supabase egress 쿼터 초과로 사이트가 내려간 뒤, 매 요청 전 글의 slug·tags(i18n.title/
+// i18n.excerpt 태그 텍스트 포함)를 긁는 비용을 없애기 위해 1시간 ISR로 되돌린다. 발행 웹훅
+// (/api/revalidate)이 revalidatePath('/sitemap.xml')을 호출하므로 신규 발행은 즉시 반영을 기대하고,
+// 최악의 경우에도 1시간 내 반영된다. 조회 에러는 throw → 글이 빠진 sitemap이 캐시되지 않게 한다.
+export const revalidate = 3600;
 
 function entry(base: string, path: string, rest: Omit<MetadataRoute.Sitemap[number], 'url' | 'alternates'>): MetadataRoute.Sitemap[number] {
   const koPath = path === '/' ? '' : path;
@@ -42,10 +45,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .select('slug,published_at,tags,category')
       .eq('status', 'published') as typeof postsRes;
   }
+  if (postsRes.error) throw new Error(`sitemap posts fetch failed: ${postsRes.error.code ?? ''} ${postsRes.error.message}`);
   const guidesRes = await client
     .from('engineer_guides')
     .select('slug,updated_at')
     .eq('status', 'published');
+  if (guidesRes.error) throw new Error(`sitemap guides fetch failed: ${guidesRes.error.code ?? ''} ${guidesRes.error.message}`);
 
   // noindex 처리된 보강 대상 글은 sitemap에서도 제외 (색인 신호 일관성)
   const posts = ((postsRes.data ?? []) as { slug: string; published_at: string; updated_at?: string | null; tags: string[] }[])

@@ -2,33 +2,54 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { postCacheTag, guideCacheTag } from '@/lib/cacheTags';
 
+// 앱 라우트는 app/[locale]/... 이고, ko는 proxy.ts가 접두사 없는 URL을 /ko/...로 rewrite한다.
+// 그래서 목록 경로는 접두사 없는 형태(기존 호출 유지)와 /ko·/en 실제 라우트 경로를 모두 무효화한다.
+const LOCALE_PREFIXES = ['', '/ko', '/en'] as const;
+
+function revalidateLocalized(path: string) {
+  for (const prefix of LOCALE_PREFIXES) {
+    revalidatePath(`${prefix}${path}` || '/');
+  }
+}
+
+function safeDecode(slug: string): string {
+  try {
+    return decodeURIComponent(slug);
+  } catch {
+    return slug;
+  }
+}
+
 export async function POST(req: NextRequest) {
   if (req.headers.get('x-api-key') !== process.env.BLOG_API_KEY) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { slug, type = 'post' } = await req.json().catch(() => ({}));
+  const cleanSlug = typeof slug === 'string' && slug.trim() ? safeDecode(slug.trim()) : null;
 
-  revalidatePath('/');
-  revalidatePath('/trending');
-  revalidatePath('/series');
-  revalidatePath('/tags');
-  revalidatePath('/archive');
+  // 목록·홈·sitemap·RSS (ISR 페이지만 — category/tag/series 상세 목록은 noStore 동적이라 불필요)
+  for (const p of ['', '/trending', '/series', '/tags', '/archive', '/recommend']) revalidateLocalized(p);
   revalidatePath('/sitemap.xml');
+  revalidatePath('/rss');
 
-  // 개별 글/가이드는 revalidatePath가 아니라 revalidateTag(ASCII 해시)로 무효화한다.
-  // revalidatePath('/blog/<한글슬러그>')는 Next의 암묵적 pathname 소프트 태그
-  // 인코딩 경로를 타는데, 이 경로가 프로덕션에서 깨져(x-matched-path 미인코딩
-  // 유출 확인) 한글 슬러그 글에는 사실상 아무 효과가 없었다(실측: 반복 호출해도
-  // 캐시 age가 전혀 리셋 안 됨). getPost/getGuide가 같은 해시 태그로 캐싱되므로
-  // revalidateTag만으로 해당 글 전체(본문+댓글+관련글 등)가 재생성된다.
+  // 예전엔 revalidatePath('/blog/[slug]', 'page')로 발행 1건마다 "모든" 상세 페이지를 무효화해
+  // 다음 방문 때 전 글이 재생성(=글마다 본문·관련글 쿼리)되며 egress가 폭증했다. 이제 해당 slug만:
+  //  - revalidateTag(ASCII 해시 태그): getPost/getGuide 캐시 태그. 한글 slug에서도 동작하는 주 경로
+  //    (revalidatePath('/blog/<한글>')은 프로덕션에서 효과가 없었음 — lib/cacheTags.ts 참고).
+  //  - revalidatePath(양 로케일 상세 경로): ASCII slug용 보조 수단(한글 slug에는 효과 없어도 무해).
+  // 다른 글의 "관련 글/이전·다음 글"에 신규 글이 반영되는 것은 상세 ISR(1시간) 주기에 맡긴다.
   if (type === 'guide') {
-    revalidatePath('/engineer');
-    revalidatePath('/engineer/[slug]', 'page');
-    if (slug) revalidateTag(guideCacheTag(slug), 'max');
-  } else {
-    revalidatePath('/blog/[slug]', 'page');
-    if (slug) revalidateTag(postCacheTag(slug), 'max');
+    revalidateLocalized('/engineer');
+    // /engineer 목록 데이터는 unstable_cache('engineer-list' 태그)로 캐싱된다(페이지 자체는 동적).
+    revalidateTag('engineer-list', 'max');
+    if (cleanSlug) {
+      revalidateTag(guideCacheTag(cleanSlug), 'max');
+      revalidateLocalized(`/engineer/${encodeURIComponent(cleanSlug)}`);
+    }
+  } else if (cleanSlug) {
+    revalidateTag(postCacheTag(cleanSlug), 'max');
+    revalidateLocalized(`/blog/${encodeURIComponent(cleanSlug)}`);
   }
 
-  return NextResponse.json({ revalidated: true, type, slug });
+  return NextResponse.json({ revalidated: true, type, slug: cleanSlug });
 }

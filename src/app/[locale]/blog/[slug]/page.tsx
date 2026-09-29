@@ -2,6 +2,7 @@ import { unstable_cache } from 'next/cache';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { catTone, publicTags, DEFAULT_ROBOTS, MIN_DISPLAY_VIEWS } from '@/lib/utils';
 import { rankRelated, isStronglyRelated } from '@/lib/related';
+import { withEnFallbackContent } from '@/lib/enFallback';
 import { postCacheTag } from '@/lib/cacheTags';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
@@ -31,7 +32,9 @@ import { formatDate } from '@/i18n/format';
 import { containsHangul, seriesLabel, visiblePublicTags } from '@/i18n/display';
 import type { Locale } from '@/i18n/config';
 
-export const revalidate = 60;
+// 상세 페이지는 발행/수정 웹훅(/api/revalidate → revalidateTag(postCacheTag))으로 즉시
+// 무효화되므로 시간 기반 재생성은 1시간으로 늘려 Supabase egress를 줄인다.
+export const revalidate = 3600;
 
 // 아래 보조 데이터(댓글·이전/다음글·시리즈·관련 콘텐츠)는 전부 try/catch로 감싼다 —
 // 하나라도 unhandled로 throw하면 Promise.all 전체가 실패해 ISR 재생성 렌더가 통째로
@@ -110,26 +113,28 @@ const CAT_TO_GUIDE_CAT: Record<string, string[]> = {
   'IT 트렌드': ['클라우드', '데이터베이스', '네트워킹 / 서버'],
 };
 
-async function getRelatedGuides(category: string): Promise<import('@/lib/types').EngineerGuide[]> {
+async function getRelatedGuides(category: string, locale: Locale): Promise<import('@/lib/types').EngineerGuide[]> {
   const guideCats = CAT_TO_GUIDE_CAT[category] ?? [];
   if (guideCats.length === 0) return [];
   try {
     const client = makeFreshClient();
     const { data } = await client
       .from('engineer_guides')
-      .select('id,title,slug,summary,category,difficulty,views,tags,content')
+      // 본문(content) 미조회(egress). 영문 제목/요약 태그가 없는 예외 행만 content 보충(최대 3건).
+      .select('id,title,slug,summary,category,tags')
       .eq('status', 'published')
       .in('category', guideCats)
       .order('views', { ascending: false })
       .limit(3);
-    return (data ?? []) as import('@/lib/types').EngineerGuide[];
+    return await withEnFallbackContent(client, 'engineer_guides', (data ?? []) as import('@/lib/types').EngineerGuide[], locale);
   } catch (e) {
     console.error('getRelatedGuides 실패:', e);
     return [];
   }
 }
 
-const RELATED_POST_SELECT = 'id,title,slug,excerpt,category,tags,author,agent_role,views,published_at,content,cover_image,content_evidence';
+// 관련 글 카드는 제목/요약(tags·content_evidence로 영문화)·카테고리·썸네일만 쓴다 — 본문(content)은 조회하지 않는다.
+const RELATED_POST_SELECT = 'id,title,slug,excerpt,category,tags,views,published_at,cover_image,content_evidence';
 
 interface RankablePost { id: number; category: string; tags: string[] }
 
@@ -141,9 +146,9 @@ async function getRelatedPosts(post: { id: number; category: string; tags: strin
 
     const [tagRes, catRes] = await Promise.all([
       cleanTags.length > 0
-        ? client.from('posts').select(RELATED_POST_SELECT).eq('status', 'published').neq('id', post.id).overlaps('tags', cleanTags).order('published_at', { ascending: false }).limit(8)
+        ? client.from('posts').select(RELATED_POST_SELECT).eq('status', 'published').neq('id', post.id).overlaps('tags', cleanTags).order('published_at', { ascending: false }).limit(6)
         : Promise.resolve({ data: [] as unknown[] }),
-      client.from('posts').select(RELATED_POST_SELECT).eq('status', 'published').eq('category', post.category).neq('id', post.id).order('published_at', { ascending: false }).limit(8),
+      client.from('posts').select(RELATED_POST_SELECT).eq('status', 'published').eq('category', post.category).neq('id', post.id).order('published_at', { ascending: false }).limit(6),
     ]);
 
     let ranked = rankRelated<RankablePost & Record<string, unknown>>(post, [
@@ -158,15 +163,11 @@ async function getRelatedPosts(post: { id: number; category: string; tags: strin
         .eq('status', 'published')
         .neq('id', post.id)
         .order('views', { ascending: false })
-        .limit(10);
+        .limit(6);
       ranked = rankRelated(post, [ranked, (fallback ?? []) as (RankablePost & Record<string, unknown>)[]]);
     }
 
-    return ranked.slice(0, 3).map((p) => ({
-      ...p,
-      content: undefined,
-      reading_time: readingTime((p.content as string) ?? ''),
-    })) as unknown as import('@/lib/types').PostSummary[];
+    return ranked.slice(0, 3) as unknown as import('@/lib/types').PostSummary[];
   } catch (e) {
     console.error('getRelatedPosts 실패:', e);
     return [];
@@ -185,20 +186,31 @@ async function getPost(slug: string): Promise<Post | null> {
     return await unstable_cache(
       async () => {
         const client = makeFreshClient();
+        // 상세 본문은 content·content_evidence 등 거의 모든 컬럼을 쓴다. 선택적 컬럼
+        // (key_points, title_en/excerpt_en/content_en 등)의 실제 존재 여부를 코드에서 보장할 수
+        // 없어, 명시 목록으로 바꾸면 없는 컬럼 하나로 전 상세가 에러(throw)날 위험이 있어 '*' 유지.
         const { data, error } = await client
           .from('posts')
           .select('*')
           .eq('slug', decoded)
           .eq('status', 'published')
           .single();
-        if (error || !data) return null;
+        // PGRST116 = 행 없음(진짜 404). 그 외 에러(쿼터 초과·네트워크·5xx 등)는 throw해서
+        // ISR이 404를 캐시하지 않고 마지막 정상 페이지를 계속 서빙하게 한다.
+        if (error) {
+          if (error.code === "PGRST116") return null;
+          throw new Error(`supabase fetch failed: ${error.code ?? ""} ${error.message}`);
+        }
+        if (!data) return null;
         return data as unknown as Post;
       },
       ['post-by-slug', decoded],
-      { tags: [postCacheTag(decoded)], revalidate: 60 },
+      { tags: [postCacheTag(decoded)], revalidate: 3600 },
     )();
-  } catch {
-    return null;
+  } catch (e) {
+    // 조회 실패를 null(=notFound)로 바꾸면 ISR이 404를 캐시해 버린다. 반드시 throw.
+    console.error("post/guide fetch failed:", e);
+    throw e;
   }
 }
 
@@ -368,7 +380,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
     getRelatedPosts(post),
     getAdjacentPosts(post.published_at ?? '', post.id),
     getSeriesContext(post.tags ?? [], post.id),
-    getRelatedGuides(post.category),
+    getRelatedGuides(post.category, locale),
     getComments(post.slug),
   ]);
   const mdComponents = makeMdComponents(locale);
@@ -797,7 +809,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
             description: excerptForLocale(locale, p.excerpt, { tags: p.tags, content_evidence: (p as { content_evidence?: unknown }).content_evidence }),
             category: categoryLabel(p.category, locale),
             badgeTone: catTone(p.category),
-            meta: interpolate(dict.blog.readingTime, { min: p.reading_time }),
+            meta: p.reading_time ? interpolate(dict.blog.readingTime, { min: p.reading_time }) : undefined,
             thumb: { coverImage: p.cover_image },
           }))}
         />
