@@ -13,7 +13,9 @@ import { siteUrl } from '@/i18n/metadata';
 import { categoryLabel } from '@/i18n/categories';
 import { formatDate } from '@/i18n/format';
 
-export const revalidate = 60;
+// 참고: 이 페이지는 한글 경로 파라미터라 noStore()로 동적 렌더를 유지한다(한글 경로 ISR 정지 이슈,
+// lib/cacheTags.ts 참고). 아래 값은 noStore 제거 시의 상한이며, 이 페이지 쿼리는 원래 본문을 조회하지 않는다.
+export const revalidate = 900;
 
 interface PostRow {
   id: number;

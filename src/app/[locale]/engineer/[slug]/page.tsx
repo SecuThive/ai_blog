@@ -6,6 +6,7 @@ import { unstable_cache } from 'next/cache';
 import { makeFreshClient } from '@/lib/supabase';
 import { engCatTone, diffLabel, publicTags, DEFAULT_ROBOTS } from '@/lib/utils';
 import { rankRelated } from '@/lib/related';
+import { withEnFallbackContent } from '@/lib/enFallback';
 import { guideCacheTag } from '@/lib/cacheTags';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -19,14 +20,16 @@ import InlineSubscribeCTA from '@/components/InlineSubscribeCTA';
 import RelatedContent, { type RelatedItem } from '@/components/RelatedContent';
 import TrackedExternalLink from '@/components/TrackedExternalLink';
 import {  localizeGuide , titleForLocale, excerptForLocale } from '@/i18n/content';
-import { isLocale } from '@/i18n/config';
+import { isLocale, type Locale } from '@/i18n/config';
 import { getDictionary, interpolate } from '@/i18n/messages';
 import { languageAlternates, siteUrl } from '@/i18n/metadata';
 import { engineerCatLabel, categoryLabel } from '@/i18n/categories';
 import { formatDate } from '@/i18n/format';
 import { containsHangul, visiblePublicTags } from '@/i18n/display';
 
-export const revalidate = 60;
+// 상세 페이지는 웹훅(/api/revalidate → revalidateTag(guideCacheTag))으로 즉시 무효화되므로
+// 시간 기반 재생성은 1시간으로 늘려 Supabase egress를 줄인다.
+export const revalidate = 3600;
 
 // 가이드 Q&A는 comments 테이블을 재사용하되 post_slug를 'guide:'로 네임스페이스해
 // 블로그 글 slug와 충돌하지 않게 한다.
@@ -62,6 +65,8 @@ async function getGuide(slug: string): Promise<EngineerGuide | null> {
     const decoded = decodeURIComponent(slug);
     return await unstable_cache(
       async () => {
+        // 상세 본문은 거의 모든 컬럼을 쓰고, 선택적 컬럼(title_en/summary_en/content_en 등)의
+        // 존재 여부를 코드에서 보장할 수 없어 '*' 유지(없는 컬럼 지정 시 전 상세 에러 위험).
         const { data, error } = await makeFreshClient()
           .from('engineer_guides')
           .select('*')
@@ -78,7 +83,7 @@ async function getGuide(slug: string): Promise<EngineerGuide | null> {
         return data as unknown as EngineerGuide;
       },
       ['guide-by-slug', decoded],
-      { tags: [guideCacheTag(decoded)], revalidate: 60 },
+      { tags: [guideCacheTag(decoded)], revalidate: 3600 },
     )();
   } catch (e) {
     // 조회 실패를 null(=notFound)로 바꾸면 ISR이 404를 캐시해 버린다. 반드시 throw.
@@ -130,21 +135,23 @@ function extractHowToSteps(md: string): { name: string }[] {
   return steps;
 }
 
-const RELATED_GUIDE_SELECT = 'id,title,slug,summary,category,difficulty,tags,content';
+// 사이드바 관련 가이드는 제목·난이도만 쓴다 — 본문(content)은 조회하지 않고, 영문 제목 태그가
+// 없는 예외 행만 최종 4건에 한해 content를 보충한다(withEnFallbackContent).
+const RELATED_GUIDE_SELECT = 'id,title,slug,category,difficulty,tags';
 
 interface RankableGuide { id: number; category: string; tags: string[] }
 
 /** 태그·카테고리 유사도 기반 관련 가이드. 부족하면 조회수 상위 가이드로 폴백. */
-async function getRelated(guide: { id: number; category: string; tags: string[] }): Promise<EngineerGuide[]> {
+async function getRelated(guide: { id: number; category: string; tags: string[] }, locale: Locale): Promise<EngineerGuide[]> {
   try {
     const client = makeFreshClient();
     const cleanTags = publicTags(guide.tags);
 
     const [tagRes, catRes] = await Promise.all([
       cleanTags.length > 0
-        ? client.from('engineer_guides').select(RELATED_GUIDE_SELECT).eq('status', 'published').neq('id', guide.id).overlaps('tags', cleanTags).order('created_at', { ascending: false }).limit(8)
+        ? client.from('engineer_guides').select(RELATED_GUIDE_SELECT).eq('status', 'published').neq('id', guide.id).overlaps('tags', cleanTags).order('created_at', { ascending: false }).limit(6)
         : Promise.resolve({ data: [] as unknown[] }),
-      client.from('engineer_guides').select(RELATED_GUIDE_SELECT).eq('status', 'published').eq('category', guide.category).neq('id', guide.id).order('created_at', { ascending: false }).limit(8),
+      client.from('engineer_guides').select(RELATED_GUIDE_SELECT).eq('status', 'published').eq('category', guide.category).neq('id', guide.id).order('created_at', { ascending: false }).limit(6),
     ]);
 
     let ranked = rankRelated<RankableGuide & Record<string, unknown>>(guide, [
@@ -159,11 +166,11 @@ async function getRelated(guide: { id: number; category: string; tags: string[] 
         .eq('status', 'published')
         .neq('id', guide.id)
         .order('views', { ascending: false })
-        .limit(10);
+        .limit(8);
       ranked = rankRelated(guide, [ranked, (fallback ?? []) as (RankableGuide & Record<string, unknown>)[]]);
     }
 
-    return ranked.slice(0, 4) as unknown as EngineerGuide[];
+    return await withEnFallbackContent(client, 'engineer_guides', ranked.slice(0, 4) as unknown as EngineerGuide[], locale, { title: true });
   } catch (e) {
     console.error('getRelated 실패:', e);
     return [];
@@ -288,7 +295,7 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
   const tone = engCatTone(guide.category);
   const headings = extractHeadings(guide.content);
   const [related, relatedPosts, qa] = await Promise.all([
-    getRelated(guide),
+    getRelated(guide, locale),
     getRelatedBlogPosts(guide.category),
     getGuideQa(guide.slug),
   ]);

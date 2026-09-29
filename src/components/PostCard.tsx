@@ -33,7 +33,7 @@ export default function PostCard({ post, featured = false }: Props) {
         <p className="card-sub" style={{ fontSize: 16, lineHeight: 1.6 }}>{post.excerpt}</p>
         <div className="card-foot">
           <span className="ai-mini">{dict.common.aiWritten}</span>
-          <span>{interpolate(dict.home.minShort, { min: post.reading_time })}</span>
+          {post.reading_time ? <span>{interpolate(dict.home.minShort, { min: post.reading_time })}</span> : null}
           <span>{formatTimeAgo(post.published_at, locale, dict)}</span>
           {post.views >= MIN_DISPLAY_VIEWS && <span>{post.views.toLocaleString()} views</span>}
         </div>
@@ -49,7 +49,7 @@ export default function PostCard({ post, featured = false }: Props) {
       <p className="card-sub">{post.excerpt}</p>
       <div className="card-foot">
         <span className="ai-mini">{dict.common.aiWritten}</span>
-        <span>{interpolate(dict.home.minShort, { min: post.reading_time })}</span>
+        {post.reading_time ? <span>{interpolate(dict.home.minShort, { min: post.reading_time })}</span> : null}
         <span>{formatTimeAgo(post.published_at, locale, dict)}</span>
       </div>
     </Link>

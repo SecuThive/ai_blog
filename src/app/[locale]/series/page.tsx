@@ -1,5 +1,4 @@
 import Link from '@/i18n/link';
-import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
 import { toneForSeries } from '@/lib/utils';
@@ -27,7 +26,9 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   };
 }
 
-export const revalidate = 60;
+// egress 절감: 예전엔 noStore()로 매 요청 DB를 조회했다. 경로가 ASCII라 ISR이 정상 동작하므로
+// 시간 기반 재생성으로 전환한다. 조회 에러는 throw → ISR이 빈 페이지를 캐시하지 않고 직전 정상본 유지.
+export const revalidate = 1800;
 
 interface SeriesInfo {
   name: string;
@@ -40,12 +41,12 @@ interface SeriesInfo {
 }
 
 async function getSeries(locale: 'ko' | 'en'): Promise<SeriesInfo[]> {
-  noStore();
-  const { data } = await makeFreshClient()
+  const { data, error } = await makeFreshClient()
     .from('posts')
     .select('tags,published_at')
     .eq('status', 'published')
     .order('published_at', { ascending: false });
+  if (error) throw new Error(`series fetch failed: ${error.code ?? ''} ${error.message}`);
 
   const map = new Map<string, { count: number; latestDate: string; firstDate: string }>();
 

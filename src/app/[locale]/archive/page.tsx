@@ -1,4 +1,3 @@
-import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
 import ArchiveLoadMore from '@/components/ArchiveLoadMore';
@@ -6,7 +5,9 @@ import { isLocale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/messages';
 import { pageMetadata } from '@/i18n/metadata';
 
-export const revalidate = 60;
+// egress 절감: 예전엔 noStore()로 매 요청 DB를 조회했다. 경로가 ASCII라 ISR이 정상 동작하므로
+// 시간 기반 재생성으로 전환한다. 조회 에러는 throw → ISR이 빈 페이지를 캐시하지 않고 직전 정상본 유지.
+export const revalidate = 1800;
 
 interface PostRow {
   id: number;
@@ -34,12 +35,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 async function getAllPosts(): Promise<PostRow[]> {
-  noStore();
-  const { data } = await makeFreshClient()
+  const { data, error } = await makeFreshClient()
     .from('posts')
     .select('id,title,slug,category,published_at,tags,content_evidence')
     .eq('status', 'published')
     .order('published_at', { ascending: false });
+  if (error) throw new Error(`archive fetch failed: ${error.code ?? ''} ${error.message}`);
   return (data ?? []) as PostRow[];
 }
 

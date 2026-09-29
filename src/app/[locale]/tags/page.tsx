@@ -1,5 +1,4 @@
 import Link from '@/i18n/link';
-import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
 import { catTone, publicTags } from '@/lib/utils';
@@ -9,7 +8,9 @@ import { pageMetadata } from '@/i18n/metadata';
 import { categoryLabel } from '@/i18n/categories';
 import { tagLabel } from '@/i18n/display';
 
-export const revalidate = 60;
+// egress 절감: 예전엔 noStore()로 매 요청 DB를 조회했다. 경로가 ASCII라 ISR이 정상 동작하므로
+// 시간 기반 재생성으로 전환한다. 조회 에러는 throw → ISR이 빈 페이지를 캐시하지 않고 직전 정상본 유지.
+export const revalidate = 1800;
 
 interface TagInfo { tag: string; label: string; count: number }
 
@@ -26,11 +27,11 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 async function getTags(locale: 'ko' | 'en'): Promise<{ popular: TagInfo[]; byCategory: { cat: string; label: string; tone: string; tags: TagInfo[] }[]; total: number }> {
-  noStore();
-  const { data } = await makeFreshClient()
+  const { data, error } = await makeFreshClient()
     .from('posts')
     .select('tags,category')
     .eq('status', 'published');
+  if (error) throw new Error(`tags fetch failed: ${error.code ?? ''} ${error.message}`);
 
   const tagCount = new Map<string, number>();
   const catTags = new Map<string, Map<string, number>>();

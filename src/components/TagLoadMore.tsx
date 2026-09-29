@@ -47,8 +47,12 @@ export default function TagLoadMore({ posts }: { posts: PostRow[] }) {
                 <p className="card-excerpt">{excerptForLocale(locale, p.excerpt, { tags: p.tags, content_evidence: p.content_evidence })}</p>
                 <div className="card-foot">
                   <span>{formatTimeAgo(p.published_at, locale, dict)}</span>
-                  <span className="dot" />
-                  <span>{interpolate(dict.home.minRead, { min: p.reading_time ?? 1 })}</span>
+                  {p.reading_time ? (
+                    <>
+                      <span className="dot" />
+                      <span>{interpolate(dict.home.minRead, { min: p.reading_time })}</span>
+                    </>
+                  ) : null}
                 </div>
               </div>
             </Link>

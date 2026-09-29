@@ -2,7 +2,8 @@ import Link from '@/i18n/link';
 import TrackedExternalLink from '@/components/TrackedExternalLink';
 import { unstable_noStore as noStore } from 'next/cache';
 import { notFound } from 'next/navigation';
-import { readingTime, makeFreshClient } from '@/lib/supabase';
+import { makeFreshClient } from '@/lib/supabase';
+import { withEnFallbackContent } from '@/lib/enFallback';
 import LoadMore from '@/components/LoadMore';
 import JsonLd from '@/components/JsonLd';
 import type { PostSummary } from '@/lib/types';
@@ -13,7 +14,9 @@ import { localizePost, titleForLocale } from '@/i18n/content';
 import { categoryLabel, categoryHref, toKoreanCategory, CAT_TO_SLUG } from '@/i18n/categories';
 import { languageAlternates, siteUrl } from '@/i18n/metadata';
 
-export const revalidate = 60;
+// 참고: 이 페이지는 한글 경로 파라미터라 noStore()로 동적 렌더를 유지한다(한글 경로 ISR 정지 이슈,
+// lib/cacheTags.ts 참고). 아래 값은 noStore 제거 시의 상한이며, egress 절감은 본문 미조회로 확보.
+export const revalidate = 900;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
@@ -154,7 +157,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
   const [{ data }, { data: topData }] = await Promise.all([
     client
       .from('posts')
-      .select('id,title,slug,excerpt,cover_image,category,tags,author,agent_role,views,published_at,content')
+      // 본문(content) 미조회(egress). 영문 제목/요약은 tags·content_evidence, 없으면 아래에서 예외 행만 보충.
+      .select('id,title,slug,excerpt,cover_image,category,tags,views,published_at,content_evidence')
       .eq('status', 'published')
       .eq('category', cat)
       .order('published_at', { ascending: false })
@@ -168,19 +172,21 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
       .limit(3),
   ]);
 
-  const posts: PostSummary[] = (data ?? []).map((p: Record<string, unknown>) => {
+  const listRows = await withEnFallbackContent(client, 'posts', (data ?? []) as (Record<string, unknown> & { id: number })[], locale);
+  const posts: PostSummary[] = listRows.map((p) => {
     const localized = localizePost({
       title: String(p.title ?? ''),
       excerpt: String(p.excerpt ?? ''),
       tags: p.tags as string[] | null,
       content: String(p.content ?? ''),
+      content_evidence: p.content_evidence,
     }, locale);
     return {
       ...p,
       title: localized.title,
       excerpt: localized.excerpt,
       content: undefined,
-      reading_time: readingTime((p.content as string) ?? ''),
+      content_evidence: undefined,
     };
   }) as unknown as PostSummary[];
   const topPosts = ((topData ?? []) as { title: string; slug: string; views: number; tags?: string[] | null; content_evidence?: unknown }[]).map((p) => ({

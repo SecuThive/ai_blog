@@ -1,5 +1,4 @@
 import Link from '@/i18n/link';
-import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { catTone } from '@/lib/utils';
@@ -10,7 +9,9 @@ import { categoryLabel } from '@/i18n/categories';
 import { titleForLocale, excerptForLocale } from '@/i18n/content';
 import { formatTimeAgo } from '@/i18n/format';
 
-export const revalidate = 60;
+// egress 절감: 예전엔 noStore()로 매 요청 DB를 조회했다. 경로가 ASCII라 ISR이 정상 동작하므로
+// 시간 기반 재생성으로 전환한다. 조회 에러는 throw → ISR이 빈 페이지를 캐시하지 않고 직전 정상본 유지.
+export const revalidate = 1800;
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale: raw } = await params;
@@ -53,13 +54,16 @@ function fmtViews(n: number, locale: Locale): string {
 }
 
 async function getPosts(): Promise<PostRow[]> {
-  noStore();
-  const { data } = await makeFreshClient()
+  const { data, error } = await makeFreshClient()
     .from('posts')
+    // 의도적 예외: 이 페이지는 읽기시간(reading_time)으로 평균 통계·'완독 추천' 그룹을 계산하므로
+    // 본문(content)이 필요하다. 대신 noStore(매 요청) → 30분 ISR로 바꿔 조회 빈도를 크게 줄였다.
+    // 근본 해결은 posts에 reading_time(또는 word_count) 컬럼을 추가해 그 컬럼만 조회하는 것.
     .select('id,title,slug,excerpt,category,tags,published_at,views,content,content_evidence')
     .eq('status', 'published')
     .order('published_at', { ascending: false })
     .limit(50);
+  if (error) throw new Error(`recommend fetch failed: ${error.code ?? ''} ${error.message}`);
 
   return (data ?? []).map((p: Record<string, unknown>) => ({
     id: p.id as number,

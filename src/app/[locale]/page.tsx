@@ -1,7 +1,8 @@
 import Link from '@/i18n/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { readingTime, makeFreshClient } from '@/lib/supabase';
+import { makeFreshClient } from '@/lib/supabase';
+import { withEnFallbackContent } from '@/lib/enFallback';
 import { getHomePostIds } from '@/lib/homePosts';
 import { catTone, toneForSeries, engCatTone } from '@/lib/utils';
 import type { PostSummary, EngineerGuide } from '@/lib/types';
@@ -23,9 +24,9 @@ import { formatTimeAgo } from '@/i18n/format';
 import { seriesLabel } from '@/i18n/display';
 
 // 홈은 DB 쿼리 6개를 병렬로 조합하므로 매분 콜드 재생성하면 최초 응답이 길어진다.
-// 발행 웹훅이 목록·sitemap을 별도로 무효화하므로 5분 캐시로 최신 글 반영과 응답 안정성을
-// 함께 확보한다.
-export const revalidate = 300;
+// 발행 웹훅(/api/revalidate)이 '/'를 별도로 무효화하므로 시간 기반 재생성은 30분으로
+// 늘려 Supabase egress를 줄인다(신규 발행은 웹훅으로 즉시 반영).
+export const revalidate = 1800;
 
 export async function generateMetadata({
   params,
@@ -90,13 +91,15 @@ async function getPosts(locale: Locale): Promise<PostSummary[]> {
   const client = makeFreshClient();
   const { data: rows } = await client
     .from('posts')
-    .select('id,title,slug,excerpt,cover_image,category,tags,author,agent_role,views,published_at,content,content_evidence')
+    .select('id,title,slug,excerpt,cover_image,category,tags,views,published_at,content_evidence')
     .in('id', ids)
     .eq('status', 'published')
     .order('published_at', { ascending: false })
     .limit(20);
 
-  return (rows as Record<string, unknown>[]).map((p) => {
+  // 본문은 가져오지 않는다(egress). 영문 제목/요약 태그가 없는 예외 행만 content 보충.
+  const withEn = await withEnFallbackContent(client, 'posts', (rows ?? []) as (Record<string, unknown> & { id: number })[], locale);
+  return withEn.map((p) => {
     const localized = localizePost({
       title: String(p.title ?? ''),
       excerpt: String(p.excerpt ?? ''),
@@ -109,7 +112,7 @@ async function getPosts(locale: Locale): Promise<PostSummary[]> {
       title: localized.title,
       excerpt: localized.excerpt,
       content: undefined,
-      reading_time: readingTime((p.content as string) ?? ''),
+      content_evidence: undefined,
     };
   }) as unknown as PostSummary[];
 }
@@ -285,7 +288,7 @@ function DailyBriefing({ posts, locale, dict }: { posts: PostSummary[]; locale: 
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 0 }}>
                 <span className={`badge badge-${leadTone}`}>{categoryLabel(lead.category, locale)}</span>
                 <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', letterSpacing: '0.04em' }}>
-                  {formatTimeAgo(lead.published_at, locale, dict)} · {interpolate(dict.home.minRead, { min: lead.reading_time })}
+                  {formatTimeAgo(lead.published_at, locale, dict)}{lead.reading_time ? <> · {interpolate(dict.home.minRead, { min: lead.reading_time })}</> : null}
                 </span>
               </div>
               <h3>{lead.title}</h3>
@@ -314,7 +317,7 @@ function DailyBriefing({ posts, locale, dict }: { posts: PostSummary[]; locale: 
                       <Link className="l" href={`/blog/${p.slug}`} style={{ color: 'var(--text-2)' }}>
                         {p.title.length > 36 ? p.title.slice(0, 36) + '…' : p.title}
                       </Link>
-                      <span className="r">{interpolate(dict.home.minShort, { min: p.reading_time })}</span>
+                      {p.reading_time ? <span className="r">{interpolate(dict.home.minShort, { min: p.reading_time })}</span> : null}
                     </li>
                   ))}
                 </ul>
@@ -404,7 +407,7 @@ function ReadingLanes({ lanePosts, locale, dict }: { lanePosts: Record<string, P
                       <span className="num">{String(j + 1).padStart(2, '0')}</span>
                       <div>
                         <p className="t">{p.title}</p>
-                        <p className="m">{interpolate(dict.home.minRead, { min: p.reading_time })}</p>
+                        {p.reading_time ? <p className="m">{interpolate(dict.home.minRead, { min: p.reading_time })}</p> : null}
                       </div>
                     </Link>
                   )) : (
@@ -561,13 +564,14 @@ async function getLanePosts(locale: Locale): Promise<Record<string, PostSummary[
       if (ids.length === 0) return [lane.category, []] as const;
       const { data } = await client
         .from('posts')
-        .select('id,title,slug,category,content,published_at,tags,content_evidence')
+        .select('id,title,slug,category,published_at,tags,content_evidence')
         .in('id', ids)
         .eq('status', 'published')
         .eq('category', lane.category)
         .order('published_at', { ascending: false })
         .limit(3);
-      const items = (data as Record<string, unknown>[]).map((p) => {
+      const withEn = await withEnFallbackContent(client, 'posts', (data ?? []) as (Record<string, unknown> & { id: number })[], locale, { title: true });
+      const items = withEn.map((p) => {
         const localized = localizePost({
           title: String(p.title ?? ''),
           tags: p.tags as string[] | null,
@@ -579,7 +583,6 @@ async function getLanePosts(locale: Locale): Promise<Record<string, PostSummary[
           title: localized.title,
           content: undefined,
           content_evidence: undefined,
-          reading_time: readingTime((p.content as string) ?? ''),
         };
       }) as unknown as PostSummary[];
       return [lane.category, items] as const;
@@ -592,11 +595,12 @@ async function getRecentGuides(locale: Locale): Promise<EngineerGuide[]> {
   const client = makeFreshClient();
   const { data } = await client
     .from('engineer_guides')
-    .select('id,title,slug,summary,category,difficulty,views,created_at,tags,content')
+    .select('id,title,slug,summary,category,difficulty,views,created_at,tags')
     .eq('status', 'published')
     .order('created_at', { ascending: false })
     .limit(6);
-  return (data as EngineerGuide[]).map((g) => localizeGuide(g, locale));
+  const withEn = await withEnFallbackContent(client, 'engineer_guides', (data ?? []) as EngineerGuide[], locale);
+  return withEn.map((g) => ({ ...localizeGuide(g, locale), content: '' }));
 }
 
 function EngineerGuidesSection({ guides, total, locale, dict }: { guides: EngineerGuide[]; total: number; locale: Locale; dict: Messages }) {

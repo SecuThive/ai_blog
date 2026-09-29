@@ -22,7 +22,8 @@ export interface MagPost {
   excerpt: string;
   category: string;
   cover_image?: string;
-  reading_time: number;
+  /** 목록 쿼리는 본문을 가져오지 않으므로 보통 비어 있다 — 있을 때만 표시. */
+  reading_time?: number;
   published_at: string;
   views: number;
 }
@@ -346,9 +347,11 @@ export function MagLatestSection({ posts }: { posts: MagPost[] }) {
             <div className="card-body" style={{ padding: '22px 24px 26px' }}>
               <div className="card-meta">
                 <span className={`badge badge-${bigTone}`}>{categoryLabel(big.category, locale)}</span>
-                <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)' }}>
-                  {interpolate(dict.home.minRead, { min: big.reading_time })}
-                </span>
+                {big.reading_time ? (
+                  <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)' }}>
+                    {interpolate(dict.home.minRead, { min: big.reading_time })}
+                  </span>
+                ) : null}
               </div>
               <h3 className="card-title">{big.title}</h3>
               <p className="card-excerpt" style={{ WebkitLineClamp: 3 } as React.CSSProperties}>{big.excerpt}</p>
@@ -373,8 +376,12 @@ export function MagLatestSection({ posts }: { posts: MagPost[] }) {
                   <p className="card-excerpt">{p.excerpt}</p>
                   <div className="card-foot">
                     <span>{formatTimeAgo(p.published_at, locale, dict)}</span>
-                    <span className="dot" />
-                    <span>{interpolate(dict.home.minRead, { min: p.reading_time })}</span>
+                    {p.reading_time ? (
+                      <>
+                        <span className="dot" />
+                        <span>{interpolate(dict.home.minRead, { min: p.reading_time })}</span>
+                      </>
+                    ) : null}
                   </div>
                 </div>
               </Link>

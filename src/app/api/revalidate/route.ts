@@ -23,6 +23,8 @@ export async function POST(req: NextRequest) {
   // revalidateTag만으로 해당 글 전체(본문+댓글+관련글 등)가 재생성된다.
   if (type === 'guide') {
     revalidatePath('/engineer');
+    // /engineer 목록 데이터는 unstable_cache('engineer-list' 태그)로 캐싱된다(페이지 자체는 동적).
+    revalidateTag('engineer-list', 'max');
     revalidatePath('/engineer/[slug]', 'page');
     if (slug) revalidateTag(guideCacheTag(slug), 'max');
   } else {

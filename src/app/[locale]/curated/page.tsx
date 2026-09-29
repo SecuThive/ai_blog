@@ -1,6 +1,6 @@
 import Link from '@/i18n/link';
 import type { Metadata } from 'next';
-import { supabaseAdmin, readingTime } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import { catTone } from '@/lib/utils';
 import PostThumb from '@/components/PostThumb';
 import { isLocale } from '@/i18n/config';
@@ -30,7 +30,7 @@ interface PostRow {
   excerpt: string;
   category: string;
   published_at: string;
-  reading_time: number;
+  reading_time?: number;
   cover_image?: string;
   views: number;
   tags?: string[];
@@ -40,7 +40,8 @@ interface PostRow {
 async function getPostsByCategory(category: string): Promise<PostRow[]> {
   const { data } = await supabaseAdmin()
     .from('posts')
-    .select('id,title,slug,excerpt,cover_image,category,published_at,views,content,tags,content_evidence')
+    // 본문(content) 미조회(egress) — 제목/요약 영문화는 tags·content_evidence만 사용한다(titleForLocale).
+    .select('id,title,slug,excerpt,cover_image,category,published_at,views,tags,content_evidence')
     .eq('status', 'published')
     .eq('category', category)
     .order('views', { ascending: false })
@@ -55,7 +56,6 @@ async function getPostsByCategory(category: string): Promise<PostRow[]> {
     published_at: p.published_at as string,
     cover_image: p.cover_image as string | undefined,
     views: (p.views as number) ?? 0,
-    reading_time: readingTime((p.content as string) ?? ''),
     tags: (p.tags as string[]) ?? [],
     content_evidence: p.content_evidence,
   }));
@@ -135,9 +135,11 @@ export default async function CuratedPage({ params }: { params: Promise<{ locale
                             </div>
                             <h3 className="card-title">{title}</h3>
                             <p className="card-excerpt">{excerpt}</p>
-                            <div className="card-foot">
-                              <span>{interpolate(dict.common.minRead, { min: p.reading_time })}</span>
-                            </div>
+                            {p.reading_time ? (
+                              <div className="card-foot">
+                                <span>{interpolate(dict.common.minRead, { min: p.reading_time })}</span>
+                              </div>
+                            ) : null}
                           </div>
                         </Link>
                       );
