@@ -68,14 +68,22 @@ async function getGuide(slug: string): Promise<EngineerGuide | null> {
           .eq('slug', decoded)
           .eq('status', 'published')
           .single();
-        if (error || !data) return null;
+        // PGRST116 = 행 없음(진짜 404). 그 외 에러(쿼터 초과·네트워크·5xx 등)는 throw해서
+        // ISR이 404를 캐시하지 않고 마지막 정상 페이지를 계속 서빙하게 한다.
+        if (error) {
+          if (error.code === "PGRST116") return null;
+          throw new Error(`supabase fetch failed: ${error.code ?? ""} ${error.message}`);
+        }
+        if (!data) return null;
         return data as unknown as EngineerGuide;
       },
       ['guide-by-slug', decoded],
       { tags: [guideCacheTag(decoded)], revalidate: 60 },
     )();
-  } catch {
-    return null;
+  } catch (e) {
+    // 조회 실패를 null(=notFound)로 바꾸면 ISR이 404를 캐시해 버린다. 반드시 throw.
+    console.error("post/guide fetch failed:", e);
+    throw e;
   }
 }
 
