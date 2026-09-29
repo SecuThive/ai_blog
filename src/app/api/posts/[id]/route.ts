@@ -59,6 +59,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 }
 
 // GET /api/posts/[id] — single post (by id or slug)
+// 공개 API(README 문서화)라 외부 호출자가 어떤 컬럼에 의존하는지 알 수 없고, 선택적 컬럼
+// (key_points, title_en 등)의 존재 여부도 코드에서 보장할 수 없어 응답 형태 보존을 위해 '*' 유지.
+// 북마크 페이지는 더 이상 이 엔드포인트를 쓰지 않는다(POST /api/bookmarks, 조회수 증가 없음).
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const sb = supabaseAdmin();

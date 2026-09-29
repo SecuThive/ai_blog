@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { catTone } from '@/lib/utils';
 import { useT } from '@/i18n/provider';
 import { categoryLabel } from '@/i18n/categories';
-import { titleForLocale } from '@/i18n/content';
 
 interface BookmarkedPost {
   id: number;
@@ -49,18 +48,23 @@ export default function BookmarksPage() {
   useEffect(() => {
     if (slugs.length === 0) { setLoading(false); return; }
     setLoading(true);
-    Promise.all(
-      slugs.map(slug =>
-        fetch(`/api/posts/${slug}`).then(r => r.ok ? r.json() : null).catch(() => null)
-      )
-    ).then(results => {
-      const valid = results
-        .filter((r): r is { post: BookmarkedPost } => r?.post != null)
-        .map(r => r.post);
-      setPosts(valid);
-      setLoading(false);
-    });
-  }, [slugs]);
+    // 한 번의 배치 요청으로 카드 컬럼만 가져온다(글마다 /api/posts/[slug] 호출 → 전체 본문 조회 +
+    // 조회수 증가가 발생하던 문제 해소). 제목/요약은 서버에서 locale에 맞게 영문화된다.
+    let cancelled = false;
+    fetch('/api/bookmarks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slugs: slugs.slice(0, 100), locale }),
+    })
+      .then(r => (r.ok ? r.json() : { posts: [] }))
+      .catch(() => ({ posts: [] }))
+      .then((res: { posts?: BookmarkedPost[] }) => {
+        if (cancelled) return;
+        setPosts(Array.isArray(res.posts) ? res.posts : []);
+        setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [slugs, locale]);
 
   const remove = (slug: string) => {
     const next = slugs.filter(s => s !== slug);

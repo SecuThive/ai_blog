@@ -185,11 +185,12 @@ export async function POST(req: NextRequest) {
     }, { status: 200 });
   }
 
-  // Revalidate blog pages
+  // Revalidate list pages + this post's detail (slug 지정: /api/revalidate는 더 이상 전 상세를 무효화하지 않음)
   try {
     await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/revalidate`, {
       method: 'POST',
-      headers: { 'x-api-key': process.env.BLOG_API_KEY! },
+      headers: { 'x-api-key': process.env.BLOG_API_KEY!, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'post', slug: data?.slug }),
     });
   } catch { /* non-critical */ }
 
