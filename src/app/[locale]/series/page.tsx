@@ -8,15 +8,13 @@ import { getDictionary, interpolate } from '@/i18n/messages';
 import { seriesDescription, seriesLabel } from '@/i18n/display';
 import { siteUrl } from '@/i18n/metadata';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
-
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale: raw } = await params;
   const locale = isLocale(raw) ? raw : 'ko';
   const dict = getDictionary(locale);
   const desc = locale === 'en'
-    ? '14 series and 100+ in-depth episodes. From RAG to enterprise AI, read them in order.'
-    : '14개 시리즈, 100편 이상의 심층 연재. RAG부터 엔터프라이즈 AI까지 순서대로 읽으면 됩니다.';
+    ? 'Browse multi-part technical series, from RAG to infrastructure, in reading order.'
+    : 'RAG부터 인프라까지, 2편 이상으로 구성된 기술 시리즈를 순서대로 읽어보세요.';
   const url = siteUrl('/series', locale);
   return {
     title: dict.pages.seriesTitle,
@@ -64,6 +62,7 @@ async function getSeries(locale: 'ko' | 'en'): Promise<SeriesInfo[]> {
   }
 
   return Array.from(map.entries())
+    .filter(([, value]) => value.count >= 2)
     .map(([name, v]) => ({
       name,
       label: seriesLabel(name, locale),

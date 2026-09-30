@@ -5,8 +5,6 @@ import type { Metadata } from 'next';
 import { VENDORS, CATEGORIES, categoryLabel, type SecurityCategory } from './data';
 import SecurityCatalog from './SecurityCatalog';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
-
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale: raw } = await params;
   const locale = isLocale(raw) ? raw : 'ko';
@@ -16,8 +14,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     path: '/security',
     title: dict.pages.securityTitle,
     description: locale === 'en'
-      ? 'Catalog of major Korean security vendors — firewall, EDR, SIEM, WAF, MFA, and more.'
-      : '방화벽, EDR, SIEM, WAF, MFA 등 국내 주요 보안 벤더와 솔루션 카탈로그.',
+      ? 'Catalog of Korean security vendors across network, endpoint, web, identity, and data security.'
+      : '네트워크·엔드포인트·웹·인증·데이터 보안 분야의 국내 업체와 제품 카탈로그.',
   });
 }
 
@@ -45,8 +43,8 @@ export default async function SecurityPage({ params }: { params: Promise<{ local
           </div>
           <h1 className="page-title">{locale === 'en' ? 'Korean security solutions catalog' : '국내 보안 솔루션 카탈로그'}</h1>
           <p className="page-lead">{locale === 'en'
-              ? 'Major Korean security vendors by category — firewall, EDR, SIEM, WAF, MFA, and more.'
-              : '방화벽, EDR, SIEM, WAF, MFA 등 분야별 국내 주요 보안 벤더 솔루션을 한눈에.'}</p>
+              ? 'Browse Korean security vendors by network, endpoint, web, identity, and data security category.'
+              : '네트워크·엔드포인트·웹·인증·데이터 보안 분야별 업체와 제품을 살펴보세요.'}</p>
 
           {/* 통계 */}
           <div style={{ display: 'flex', gap: 24, marginTop: 24, flexWrap: 'wrap' }}>

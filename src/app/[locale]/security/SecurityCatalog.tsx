@@ -17,14 +17,11 @@ const PRODUCT_EN: Record<string, string> = {
   'MDR 서비스': 'MDR service',
   'FIDO2 솔루션': 'FIDO2 solution',
   'PKI 솔루션': 'PKI solution',
-  'KICA 공동인증서': 'KICA certificate',
-  'KICA 전자서명 API': 'KICA e-sign API',
+  '공동인증서': 'Joint certificate',
   'CrossCert 공동인증서': 'CrossCert certificate',
   '전자서명 SDK': 'E-sign SDK',
   'SOUL 프린트': 'SOUL Print',
-  'PCI DSS 솔루션': 'PCI DSS solution',
   'ESRC 위협 인텔리전스': 'ESRC threat intelligence',
-  'CAVE (악성코드 분석)': 'CAVE (malware analysis)',
   'CEREBRO-DD (단방향 전송)': 'CEREBRO-DD (one-way transfer)',
   'CEREBRO-XTD (OT 가시성)': 'CEREBRO-XTD (OT visibility)',
   'Mail-i (이메일 DLP)': 'Mail-i (email DLP)',
@@ -65,7 +62,7 @@ export default function SecurityCatalog() {
       );
     }
     return list;
-  }, [active, query]);
+  }, [active, query, locale]);
 
   const countAll = VENDORS.length;
   const counts = useMemo(() => {
@@ -168,9 +165,7 @@ export default function SecurityCatalog() {
                   <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-1)', lineHeight: 1.2 }}>
                     {locale === 'en' ? v.nameEn : v.name}
                   </div>
-                  <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 10.5, color: 'var(--text-4)', marginTop: 3, letterSpacing: '0.06em' }}>
-                    {locale === 'en' ? `Est. ${v.founded}` : `${v.nameEn} · Est. ${v.founded}`}
-                  </div>
+                  {locale !== 'en' && <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 10.5, color: 'var(--text-4)', marginTop: 3, letterSpacing: '0.06em' }}>{v.nameEn}</div>}
                 </div>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
                   style={{ color: 'var(--text-4)', flexShrink: 0, marginTop: 4 }}>

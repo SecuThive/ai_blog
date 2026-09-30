@@ -10,7 +10,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-111827?style=flat-square&logo=nextdotjs&logoColor=white)](https://nextjs.org)
 [![React](https://img.shields.io/badge/React-19.2-149ECA?style=flat-square&logo=react&logoColor=white)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Vercel](https://img.shields.io/badge/Deployed_on-Vercel-111827?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com)
 
 **공식 문서와 1차 자료를 추적하고, AI의 속도에 사람의 판단을 더합니다.**
@@ -33,7 +33,7 @@
     </td>
     <td width="33%" valign="top">
       <strong>02 · REVIEW</strong><br><br>
-      AI 초안을 사람이 사실성, 재현성, 실무 적용성 기준으로 검토합니다.
+      출처와 실행 여부를 글별로 확인하고, 확인된 범위를 기록합니다.
     </td>
     <td width="33%" valign="top">
       <strong>03 · SHIP</strong><br><br>
@@ -44,7 +44,7 @@
 
 ## 프로젝트 소개
 
-Nodelog는 IT·개발·보안 실무자를 위한 한국어 기술 미디어입니다. AI 에이전트가 공식 문서와 1차 기술 자료를 바탕으로 초안을 만들고, 사람 편집자가 사실관계·재현 가능성·실무 적용성을 검토한 뒤 발행합니다.
+Nodelog는 IT·개발·보안 실무자를 위한 한국어 기술 미디어입니다. AI 도구를 자료 조사와 초안 작성에 활용할 수 있으며, 글마다 출처와 확인 범위를 살펴볼 수 있도록 콘텐츠를 보강하고 있습니다.
 
 이 저장소에는 [thivelab.com](https://www.thivelab.com)의 프론트엔드, 콘텐츠 API, 검색, 댓글, 뉴스레터, SEO 및 운영 자동화 코드가 들어 있습니다.
 
@@ -88,7 +88,7 @@ Nodelog는 IT·개발·보안 실무자를 위한 한국어 기술 미디어입�
 flowchart LR
     A["AI 콘텐츠 엔진"] -->|"API · 승인 대기"| B["편집자 검토"]
     B -->|"발행 승인"| C["Next.js API"]
-    C --> D[("Supabase")]
+    C --> D[("PostgreSQL · PostgREST")]
     C -->|"revalidatePath"| E["Next.js App Router"]
     D --> E
     E --> F["Vercel"]
@@ -102,14 +102,14 @@ flowchart LR
 ### 기술 스택
 
 <p>
-  <img src="https://skillicons.dev/icons?i=nextjs,react,ts,tailwind,supabase,vercel&theme=dark" alt="Next.js, React, TypeScript, Tailwind CSS, Supabase, Vercel">
+  <img src="https://skillicons.dev/icons?i=nextjs,react,ts,tailwind,postgres,vercel&theme=dark" alt="Next.js, React, TypeScript, Tailwind CSS, PostgreSQL, Vercel">
 </p>
 
 | Layer | Technology | Responsibility |
 | --- | --- | --- |
 | Web | Next.js 16 · React 19 · TypeScript | App Router, RSC, Route Handler, Metadata |
 | Content | React Markdown · remark-gfm | Markdown 및 GFM 본문 렌더링 |
-| Data | Supabase · PostgreSQL | 콘텐츠, 댓글, 구독자, 문의와 RLS |
+| Data | 자체 운영 PostgreSQL · PostgREST | 콘텐츠, 댓글, 구독자, 문의와 API 접근 제어 |
 | Delivery | Vercel · ISR · Cron | 배포, 캐시 재검증, 예약 작업, Analytics |
 | Messaging | Resend | 구독, 뉴스레터, 문의 알림 |
 | Discovery | IndexNow · JSON-LD · RSS | 검색엔진 갱신과 콘텐츠 배포 |
@@ -134,7 +134,7 @@ npm install
 npm run dev
 ```
 
-**Requirements**　Node.js 20+ · npm · Supabase project<br>
+**Requirements**　Node.js 20+ · npm · PostgreSQL with a PostgREST endpoint<br>
 **Local URL**　[http://localhost:3000](http://localhost:3000)
 
 아래 환경 변수 표를 참고해 `.env.local`을 구성하세요. 실제 키는 Git에 커밋하지 않습니다.
@@ -146,9 +146,9 @@ npm run dev
 | 변수 | 설명 |
 | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | canonical과 OG URL에 사용할 사이트 주소 |
-| `SUPABASE_URL` | Supabase 프로젝트 URL |
-| `SUPABASE_ANON_KEY` | 공개 읽기용 Supabase anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | 서버 API의 쓰기 작업용 service role key |
+| `SUPABASE_URL` | 자체 운영 PostgREST의 공개 기본 URL (`/rest/v1` 앞부분). 기존 클라이언트 호환을 위해 변수명 유지 |
+| `SUPABASE_ANON_KEY` | PostgREST 공개 읽기용 JWT. 기존 클라이언트 호환 변수명 |
+| `SUPABASE_SERVICE_ROLE_KEY` | PostgREST 서버 쓰기용 JWT. 기존 클라이언트 호환 변수명 |
 | `BLOG_API_KEY` | 글 생성·수정·재검증 API 인증 키 |
 
 #### 기능별 선택
@@ -200,7 +200,7 @@ ai-blog/
 │   │   ├── robots.ts          # 검색봇 정책
 │   │   └── rss/               # RSS 피드
 │   ├── components/            # 공통 UI와 클라이언트 상호작용
-│   └── lib/                   # Supabase, 타입, 리다이렉트, SEO 유틸
+│   └── lib/                   # PostgREST 호환 클라이언트, 타입, SEO 유틸
 ├── scripts/                   # 생성·감사·정리·리프레시 자동화
 ├── docs/                      # 콘텐츠 템플릿과 SEO 운영 문서
 ├── public/                    # 정적 파일, llms.txt, IndexNow 키
@@ -223,11 +223,11 @@ ai-blog/
 | `subscribers` | 뉴스레터 구독 상태 |
 | `contact_messages` | 문의 폼 메시지 |
 
-공개 사용자는 RLS 정책을 통해 발행된 콘텐츠만 읽을 수 있습니다. 데이터 변경은 서버 Route Handler에서 service role로 수행합니다.
+공개 읽기와 서버 쓰기 권한은 PostgREST 역할과 데이터베이스 정책으로 관리합니다. 데이터 변경은 서버 Route Handler에서 service role로 수행합니다.
 
 ### 초기 스키마 적용
 
-Supabase SQL Editor에서 다음 순서로 실행합니다.
+새로운 PostgreSQL 환경에서는 기존 SQL 파일을 그대로 적용하기 전에 현재 운영 스키마와 역할·권한 설정을 대조합니다. 아래 파일은 초기 스키마 참고 자료입니다.
 
 1. `supabase-schema.sql`
 2. `comments-schema.sql`
@@ -281,7 +281,7 @@ API는 본문 최상위 제목과 태그를 정규화합니다. 유사한 기존
   → 출처·명령어·버전·안전성 검토
   → 중복 및 카니벌라이제이션 검사
   → 편집자 승인
-  → Supabase 발행
+  → 내부 PostgreSQL 발행
   → Next.js 캐시 재검증
   → Sitemap·RSS·IndexNow 갱신
 ```
@@ -334,7 +334,7 @@ node scripts/audit-cannibalization.mjs
 node scripts/score-content-quality.mjs
 ```
 
-일부 스크립트는 운영 Supabase 데이터를 변경합니다. 파일 상단의 설명과 dry-run 지원 여부를 확인한 뒤 실행하세요.
+일부 과거 스크립트는 이전 Supabase 주소를 하드코딩했거나 운영 데이터를 변경합니다. 실행 전 연결 주소와 dry-run 지원 여부를 확인하세요. 현재 콘텐츠 점검 스크립트는 [수정 기록](./docs/CONTENT_REMEDIATION_2026-09-30.md)을 참고하세요.
 
 대표 도메인 설정, Search Console·네이버 서치어드바이저 등록 체크리스트, sitemap/RSS 제출 URL,
 분석 이벤트 목록과 개인정보 원칙은 [docs/SEO_ANALYTICS.md](./docs/SEO_ANALYTICS.md)를 참고하세요.
@@ -363,7 +363,7 @@ GitHub main
 
 - 비밀 키와 service role key를 저장소에 커밋하지 않습니다.
 - 쓰기 API는 `x-api-key`, Cron secret 등 서버 측 인증을 사용합니다.
-- 공개 데이터는 Supabase RLS로 발행 상태만 조회할 수 있게 제한합니다.
+- 공개 읽기 범위는 PostgREST 역할·데이터베이스 정책과 서버 API에서 관리합니다.
 - 댓글은 IP 원문 대신 salt가 포함된 해시를 저장하고 요청 빈도를 제한합니다.
 - 외부 입력은 길이·형식·허용 호스트를 검사한 뒤 처리합니다.
 

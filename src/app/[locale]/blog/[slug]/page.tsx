@@ -33,7 +33,7 @@ import { containsHangul, seriesLabel, visiblePublicTags } from '@/i18n/display';
 import type { Locale } from '@/i18n/config';
 
 // 상세 페이지는 발행/수정 웹훅(/api/revalidate → revalidateTag(postCacheTag))으로 즉시
-// 무효화되므로 시간 기반 재생성은 1시간으로 늘려 Supabase egress를 줄인다.
+// 무효화되므로 시간 기반 재생성은 1시간으로 늘려 DB 트래픽을 줄인다.
 export const revalidate = 3600;
 
 // 아래 보조 데이터(댓글·이전/다음글·시리즈·관련 콘텐츠)는 전부 try/catch로 감싼다 —
@@ -199,7 +199,7 @@ async function getPost(slug: string): Promise<Post | null> {
         // ISR이 404를 캐시하지 않고 마지막 정상 페이지를 계속 서빙하게 한다.
         if (error) {
           if (error.code === "PGRST116") return null;
-          throw new Error(`supabase fetch failed: ${error.code ?? ""} ${error.message}`);
+          throw new Error(`post fetch failed: ${error.code ?? ""} ${error.message}`);
         }
         if (!data) return null;
         return data as unknown as Post;
@@ -685,7 +685,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
 
             <div className="endmark">✦ ✦ ✦</div>
 
-            {/* AI 보조 도구 활용과 사람의 편집 판단을 투명하게 안내한다. */}
+            {/* 글별 근거와 기록된 검토 범위만 안내한다. */}
             <div className="editorial-note">
               <div className="editorial-note-head">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -700,8 +700,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
                 <a href="mailto:thive8564@gmail.com">{dict.blog.reportEmail}</a>
               </p>
               <div className="editorial-note-meta">
-                <span>{dict.blog.editorialOwner} · {post.reviewed_by || dict.meta.authors}</span>
-                <span className="sep">·</span>
+                {post.reviewed_at && post.reviewed_by && <><span>{dict.blog.editorialOwner} · {post.reviewed_by}</span><span className="sep">·</span></>}
                 <span>{dict.blog.published} · <time dateTime={post.published_at ?? undefined}>{dateStr}</time></span>
                 {hasMeaningfulUpdate && <><span className="sep">·</span><span>{dict.blog.updated} · <time dateTime={post.updated_at ?? undefined}>{modifiedDateStr}</time></span></>}
               </div>

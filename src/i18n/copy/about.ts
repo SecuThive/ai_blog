@@ -15,7 +15,7 @@ const ABOUT: Record<Locale, AboutCopy> = {
   ko: {
     stats: [
       { num: 'PRACTICAL', label: 'TECHNICAL GUIDES', sub: 'Linux · Docker · Network · Security' },
-      { num: 'REVIEWED', label: 'EDITORIAL PROCESS', sub: '자료 확인 · 문맥 검토 · 발행 판단' },
+      { num: 'EDITORIAL', label: 'CONTENT PROCESS', sub: '자료 확인 · 정정 · 출처 보강' },
       { num: 'UPDATED', label: 'LIVING CONTENT', sub: '오류 정정 · 문서 변경 반영 · 지속 보강' },
     ],
     missionTitle: '미션',
@@ -41,7 +41,7 @@ const ABOUT: Record<Locale, AboutCopy> = {
   en: {
     stats: [
       { num: 'PRACTICAL', label: 'TECHNICAL GUIDES', sub: 'Linux · Docker · Network · Security' },
-      { num: 'REVIEWED', label: 'EDITORIAL PROCESS', sub: 'Source check · context review · publish decision' },
+      { num: 'EDITORIAL', label: 'CONTENT PROCESS', sub: 'Source checks · corrections · citation updates' },
       { num: 'UPDATED', label: 'LIVING CONTENT', sub: 'Corrections · doc changes · ongoing expansion' },
     ],
     missionTitle: 'Mission',

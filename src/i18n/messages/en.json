@@ -1,7 +1,7 @@
 {
   "meta": {
     "siteName": "Nodelog — IT, engineering, and security media",
-    "siteDesc": "Practical IT, development, security, and infrastructure media. We verify official docs and keep content reviewed, corrected, and updated.",
+    "siteDesc": "Practical IT, development, security, and infrastructure articles with article-specific sources and corrections.",
     "authors": "Nodelog editorial team"
   },
   "lang": {
@@ -63,9 +63,9 @@
     "policy": "Editorial policy"
   },
   "home": {
-    "heroLine1": "Verified sources, reviewed context —",
-    "heroLine2": "practical IT insight for today.",
-    "heroLead": "Automation, development, security, infrastructure, and productivity. We pull what practitioners need from official docs and technical sources, then check the facts and context before publishing.",
+    "heroLine1": "Practical context for",
+    "heroLine2": "today's IT decisions.",
+    "heroLead": "Automation, development, security, infrastructure, and productivity. Look to each article for its available sources and verification scope.",
     "latestPost": "Read the latest",
     "engineerGuides": "Engineer guides",
     "howWeWork": "How we work",
@@ -76,7 +76,7 @@
     "minRead": "{min} min read",
     "minShort": "{min} min",
     "latestTitle": "Latest",
-    "latestSub": "Newly reviewed insights, in chronological order.",
+    "latestSub": "Recently published articles, in chronological order.",
     "archive": "Archive",
     "noCategoryPosts": "No posts in this category yet.",
     "filterAll": "All",
@@ -195,8 +195,8 @@
     "cautions": "Cautions",
     "officialDocs": "Official docs",
     "relatedOfficial": "Related official docs",
-    "editorialReview": "Editorial review",
-    "editorialBody": "Nodelog reviews every piece before publishing. Technical details that vary by OS or version are checked against official docs. Standards and corrections are in our editorial policy. If you find an error, email us — we will review and fix it promptly.",
+    "editorialReview": "Sources and verification",
+    "editorialBody": "Sources and verification vary by article. Treat a claim as checked only within the test environment, date, and official references stated in that article. Check the current docs for your version before applying instructions, and email us about errors.",
     "editorialOwner": "Editorial owner",
     "published": "Published",
     "seeAuthor": "How we write and review →",
@@ -207,7 +207,7 @@
     "sections": "Sections",
     "publishedDate": "Published",
     "authorRole": "Editorial owner",
-    "authorBio": "We check official docs, verify commands, and review each piece. Reader reports and upstream doc changes are used to correct and expand our content.",
+    "authorBio": "Check each article for its available sources and verification scope. Reader reports and upstream changes help us correct and expand content.",
     "relatedGuidesTitle": "Related engineer guides",
     "allGuides": "All guides",
     "guideMeta": "GUIDE · reference",
@@ -234,7 +234,7 @@
     "modified": "Updated",
     "views": "{count} views",
     "noteHead": "Editorial note",
-    "noteBody": "This guide was drafted with AI assistance and reviewed by an editor for commands and context. Results can vary by OS and tool version — confirm against official docs before applying. If you find an error, email us.",
+    "noteBody": "AI tools may assist drafting. Check the evidence in each guide for whether commands were run and which environment was used. Confirm the current docs for your version before applying instructions, and email us about errors.",
     "seeAuthor": "How we write and review →",
     "seePolicy": "Editorial policy →",
     "searchPlaceholder": "Search titles, tags, categories…",
