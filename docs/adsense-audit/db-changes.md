@@ -29,3 +29,6 @@
 ## 참고: updated_at 일괄 갱신
 - 발행 글 540편 모두 `updated_at`이 발행일보다 하루 넘게 늦다. 364편은 2026-09-18 01~03시, 131편은 2026-09-29 02~03시(KST)에 찍혔다. 번역(`content_evidence.en`) 일괄 추가 때 트리거 `posts_set_content_updated_at`이 실행된 결과다.
 - `engineer_guides`는 트리거가 없다. 26편이 2026-09-29 05:00에 제목이 바뀌었다(`refresh_apply.py`).
+
+## 시간 민감 콘텐츠 갱신 (2026-10-04, 운영 DB 적용)
+- posts #217, #206, #224, #419, #284, #212, #798, #743, #417 KO·EN 본문 갱신(각 1행). 백업 `~/project/nodelog-db/backups/stale-refresh-20261004-0437.dump`, 행별 복원 SQL은 같은 폴더의 `stale-refresh-20261004-0437-restore/`. 자세한 내용은 `stale-refresh.md`, SQL은 `sql/stale-refresh/`.
