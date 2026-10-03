@@ -75,3 +75,8 @@
 2. 2절 병합 15건을 한 번에 할지, 조회 상위부터 나눌지.
 3. noindex D·E 묶음(85편)을 AdSense 재신청 전에 비공개로 돌릴지. noindex여도 사이트 안에서 열람·크롤링되므로 심사자가 볼 수 있다. 비공개로 돌리면 리다이렉트 대상을 함께 정해야 한다.
 4. B 묶음 11편의 재작성 우선순위.
+
+## 5. CSP 방식 (참고)
+Google AdSense의 CSP 안내(support.google.com/adsense/answer/16283098)는 nonce 기반 strict CSP(`script-src 'nonce-…' 'unsafe-inline' 'unsafe-eval' 'strict-dynamic' https: http:; object-src 'none'; base-uri 'none'`)만 공식 지원하고, 도메인 목록 방식은 도메인이 바뀌어 깨질 수 있다고 밝힌다. 이 PR은 도메인 목록 방식을 유지하면서 AdSense·Cloudflare Web Analytics 도메인을 추가했다. nonce 방식은 요청마다 HTML을 새로 렌더링해야 해서 ISR 캐시와 DB 조회 절감 효과를 잃는다.
+- 선택지 1(현재): 목록 방식. 배포 뒤 브라우저 콘솔과 `Content-Security-Policy-Report-Only` 보고로 차단된 광고 요청이 있는지 확인한다.
+- 선택지 2: nonce 기반 strict CSP로 전환. 광고 호환성은 공식 지원되지만 캐시 전략을 다시 짜야 한다.
