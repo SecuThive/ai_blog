@@ -39,7 +39,7 @@ const FAQ: Record<Locale, FaqCopy> = {
       {
         category: 'service',
         q: '이 블로그는 어떤 주제를 다루나요?',
-        a: 'AI & 자동화, IT 트렌드, 개발, 툴 리뷰, 보안 등 5개 카테고리를 중심으로 운영됩니다. LLM·RAG·에이전트 아키텍처, 백엔드 개발, DevOps, 보안, 최신 AI 도구 리뷰를 다룹니다. 단순 뉴스가 아니라, 변화의 의미와 실무 적용 방법까지 다루는 것을 원칙으로 합니다.',
+        a: 'AI & 자동화, IT 트렌드, 개발, 툴 리뷰, 보안, 인프라 6개 카테고리를 중심으로 운영됩니다. LLM·RAG·에이전트 아키텍처, 백엔드 개발, DevOps, 보안, 최신 AI 도구 리뷰를 다룹니다. 단순 뉴스가 아니라, 변화의 의미와 실무 적용 방법까지 다루는 것을 원칙으로 합니다.',
       },
       {
         category: 'service',
@@ -54,22 +54,22 @@ const FAQ: Record<Locale, FaqCopy> = {
       {
         category: 'content',
         q: 'AI 도구는 콘텐츠 제작에 어떻게 활용되나요?',
-        a: 'Nodelog는 자료 조사, 콘텐츠 구조화 및 초안 작성 과정에서 AI 도구를 보조적으로 활용합니다. AI가 생성한 결과물을 그대로 자동 공개하지 않으며, 사람이 관련 자료를 확인하고 사실관계, 명령어, 문맥 및 표현을 검토한 뒤 최종 발행 여부를 결정합니다. 발행된 콘텐츠도 공식 문서 변경이나 오류 제보가 확인되면 수정·보강합니다.',
+        a: 'Nodelog의 글 대부분은 AI 도구로 초안을 만들었고, 발행 여부는 운영자가 결정합니다. 모든 글의 명령어와 수치를 사람이 실행·대조한 것은 아닙니다. 사람이 확인한 글에는 하단에 확인일·확인 범위·출처가 검증 기록으로 표시되며, 기록이 없는 글은 확인 기록이 없는 상태입니다. 공식 문서 변경이나 오류 제보가 확인되면 수정·보강합니다.',
       },
       {
         category: 'content',
         q: '글은 어떻게 작성되나요?',
-        a: '주제 선정 → 자료 확인 → 초안 준비 → 편집 검토 → 발행 판단 → 정정·보강의 단계를 거칩니다. AI 도구는 조사와 초안 준비를 보조하며, 공개 여부와 수정 범위는 사람이 결정합니다. 자세한 내용은 편집자 페이지의 운영 방식 섹션에서 확인할 수 있습니다.',
+        a: '주제 선정 → AI 도구를 이용한 초안 작성 → 운영자의 발행 결정 → 오류 제보·문서 변경에 따른 정정·보강 순서로 운영합니다. 운영자가 확인한 글에는 확인 범위를 기록해 표시합니다. 자세한 내용은 편집자 페이지의 운영 방식 섹션에서 확인할 수 있습니다.',
       },
       {
         category: 'newsletter',
         q: '뉴스레터는 어떻게 구독하나요?',
-        a: '홈 페이지 하단 또는 구독 페이지에서 이메일을 입력하면 됩니다. 매주 화요일 오전 8시(KST) 발송되며, 언제든 해지 가능합니다.',
+        a: '홈 페이지 하단 또는 구독 페이지에서 이메일을 입력하면 됩니다. 발송 주기는 아직 고정되어 있지 않으며, 언제든 해지할 수 있습니다.',
       },
       {
         category: 'newsletter',
         q: '뉴스레터 구독 해지는 어떻게 하나요?',
-        a: '수신한 뉴스레터 하단의 "구독 해지" 링크를 클릭하거나, thive8564@gmail.com으로 해지 요청을 보내주시면 즉시 처리합니다.',
+        a: '수신한 뉴스레터 하단의 "구독 해지" 링크를 클릭하거나, thive8564@gmail.com으로 해지 요청을 보내주시면 확인 후 처리합니다.',
       },
       {
         category: 'etc',
@@ -99,7 +99,7 @@ const FAQ: Record<Locale, FaqCopy> = {
       {
         category: 'service',
         q: 'What does this site cover?',
-        a: 'Five categories: AI & automation, IT trends, development, tool reviews, and security. That includes LLM, RAG, and agent architecture, backend work, DevOps, security, and current AI tools. The rule is not just news — we cover what a change means and how to apply it.',
+        a: 'Six categories: AI & automation, IT trends, development, tool reviews, security, and infrastructure. That includes LLM, RAG, and agent architecture, backend work, DevOps, security, and current AI tools. The rule is not just news — we cover what a change means and how to apply it.',
       },
       {
         category: 'service',
@@ -114,22 +114,22 @@ const FAQ: Record<Locale, FaqCopy> = {
       {
         category: 'content',
         q: 'How is AI used in the writing?',
-        a: 'AI tools assist research, structuring, and drafting. We do not auto-publish the output. A person checks the sources, facts, commands, context, and wording, then decides whether to publish. After publication we still correct and expand when official docs change or readers report errors.',
+        a: 'Most Nodelog articles started as AI-generated drafts, and the site operator decides what is published. Not every command or figure has been run or checked by a person. Articles a person has checked show a verification record (check date, scope, sources) at the bottom; articles without one have no recorded check. We correct and expand pieces when official docs change or readers report errors.',
       },
       {
         category: 'content',
         q: 'How is a piece written?',
-        a: 'Topic → source check → draft → editorial review → publish decision → correction and expansion. AI helps with research and the draft; a person decides what goes live and what to change. More detail is on the editorial standards page.',
+        a: 'Topic → AI-assisted draft → operator publish decision → correction and expansion after reader reports or doc changes. When the operator checks an article, the scope of that check is recorded and shown. More detail is on the editorial standards page.',
       },
       {
         category: 'newsletter',
         q: 'How do I subscribe?',
-        a: 'Enter your email in the footer on the home page or on the subscribe page. We send on Tuesdays at 08:00 KST. You can unsubscribe at any time.',
+        a: 'Enter your email in the footer on the home page or on the subscribe page. There is no fixed sending schedule yet. You can unsubscribe at any time.',
       },
       {
         category: 'newsletter',
         q: 'How do I unsubscribe?',
-        a: 'Use the unsubscribe link at the bottom of any newsletter, or email thive8564@gmail.com. We process it immediately.',
+        a: 'Use the unsubscribe link at the bottom of any newsletter, or email thive8564@gmail.com and we will process it.',
       },
       {
         category: 'etc',

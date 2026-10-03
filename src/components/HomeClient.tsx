@@ -357,8 +357,6 @@ export function MagLatestSection({ posts }: { posts: MagPost[] }) {
               <p className="card-excerpt" style={{ WebkitLineClamp: 3 } as React.CSSProperties}>{big.excerpt}</p>
               <div className="card-foot">
                 <span>{formatTimeAgo(big.published_at, locale, dict)}</span>
-                <span className="dot" />
-                <span>REVIEWED · UPDATED</span>
               </div>
             </div>
           </Link>

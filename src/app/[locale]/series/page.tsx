@@ -6,7 +6,7 @@ import JsonLd from '@/components/JsonLd';
 import { isLocale } from '@/i18n/config';
 import { getDictionary, interpolate } from '@/i18n/messages';
 import { seriesDescription, seriesLabel } from '@/i18n/display';
-import { siteUrl } from '@/i18n/metadata';
+import { languageAlternates, siteUrl } from '@/i18n/metadata';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale: raw } = await params;
@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     title: dict.pages.seriesTitle,
     description: desc,
-    alternates: { canonical: url },
+    alternates: { canonical: url, languages: languageAlternates('/series') },
     openGraph: { title: dict.pages.seriesTitle, description: desc, url, type: 'website' },
   };
 }

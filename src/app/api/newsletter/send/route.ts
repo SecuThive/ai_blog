@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { Resend } from 'resend';
+import { unsubscribeHref } from '@/lib/unsubscribeToken';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
   // 구독자 목록
   const { data: subscribers } = await client
     .from('subscribers')
-    .select('email')
+    .select('id,email')
     .eq('active', true)
     .limit(1000);
 
@@ -55,11 +56,11 @@ export async function POST(req: NextRequest) {
   let failed = 0;
 
   // Resend는 배치 전송 지원 (최대 100개/요청)
-  const emailList = subscribers.map((s: { email: string }) => ({
+  const emailList = subscribers.map((s: { id: number; email: string }) => ({
     from: 'Nodelog <newsletter@thivelab.com>',
     to: s.email,
     subject,
-    html: buildHtml(posts, s.email, weekStr),
+    html: buildHtml(posts, unsubscribeHref(Number(s.id)), weekStr),
   }));
 
   // 100개씩 배치 처리
@@ -104,7 +105,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
   '툴 리뷰': '🛠️',
 };
 
-function buildHtml(posts: Post[], email: string, weekStr: string): string {
+function buildHtml(posts: Post[], unsubscribeUrl: string, weekStr: string): string {
   const topPost = posts[0];
   const restPosts = posts.slice(1);
 
@@ -174,7 +175,7 @@ function buildHtml(posts: Post[], email: string, weekStr: string): string {
             </div>
             <p style="font-size:11px;color:#bbb;margin:24px 0 0;text-align:center;line-height:1.7">
               본 메일은 Nodelog 뉴스레터를 구독하신 분께 발송됩니다.<br>
-              <a href="${SITE_URL}/unsubscribe?email=${encodeURIComponent(email)}" style="color:#bbb">구독 해지</a>
+              <a href="${unsubscribeUrl}" style="color:#bbb">구독 해지</a>
             </p>
           </td>
         </tr>

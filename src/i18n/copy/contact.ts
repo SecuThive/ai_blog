@@ -71,7 +71,7 @@ const CONTACT: Record<Locale, ContactCopy> = {
     faqTag: '자주 묻는 질문',
     faqBody: '문의 전에 FAQ를 확인해보세요. 가장 자주 받는 질문은 미리 정리되어 있습니다.',
     faqCta: 'FAQ 보기',
-    newsletterBody: '매주 화요일, 보안·AI·인프라 핵심 뉴스를 6분 분량으로 받아보세요.',
+    newsletterBody: '보안·AI·인프라 새 글 소식을 이메일로 받아보세요. 발송 주기는 아직 정해져 있지 않습니다.',
     newsletterCta: '무료 구독하기 →',
   },
   en: {
@@ -114,7 +114,7 @@ const CONTACT: Record<Locale, ContactCopy> = {
     faqTag: 'FAQ',
     faqBody: 'Check the FAQ first. The questions we get most are already there.',
     faqCta: 'Read the FAQ',
-    newsletterBody: 'Security, AI, and infrastructure — about six minutes, every Tuesday.',
+    newsletterBody: 'New security, AI, and infrastructure posts by email. No fixed schedule yet.',
     newsletterCta: 'Subscribe free →',
   },
 };

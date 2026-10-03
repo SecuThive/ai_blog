@@ -1,4 +1,5 @@
 import Link from '@/i18n/link';
+import AdSenseLoader from '@/components/AdSenseLoader';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { EngineerGuide } from '@/lib/types';
@@ -373,6 +374,8 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
 
   return (
     <div>
+      {/* 실재하는 가이드이고 본문이 렌더링될 때만 광고 로더(영어 대체 화면 제외). */}
+      {showBody && <AdSenseLoader />}
       <ProgressBar />
       <ScrollToTopBtn />
       <JsonLd data={[techArticleSchema, breadcrumbSchema, ...(howToSchema ? [howToSchema] : [])]} />

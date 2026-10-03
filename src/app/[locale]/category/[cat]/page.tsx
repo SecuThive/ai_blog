@@ -11,7 +11,7 @@ import type { Metadata } from 'next';
 import { isLocale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/messages';
 import { localizePost, titleForLocale } from '@/i18n/content';
-import { categoryLabel, categoryHref, toKoreanCategory, CAT_TO_SLUG } from '@/i18n/categories';
+import { categoryLabel, categoryHref, toKoreanCategory, isKnownCategory, CAT_TO_SLUG } from '@/i18n/categories';
 import { languageAlternates, siteUrl } from '@/i18n/metadata';
 
 // 참고: 이 페이지는 한글 경로 파라미터라 noStore()로 동적 렌더를 유지한다(한글 경로 ISR 정지 이슈,
@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { cat: rawCat, locale: rawLocale } = await params;
   const locale = isLocale(rawLocale) ? rawLocale : 'ko';
   const cat = toKoreanCategory(rawCat);
+  if (!isKnownCategory(cat)) return { title: getDictionary(locale).common.notFoundTitle, robots: { index: false, follow: false } };
   const label = categoryLabel(cat, locale);
   const path = categoryHref(cat, locale);
   const url = siteUrl(path, locale);
@@ -150,6 +151,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
   const locale = rawLocale;
   const dict = getDictionary(locale);
   const cat = toKoreanCategory(rawCat);
+  // 허용 목록 밖의 값은 빈 목록(200, soft-404) 대신 404로 응답한다.
+  if (!isKnownCategory(cat)) notFound();
   const label = categoryLabel(cat, locale);
   const intro = CATEGORY_INTRO[cat]?.[locale];
 

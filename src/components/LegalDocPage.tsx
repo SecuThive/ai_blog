@@ -34,6 +34,15 @@ export default function LegalDocPage({
               <div key={section.title}>
                 <h2 style={{ margin: '0 0 12px', fontSize: 19, letterSpacing: '-0.015em', color: 'var(--text-1)' }}>{section.title}</h2>
                 <p style={{ margin: 0, color: 'var(--text-2)', fontSize: 15.5, lineHeight: 1.75 }}>{section.body}</p>
+                {section.links && section.links.length > 0 && (
+                  <ul style={{ margin: '12px 0 0', paddingLeft: 18, color: 'var(--text-2)', fontSize: 14.5, lineHeight: 1.8 }}>
+                    {section.links.map((l) => (
+                      <li key={l.url}>
+                        <a href={l.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--acc-blue)', overflowWrap: 'anywhere' }}>{l.label} ↗</a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             ))}
           </div>

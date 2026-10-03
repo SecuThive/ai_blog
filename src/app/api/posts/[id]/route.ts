@@ -14,6 +14,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const sb = supabaseAdmin();
 
   const update: Record<string, unknown> = { ...body };
+  // 날짜·검토·지표 컬럼은 API로 직접 쓰지 못하게 한다. 발행일/검토 기록을 임의로 찍거나
+  // 과거 글의 updated_at을 일괄 갱신하는 경로를 막기 위함이다(검토 기록은 아래 발행 승인 흐름에서만 생성).
+  for (const key of ['id', 'created_at', 'published_at', 'updated_at', 'reviewed_at', 'reviewed_by', 'views', 'helpful_count', 'unhelpful_count']) {
+    delete update[key];
+  }
   const { data: existing, error: existingError } = await sb
     .from('posts')
     .select('status,published_at')
@@ -38,7 +43,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     update.reviewed_by = body.reviewed_by.trim();
   }
   delete update.approval_confirmed;
-  delete update.id;
 
   const { data, error } = await sb.from('posts').update(update).eq('id', id).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

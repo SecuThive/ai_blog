@@ -901,6 +901,12 @@ img { max-width: 100%; display: block; }
 .editorial-note-links { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 14px; }
 .editorial-note-links a { font-size: 13px; color: var(--acc-blue); font-weight: 500; }
 .editorial-note-links a:hover { text-decoration: underline; }
+.editorial-record { display: grid; gap: 6px; margin: 0 0 12px; font-size: 14px; line-height: 1.6; }
+.editorial-record > div { display: grid; grid-template-columns: minmax(80px, max-content) 1fr; gap: 10px; }
+.editorial-record dt { color: var(--text-4); font-family: var(--ff-mono); font-size: 12px; letter-spacing: 0.04em; }
+.editorial-record dd { margin: 0; color: var(--text-2); word-break: keep-all; overflow-wrap: anywhere; }
+.historical-note { margin-top: 14px; border-left: 3px solid var(--acc-amber, #d9a441); padding-left: 12px; }
+.historical-note a { color: var(--acc-blue); overflow-wrap: anywhere; }
 .editorial-note-refs {
   display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
   margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line-1);

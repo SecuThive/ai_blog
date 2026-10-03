@@ -43,7 +43,8 @@ export default async function OgImage({ params }: { params: Promise<{ locale: st
   const localized = data ? localizePost(data, locale) : null;
   const title    = localized?.title    ?? 'Nodelog';
   const category = data?.category ? categoryLabel(data.category, locale) : '';
-  const author   = locale === 'en' ? dict.meta.authors : (data?.author ?? dict.meta.authors);
+  // posts.author에는 생성 파이프라인의 역할명(Content Reviewer 등)이 들어 있어 사람 필자처럼 보이므로 쓰지 않는다.
+  const author   = dict.meta.authors;
   const excerpt  = localized?.excerpt  ?? '';
   const mins = Math.max(1, Math.round(((localized?.content ?? data?.content ?? '').trim().split(/\s+/).length) / 200));
 
@@ -142,9 +143,6 @@ export default async function OgImage({ params }: { params: Promise<{ locale: st
           <span style={{ fontSize: 14, color: '#565E72' }}>{author}</span>
           <span style={{ fontSize: 14, color: '#2E3548' }}>·</span>
           <span style={{ fontSize: 14, color: '#565E72' }}>{interpolate(dict.blog.readingTime, { min: mins })}</span>
-          <span style={{ marginLeft: 'auto', fontSize: 11, color: '#2E3548', letterSpacing: 2 }}>
-            REVIEWED · UPDATED
-          </span>
         </div>
       </div>
     ),
