@@ -4,6 +4,11 @@
 - 운영 DB에 쓰기 없음. 읽기 조회만 했다.
 - 수정안: `sql/2026-10-03-phase1-content-fixes.sql`(미적용). 2026-10-03 04:17 백업의 posts 테이블을 임시 컨테이너에 복원해 시험 적용했다(8건 각 1행). 시험 후 컨테이너는 삭제했다.
 
+- Phase 2 (미적용, COMMIT 없음):
+  - `sql/2026-10-03-phase2-triggers.sql`: EN 번역만 바뀐 수정은 updated_at을 올리지 않게 `set_post_content_updated_at()` 교체, 승인 게이트 트리거(posts, engineer_guides), engineer_guides reviewed_at/reviewed_by 추가, status 기본값 'draft'.
+  - `sql/2026-10-03-phase2-content-quality.sql`: posts #640, #656, #805, #816, #817의 KO 본문과 EN 본문(content_evidence.en.content). KO 변경에는 contentUpdatedAt과 changeSummary를 남긴다. 원문 md5 조건이 있어 재실행하면 0행이다. 변경 내용은 `content-diffs/`에 있다.
+  - 시험: 04:17 덤프를 임시 컨테이너에 복원, 10건 각 1행, 재실행 0행, ROLLBACK. 자세한 결과는 `pipeline.md` 5절.
+
 ## 다른 세션이 이미 운영 DB에 적용한 변경 (2026-10-02, 이 PR과 무관)
 `~/project/ai-blog`(메인 작업 트리)의 Codex/ChatGPT 세션이 실행한 스크립트다. 파일 수정 시각이 DB 타임스탬프와 일치한다.
 사용자의 이번 단계 지시가 아니었고, 그 작업 트리의 코드 변경(16개 파일)은 커밋되지 않은 상태다.

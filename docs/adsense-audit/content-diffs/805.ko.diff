@@ -1,0 +1,25 @@
+--- 805.ko.before
++++ 805.ko.after
+@@ -60,7 +60,10 @@
+ kubectl -n "$NS" get pods --show-labels
+ 
+ # 6) selector로 실제 매칭되는 파드 수
+-kubectl -n "$NS" get pods -l "$(kubectl -n "$NS" get svc "$SVC" -o jsonpath='{range .spec.selector.*}{"\n"}{end}' >/dev/null; kubectl -n "$NS" get svc "$SVC" -o jsonpath='{.spec.selector}' | tr -d '{}"' | tr ',' ',')"
++#    jsonpath '{.spec.selector}'는 {"app":"web"} 같은 JSON을 내므로 -l에 바로 넣을 수 없습니다.
++#    jq로 key=value,key=value 형식으로 바꿉니다.
++SEL_KV=$(kubectl -n "$NS" get svc "$SVC" -o json | jq -r '.spec.selector // {} | to_entries | map("\(.key)=\(.value)") | join(",")')
++[ -n "$SEL_KV" ] && kubectl -n "$NS" get pods -l "$SEL_KV" -o wide
+ ```
+ 
+ 예상 정상 결과는 이렇습니다.
+@@ -148,8 +151,8 @@
+   -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{range .endpoints[*]}{.addresses[0]}{"=ready:"}{.conditions.ready}{" "}{end}{"\n"}{end}' || true
+ 
+ line "Matching pods"
+-SEL_KV=$(kubectl -n "$NS" get svc "$SVC" \
+-  -o jsonpath='{range .spec.selector}{@}{end}' | tr -d '{}"' )
++SEL_KV=$(kubectl -n "$NS" get svc "$SVC" -o json \
++  | jq -r '.spec.selector // {} | to_entries | map("\(.key)=\(.value)") | join(",")')
+ if [ -n "$SEL_KV" ]; then
+   kubectl -n "$NS" get pods -l "$SEL_KV" -o wide || true
+ else

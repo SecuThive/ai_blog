@@ -15,7 +15,7 @@ const guides = [
     difficulty: 'beginner',
     os_compat: ['Ubuntu', 'Debian', 'CentOS', 'RHEL'],
     author: 'Nodelog',
-    status: 'published',
+    status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */,
     views: 0,
     content: `SSH 접속이 안 될 때 나오는 오류는 크게 세 가지입니다. **오류 메시지를 먼저 확인**하면 원인을 빠르게 좁힐 수 있습니다.
 
@@ -191,7 +191,7 @@ sudo tail -20 /var/log/secure          # 인증 로그 (CentOS)
     difficulty: 'intermediate',
     os_compat: ['Ubuntu', 'Debian', 'CentOS'],
     author: 'Nodelog',
-    status: 'published',
+    status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */,
     views: 0,
     content: `502 Bad Gateway는 Nginx가 upstream(백엔드 서버)으로부터 유효한 응답을 받지 못했을 때 발생합니다. **Nginx 자체 문제가 아니라 항상 백엔드 문제**입니다.
 
@@ -369,7 +369,7 @@ sudo systemctl reload nginx
     difficulty: 'beginner',
     os_compat: ['Ubuntu', 'Debian', 'CentOS', 'RHEL'],
     author: 'Nodelog',
-    status: 'published',
+    status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */,
     views: 0,
     content: `\`No space left on device\` 에러는 디스크 100% 상태에서 파일 쓰기가 실패할 때 나타납니다. 서버가 멈추기 전에 **10분 안에 공간을 확보**해야 합니다.
 
@@ -539,7 +539,7 @@ sudo chmod +x /etc/cron.daily/disk-alert
     difficulty: 'beginner',
     os_compat: ['Ubuntu', 'Debian', 'CentOS', 'RHEL', 'macOS'],
     author: 'Nodelog',
-    status: 'published',
+    status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */,
     views: 0,
     content: `서버 시작 시 \`bind: address already in use\` 또는 \`EADDRINUSE\` 오류가 뜨면 해당 포트를 다른 프로세스가 이미 점유 중입니다.
 

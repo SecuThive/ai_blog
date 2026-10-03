@@ -411,7 +411,7 @@ const GUIDES = [
       'i18n.excerpt:A diagnostic runbook for ImagePullBackOff and ErrImagePull: read Events, classify not-found vs auth vs network vs rate-limit, then verify with describe, secrets, and node-side pull.',
     ],
     author: 'Nodelog',
-    status: 'published',
+    status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */,
     content: embedEn(imagePullKo, imagePullEn),
   },
   {
@@ -432,7 +432,7 @@ const GUIDES = [
       'i18n.excerpt:When a Service has no Endpoints/EndpointSlices, traffic goes nowhere. Match selectors to labels, require Ready pods, verify targetPort, then check NetworkPolicy and the dataplane.',
     ],
     author: 'Nodelog',
-    status: 'published',
+    status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */,
     content: embedEn(endpointsKo, endpointsEn),
   },
 ];
@@ -487,16 +487,17 @@ async function main() {
       difficulty: g.difficulty,
       os_compat: g.os_compat,
       author: g.author,
-      status: g.status,
       updated_at: new Date().toISOString(),
     };
     if (slugs.has(g.slug)) {
+      // 기존 글의 발행 상태는 건드리지 않는다(재실행으로 내려가거나 승인 없이 올라가지 않게).
       const { error } = await sb.from('engineer_guides').update(row).eq('slug', g.slug);
       if (error) throw error;
       console.log('updated', g.slug);
     } else {
       const { error } = await sb.from('engineer_guides').insert({
         ...row,
+        status: g.status,
         created_at: new Date().toISOString(),
         views: 0,
       });

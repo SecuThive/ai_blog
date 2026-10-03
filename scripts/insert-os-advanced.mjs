@@ -14,7 +14,7 @@ const guide = {
   difficulty: 'advanced',
   os_compat: ['Ubuntu', 'Debian', 'CentOS', 'RHEL'],
   author: 'Nodelog',
-  status: 'published',
+  status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */,
   views: 0,
   content: `## sysctl 기본 사용법
 
