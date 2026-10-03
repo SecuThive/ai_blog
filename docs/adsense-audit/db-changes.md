@@ -34,3 +34,4 @@
 - posts #217, #206, #224, #419, #284, #212, #798, #743, #417 KO·EN 본문 갱신(각 1행). 백업 `~/project/nodelog-db/backups/stale-refresh-20261004-0437.dump`, 행별 복원 SQL은 같은 폴더의 `stale-refresh-20261004-0437-restore/`. 자세한 내용은 `stale-refresh.md`, SQL은 `sql/stale-refresh/`.
 - (마일스톤 2, 04:55 KST) posts #469, #584, #402, #263, #395, #99, #720, #461, #265 KO·EN 갱신, #217·#206 출처 줄 보강(각 1행). 백업 `stale-refresh-20261004-044945.dump`, 복원 SQL `stale-refresh-20261004-044945-restore/`.
 - (마일스톤 3, 05:07 KST) posts #704, #747, #326, #302, #604, #665, #422, #74, #812 KO·EN 갱신, #206·#743 검수 표현 반영(각 1행). #245·#17은 변경 없음. 백업 `stale-refresh-20261004-045921.dump`, 복원 SQL `stale-refresh-20261004-045921-restore/`.
+- (배치 4, 05:14 KST, 사용자 승인) posts #734, #665 KO·EN 갱신(과기정통부·국정원 2026-04-20 보도자료 원문 + CSAP 고시). 백업 `stale-refresh-20261004-051233.dump`, 복원 SQL `stale-refresh-20261004-051233-restore/`.

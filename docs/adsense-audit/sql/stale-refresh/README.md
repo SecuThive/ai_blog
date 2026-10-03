@@ -5,3 +5,4 @@ KO가 바뀐 글은 contentUpdatedAt을 적용 시각(UTC)으로 넣고 updated_
 원래 값 복원 SQL은 운영 머신의 `~/project/nodelog-db/backups/stale-refresh-20261004-0437-restore/`에 있다.
 마일스톤 2 파일(배치 2와 `*-v2.sql`)의 복원 SQL은 `~/project/nodelog-db/backups/stale-refresh-20261004-044945-restore/`에 있다. `*-v2.sql`은 배치 1 적용 결과 위에 적용한다.
 마일스톤 3 파일(배치 3과 `*-v3.sql`)의 복원 SQL은 `~/project/nodelog-db/backups/stale-refresh-20261004-045921-restore/`에 있다. `*-v3.sql`은 v2(또는 배치 1) 적용 결과 위에 적용한다.
+배치 4(`734-csap-guide.sql`, `665-csap-simplified-grade-v2.sql`)의 복원 SQL은 `~/project/nodelog-db/backups/stale-refresh-20261004-051233-restore/`에 있다.
