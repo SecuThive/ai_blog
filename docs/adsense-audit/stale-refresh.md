@@ -31,9 +31,64 @@ Phase 2 트리거 교체안(`sql/2026-10-03-phase2-triggers.sql`)은 아직 운�
 
 모든 수정 글에는 본문 끝에 「출처 · 확인일 2026-10-04」(EN: 「Sources · checked 2026-10-04」) 블록을 붙였다(#212는 본문 안 링크, #224는 삭제만이라 없음).
 
+## 운영 DB 적용 (마일스톤 2, 2026-10-04 04:55 KST)
+- 적용 전 전체 백업: `~/project/nodelog-db/backups/stale-refresh-20261004-044945.dump` (pg_restore 전체 읽기 확인).
+- 행별 원래 값 복원 SQL: `~/project/nodelog-db/backups/stale-refresh-20261004-044945-restore/<id>.restore.sql` (#217·#206은 `217v2`·`206v2`, 배치 1 적용 후 상태로 되돌림).
+- 같은 순서로 11건 시험(각 1행, 재실행 0행, ROLLBACK) → 적용(각 UPDATE 1, COMMIT) → content·title md5가 수정본과 일치.
+- 11건 모두 KO 본문이 바뀌어 updated_at은 트리거로 갱신, published_at 유지. EN만 바뀐 글은 없음.
+- 캐시 태그 11개 무효화, KO·EN URL 22개 모두 200, 새 문구 확인.
+
+## 출처 블록 수치별 원문 URL 점검 (배치 1)
+새로 넣은 수치마다 원문 페이지(뉴스·홈페이지 아님) URL이 붙어 있는지 다시 확인했다.
+- #743: 이미 충족(docs.docker.com/docker-hub/usage/). 수정 없음.
+- #217: 전년 대비 증감의 비교 기준(2025년 2분기 점유율)에 원문이 없었음 → Synergy 2025년 2분기 발표를 추가하고, 수치별로 어느 페이지인지 출처 줄에 적음. SQL `sql/stale-refresh/217-aws-azure-gcp-compare-v2.sql`.
+- #206: 수치는 모두 Chainalysis 원문에 있음. 출처 줄에 수치를 하나씩 적고, 28%를 원문 표현대로 추정치로 고침. SQL `sql/stale-refresh/206-ransomware-trends-v2.sql`.
+
+| 글 | 수치 | 원문 URL |
+|---|---|---|
+| #217 | 2026년 2분기 점유율 AWS 28%, Microsoft 20%, Google 15% | https://www.srgresearch.com/articles/q2-cloud-market-passes-143-billion-highest-growth-rate-in-eight-years |
+| #217 | 2025년 2분기 점유율 AWS 30%, Microsoft 20%, Google 13% (증감 기준) | https://www.srgresearch.com/articles/q2-cloud-market-nears-100-billion-milestone-and-its-still-growing-by-25-year-over-year |
+| #217 | AWS 39개 리전, 124개 가용영역 | https://aws.amazon.com/about-aws/global-infrastructure/ |
+| #206 | 2025년 지불 총액 약 8.2억 달러, 2024년 수정치 8.92억 달러, -8%, 공격 주장 +50%, 지불 비율 28%(추정), 9억 달러 안팎까지 증가 가능 | https://www.chainalysis.com/blog/crypto-ransomware-2026/ |
+| #206 | LockBit 인프라 압수 2024-02-20 | https://www.nationalcrimeagency.gov.uk/news/nca-leads-international-investigation-targeting-worlds-most-harmful-ransomware-group |
+| #743 | 비인증 6시간당 100회(IPv4·IPv6 /64), Personal 200회, 유료 무제한 | https://docs.docker.com/docker-hub/usage/ |
+
+## 배치 2 (9건)
+| id | 바뀐 내용 | 주요 출처 |
+|---|---|---|
+| 469 | 제목·H1·결론의 "2024년" 제거(제목 「개발자가 알아야 할 LLM 활용 트렌드 5가지: …」). 임베딩 모델명 확인 | platform.openai.com/docs/guides/embeddings |
+| 584 | 제목·H1·요약·예시의 2024 제거. SGE → AI 개요·AI 모드. FAQ 리치 결과(2026-05-07부터 미표시) 권장 → 검색 갤러리에서 현재 지원 유형 확인으로 교체. Core Web Vitals LCP·INP·CLS | developers.google.com/search (updates, ai-features, search-gallery), web.dev/articles/vitals |
+| 402 | H1·도입 de-date. EU AI Act 4단계 위험 등급과 적용 일정, DIR 0.8/1.2 → 4/5 규칙 | digital-strategy.ec.europa.eu AI Act, eCFR 29 CFR 1607.4 |
+| 263 | 제목 「2026년 LLM 동향: OpenAI·Anthropic·Google 모델 라인업 비교와 6개월 개발 로드맵」. GPT-5(예상)/Claude 3.5/4/Llama 3 표 → 공식 모델 페이지의 현재 라인업과 공급사 설명. 가격은 넣지 않음 | 각 공급사 모델·가격 공식 페이지 |
+| 395 | 출처 없는 "시장 점유율(2024)" 수치 삭제 → 렌더링 방식 열. 예시 제목 de-date | 없음(삭제만) |
+| 99 | 예제 모델 ID: OpenAI는 `OPENAI_MODEL` 환경변수, Claude는 `claude-sonnet-5-5`. 병렬 툴 호출 출처 | OpenAI function calling, Anthropic tool use·models overview |
+| 720 | FAQ의 모델 추천 → 모델명 없이 공식 모델 페이지 안내 | 본문 링크 |
+| 461 | GPT-4o 추천 → 등급별 2026-10-04 예(GPT-6 Luna, Claude Haiku 4.5, Gemini 3.5 Flash-Lite / 상위 GPT-6 Astra·6.1 Sol, Claude Opus·Sonnet 5.5, Gemini 3.1 Pro) | 각 공급사 모델·가격 공식 페이지 |
+| 265 | H1의 "2024" 제거. "OWASP Top 10" → OWASP Top 10 for LLM Applications 2025(LLM01 Prompt Injection) | genai.owasp.org/llm-top-10 |
+
+slug는 URL 유지를 위해 바꾸지 않았다(#469·#584·#402·#263·#265 slug에 2024가 남아 있음).
+
+### 배치 2에서 새로 넣은 수치·사실과 원문 URL
+| 글 | 수치·사실 | 원문 URL |
+|---|---|---|
+| #469 | 현재 임베딩 모델 `text-embedding-3-small`·`text-embedding-3-large` | https://platform.openai.com/docs/guides/embeddings |
+| #584 | FAQ 리치 결과 2026-05-07부터 미표시, 문서 삭제 | https://developers.google.com/search/updates#removing-faq-rich-result |
+| #584 | AI 개요·AI 모드 | https://developers.google.com/search/docs/appearance/ai-features |
+| #584 | Core Web Vitals 지표 LCP·INP·CLS | https://web.dev/articles/vitals |
+| #402 | AI Act 4단계 위험 등급, 2024-08-01 발효, 2025-02-02·2025-08-02·2026-08-02, Annex III 2027-12-02, Annex I 2028-08-02, AI Omnibus 2026-07-27 발효 | https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai |
+| #402 | 4/5(80%) 규칙 | https://www.ecfr.gov/current/title-29/subtitle-B/chapter-XIV/part-1607/section-1607.4 |
+| #263, #461 | OpenAI GPT-6 Astra, GPT-6.1 Sol, GPT-6 Luna | https://platform.openai.com/docs/models |
+| #263, #461, #99 | Anthropic Claude Fable 5.1, Opus 5.5, Sonnet 5.5(`claude-sonnet-5-5`), Haiku 4.5 | https://docs.anthropic.com/en/docs/about-claude/models/overview |
+| #263, #461 | Google Gemini 3.1 Pro(Preview), 3.8 Flash, 3.5 Flash-Lite | https://ai.google.dev/gemini-api/docs/models |
+| #99 | OpenAI `parallel_tool_calls` | https://developers.openai.com/api/docs/guides/function-calling |
+| #99 | Claude 병렬 툴 사용 | https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview |
+| #265 | OWASP Top 10 for LLM Applications 2025, LLM01:2025 Prompt Injection | https://genai.owasp.org/llm-top-10/ |
+
+#395·#720은 수치를 넣지 않았다(삭제·일반화만). 가격 수치는 어느 글에도 새로 넣지 않았다.
+
 ## 남은 대상과 다음 배치 제안
 인벤토리 90행: 2024/2025가 나오는 발행 글 83행(posts 72, guides 11) + 편집 체크리스트의 다음 배치 목록 7행.
-시간 민감 23건(배치 1에서 9건 완료, 14건 대기). 나머지 60행은 예시 데이터·코드의 날짜, CVE 번호, 역사적 사실이라 유지. guides 11편은 모두 명령 예시의 날짜·파일명이다.
+시간 민감 23건: 배치 1 9건, 배치 2 9건 완료. 남은 5건 중 #734는 보류(공식 원문 확보 전 수정하지 않음), #704·#747·#326·#302 대기. 나머지 60행은 예시 데이터·코드의 날짜, CVE 번호, 역사적 사실이라 유지. guides 11편은 모두 명령 예시의 날짜·파일명이다.
 체크리스트 목록(#604, #665, #422, #74, #245, #17, #812)은 2024/2025 표현이 없어 이번 기준 밖이지만 주제상 시간 민감하므로 따로 검토한다.
 
-다음 배치 제안: #734(CSAP 제도 개편, 공식 원문 확보 후), #469(2024 LLM 트렌드, 회고형 재구성 또는 전면 갱신), #584(2024 구글 SEO), #402(AI 거버넌스: EU AI Act·AI 기본법 일정), #263(2026 LLM 트렌드 글의 2024 결론·모델 목록), #395(2024 프레임워크 점유율 표), #99·#720·#461(GPT-4o 추천 문구), #265(본문 H1의 2024).
+다음 배치(마일스톤 3) 제안: #704, #747, #326, #302, 이어서 #604, #665, #422, #74, #245, #17, #812. #734는 보류 유지.

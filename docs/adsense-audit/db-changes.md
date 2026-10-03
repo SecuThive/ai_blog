@@ -32,3 +32,4 @@
 
 ## 시간 민감 콘텐츠 갱신 (2026-10-04, 운영 DB 적용)
 - posts #217, #206, #224, #419, #284, #212, #798, #743, #417 KO·EN 본문 갱신(각 1행). 백업 `~/project/nodelog-db/backups/stale-refresh-20261004-0437.dump`, 행별 복원 SQL은 같은 폴더의 `stale-refresh-20261004-0437-restore/`. 자세한 내용은 `stale-refresh.md`, SQL은 `sql/stale-refresh/`.
+- (마일스톤 2, 04:55 KST) posts #469, #584, #402, #263, #395, #99, #720, #461, #265 KO·EN 갱신, #217·#206 출처 줄 보강(각 1행). 백업 `stale-refresh-20261004-044945.dump`, 복원 SQL `stale-refresh-20261004-044945-restore/`.
