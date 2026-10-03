@@ -45,3 +45,18 @@ test('phase-2 SQL installs the publish gate on posts and engineer_guides without
   assert.match(sql, /not like 'i18n\.%'/);
   assert.doesNotMatch(sql.replace(/--.*$/gm, ''), /\bCOMMIT\b/i);
 });
+
+test('publish gate never assigns status/published_at and has a DB regression script', () => {
+  const sql = readFileSync(join(ROOT, 'docs/adsense-audit/sql/2026-10-03-phase2-triggers.sql'), 'utf8');
+  const code = sql.replace(/--.*$/gm, '');
+  // The gate may only raise; it must never unpublish (or publish) a row by itself.
+  assert.doesNotMatch(code, /new\.status\s*:?=/i);
+  assert.doesNotMatch(code, /new\.published_at\s*:?=/i);
+  // Upserts onto an existing published row must not be treated as a new publish.
+  assert.match(code, /if old\.status = 'published' then/);
+  assert.match(code, /status = ''published''/);
+  // The executable cases live here (run on a throwaway restore; ends in ROLLBACK).
+  const t = readFileSync(join(ROOT, 'docs/adsense-audit/sql/tests/publish-gate-regression.sql'), 'utf8');
+  assert.match(t, /\\ir \.\.\/2026-10-03-phase2-triggers\.sql/);
+  assert.match(t, /^ROLLBACK;\s*$/m);
+});

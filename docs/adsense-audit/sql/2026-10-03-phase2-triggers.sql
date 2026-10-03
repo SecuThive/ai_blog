@@ -41,23 +41,46 @@ $function$;
 -- Trigger posts_set_content_updated_at (BEFORE UPDATE) already exists and is unchanged.
 
 -- ── D. Publishing requires a review record ──────────────────────────────────
--- Rejects any INSERT with status='published', or UPDATE that changes status to 'published',
--- unless reviewed_at and reviewed_by are set. Existing published rows are not touched
--- (edits to already-published rows pass because OLD.status is already 'published').
--- The site API (/api/posts, /api/posts/[id]) and the patched Telegram bot set both fields.
+-- Blocks only a move INTO 'published' without reviewed_at and reviewed_by:
+--   * UPDATE where OLD.status <> 'published' and NEW.status = 'published';
+--   * INSERT of a new row with status 'published'.
+-- Not blocked: any edit of a row that is already published (content, title, EN, views, no-op,
+-- or a full-row save that repeats status='published'), including an upsert
+-- (INSERT ... ON CONFLICT DO UPDATE, i.e. supabase-js .upsert) that hits an existing published
+-- row by id or slug. BEFORE INSERT fires before conflict detection, so that case is checked
+-- explicitly; the ON CONFLICT UPDATE then goes through the UPDATE branch.
+-- The function never assigns status or published_at (no silent unpublish).
+-- Regression test: tests/publish-gate-regression.sql.
 CREATE OR REPLACE FUNCTION public.enforce_review_before_publish()
  RETURNS trigger
  LANGUAGE plpgsql
 AS $function$
+declare
+  already_published boolean := false;
 begin
-  if new.status = 'published'
-     and (tg_op = 'INSERT' or old.status is distinct from 'published')
-     and (new.reviewed_at is null or coalesce(btrim(new.reviewed_by), '') = '') then
-    raise exception 'publish blocked: % id=% needs reviewed_at and reviewed_by (approval gate, docs/adsense-audit/pipeline.md)',
-      tg_table_name, new.id
-      using errcode = 'check_violation';
+  if new.status is distinct from 'published'
+     or (new.reviewed_at is not null and coalesce(btrim(new.reviewed_by), '') <> '') then
+    return new;
   end if;
-  return new;
+
+  if tg_op = 'UPDATE' then
+    if old.status = 'published' then
+      return new;
+    end if;
+  else
+    -- INSERT: let an upsert onto an existing published row through (posts and engineer_guides
+    -- both have id and a unique slug).
+    execute format('select exists (select 1 from %I.%I where (id = $1 or slug = $2) and status = ''published'')',
+                   tg_table_schema, tg_table_name)
+      into already_published using new.id, new.slug;
+    if already_published then
+      return new;
+    end if;
+  end if;
+
+  raise exception 'publish blocked: % id=% needs reviewed_at and reviewed_by (approval gate, docs/adsense-audit/pipeline.md)',
+    tg_table_name, new.id
+    using errcode = 'check_violation';
 end;
 $function$;
 
