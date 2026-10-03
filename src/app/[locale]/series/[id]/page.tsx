@@ -9,7 +9,7 @@ import { isLocale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/messages';
 import { seriesDescription, seriesLabel } from '@/i18n/display';
 import { titleForLocale, excerptForLocale } from '@/i18n/content';
-import { siteUrl } from '@/i18n/metadata';
+import { languageAlternates, siteUrl } from '@/i18n/metadata';
 import { categoryLabel } from '@/i18n/categories';
 import { formatDate } from '@/i18n/format';
 
@@ -94,7 +94,7 @@ export async function generateMetadata({
   return {
     title: `${label} — ${dict.pages.seriesTitle}`,
     description: desc,
-    alternates: { canonical: url },
+    alternates: { canonical: url, languages: languageAlternates(`/series/${encodeURIComponent(seriesName)}`) },
     robots: isThin ? { index: false, follow: true } : undefined,
     openGraph: {
       title: `${label} — ${dict.pages.seriesTitle}`,

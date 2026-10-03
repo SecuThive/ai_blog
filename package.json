@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "node scripts/apply-next-patch.cjs"
+    "postinstall": "node scripts/apply-next-patch.cjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types tests/*.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",

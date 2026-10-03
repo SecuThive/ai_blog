@@ -17,7 +17,7 @@ const guides = [
   difficulty: 'beginner',
   os_compat: ['Ubuntu', 'Debian', 'CentOS', 'RHEL'],
   author: 'Nodelog',
-  status: 'published',
+  status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */,
   views: 0,
   content: `MySQL·MariaDB 접속 오류는 크게 세 가지입니다. **오류 메시지를 먼저 확인**하세요.
 
@@ -178,7 +178,7 @@ mysql -u root -p --verbose           # verbose 접속
   difficulty: 'beginner',
   os_compat: ['Ubuntu', 'Debian', 'CentOS'],
   author: 'Nodelog',
-  status: 'published',
+  status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */,
   views: 0,
   content: `컨테이너가 계속 재시작되거나 Exited 상태로 멈춘다면 **로그와 exit code**로 원인을 바로 알 수 있습니다.
 
@@ -321,7 +321,7 @@ docker run --rm -it \
   difficulty: 'beginner',
   os_compat: ['Ubuntu', 'Debian'],
   author: 'Nodelog',
-  status: 'published',
+  status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */,
   views: 0,
   content: `브라우저에 \`NET::ERR_CERT_DATE_INVALID\` 또는 \`Your connection is not private\` 가 뜬다면 SSL 인증서가 만료된 것입니다.
 
@@ -462,7 +462,7 @@ sudo nginx -t && sudo systemctl reload nginx
   difficulty: 'intermediate',
   os_compat: ['Ubuntu', 'Debian', 'CentOS', 'RHEL'],
   author: 'Nodelog',
-  status: 'published',
+  status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */,
   views: 0,
   content: `\`Too many open files\` 오류는 프로세스가 열 수 있는 파일 디스크립터(fd) 수의 한계에 도달했을 때 발생합니다. 소켓·파이프·실제 파일 모두 fd를 사용합니다.
 
@@ -613,7 +613,7 @@ fd 수가 계속 증가하면 애플리케이션 코드에서 파일·소켓을 
   difficulty: 'beginner',
   os_compat: ['Ubuntu', 'Debian', 'macOS', 'Windows'],
   author: 'Nodelog',
-  status: 'published',
+  status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */,
   views: 0,
   content: `\`git push\` 가 거부될 때 나오는 메시지로 원인을 특정할 수 있습니다.
 

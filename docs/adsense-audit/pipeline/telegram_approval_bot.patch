@@ -1,0 +1,149 @@
+--- a/backend/telegram_approval_bot.py
++++ b/backend/telegram_approval_bot.py
+@@ -46,7 +46,10 @@
+ 
+ 
+ def sb(method, blog, path, params=None, body=None):
+-    url = blog["supabase_url"].rstrip("/")
++    url = (blog.get("supabase_url") or "").rstrip("/")
++    if not url:
++        # 예전에는 KeyError('supabase_url')로 '처리 실패' 메시지만 남았다. 원인을 명확히 남긴다.
++        raise RuntimeError(f"blog_settings.json에 supabase_url이 없습니다 ({BLOG_SETTINGS})")
+     key = blog.get("supabase_service_role_key") or blog.get("supabase_anon_key", "")
+     q = f"{url}/rest/v1/{path}"
+     if params:
+@@ -59,10 +62,22 @@
+     return json.loads(raw) if raw else []
+ 
+ 
+-def publish(post_id, blog):
+-    """draft → published. 그리고 블로그 ISR revalidate(그래야 사이트에 즉시 반영)."""
+-    sb("PATCH", blog, "posts", {"id": f"eq.{post_id}"},
+-       {"status": "published", "published_at": datetime.now(timezone.utc).isoformat()})
++def publish(post_id, blog, approver):
++    """draft → published. 승인 기록(reviewed_at/reviewed_by)을 함께 남긴다.
++
++    - DB 트리거(enforce_review_before_publish)는 reviewed_at/reviewed_by 없이 published로
++      바뀌는 것을 거부한다. 승인 버튼이 곧 검토 기록이다.
++    - 이미 published_at이 있으면(재발행) 원래 날짜를 유지한다. 날짜를 새로 찍지 않는다.
++    """
++    rows = sb("GET", blog, "posts", {"id": f"eq.{post_id}", "select": "status,published_at"})
++    if not rows:
++        raise ValueError("글 없음")
++    if rows[0].get("status") == "published":
++        raise ValueError("이미 발행됨")
++    now = datetime.now(timezone.utc).isoformat()
++    sb("PATCH", blog, "posts", {"id": f"eq.{post_id}", "status": "neq.published"},
++       {"status": "published", "published_at": rows[0].get("published_at") or now,
++        "reviewed_at": now, "reviewed_by": approver})
+     try:
+         rows = sb("GET", blog, "posts", {"id": f"eq.{post_id}", "select": "slug"})
+         slug = rows[0]["slug"] if rows else ""
+@@ -171,7 +186,7 @@
+         pass
+ 
+ 
+-def apply_refresh(item, blog):
++def apply_refresh(item, blog, approver):
+     """리프레시 항목을 라이브 글에 적용. slug(URL)는 안 바꾸고 title/excerpt/content 만.
+ 
+     type=title  → 제목(+메타) 교체.  type=rewrite → 제목+본문(+메타) 교체.
+@@ -187,12 +202,24 @@
+         fields["content"] = item["new_content"]
+     if item.get("new_excerpt") and table == "posts":
+         fields["excerpt"] = item["new_excerpt"]
+-    if table == "engineer_guides":
+-        fields["updated_at"] = _dt.now(_tz.utc).isoformat()
+-    else:
+-        fields["published_at"] = _dt.now(_tz.utc).isoformat()   # lastmod 갱신
+     if not fields or not slug:
+         raise ValueError("적용할 필드/slug 없음")
++    now = _dt.now(_tz.utc).isoformat()
++    # published_at은 절대 바꾸지 않는다(최초 공개일). 수정일은 별도 필드로만 남긴다.
++    #  - posts: updated_at은 DB 트리거가 본문/제목 변경 시 갱신. content_evidence에
++    #    contentUpdatedAt/changeSummary/reviewer를 병합한다(사이트 '업데이트' 표기의 근거).
++    #  - engineer_guides: updated_at만 갱신.
++    if table == "engineer_guides":
++        fields["updated_at"] = now
++    else:
++        rows = sb("GET", blog, "posts", {"slug": f"eq.{slug}", "select": "content_evidence"})
++        if not rows:
++            raise ValueError("글 없음")
++        ev = rows[0].get("content_evidence") or {}
++        ev["contentUpdatedAt"] = now
++        ev["changeSummary"] = item.get("summary") or item.get("type") or "refresh"
++        ev["refreshApprovedBy"] = approver
++        fields["content_evidence"] = ev
+     sb("PATCH", blog, table, {"slug": f"eq.{slug}"}, fields)
+     _revalidate(blog, slug)
+ 
+@@ -201,8 +228,11 @@
+     x = _load(X_SETTINGS)
+     token = x.get("telegram_bot_token", "")
+     chat = str(x.get("telegram_chat_id", ""))
+-    if not token:
+-        print("봇 토큰 없음 — x_telegram_settings.json 확인"); return
++    if not token or not chat:
++        # chat_id가 비어 있으면 누구의 콜백이든 승인으로 처리될 수 있으므로 시작하지 않는다.
++        # 종료 코드 0이 아닌 상태로 끝나므로 pm2 max_restarts/backoff 설정과 함께 써야 한다.
++        print("봇 토큰 또는 chat_id 없음 — x_telegram_settings.json 확인", flush=True)
++        time.sleep(60); raise SystemExit(2)
+     try:
+         offset = int(OFFSET_FILE.read_text())
+     except Exception:
+@@ -230,20 +260,28 @@
+                 continue
+             msg = cq.get("message", {}) or {}
+             cq_chat = str(msg.get("chat", {}).get("id", ""))
+-            if chat and cq_chat != chat:      # 설정된 챗만 허용
+-                tg("answerCallbackQuery", {"callback_query_id": cq["id"], "text": "권한 없음"}, token, 15)
++            if cq_chat != chat:      # 설정된 챗만 허용
++                try:
++                    tg("answerCallbackQuery", {"callback_query_id": cq["id"], "text": "권한 없음"}, token, 15)
++                except Exception:
++                    pass
+                 continue
++            who = cq.get("from", {}) or {}
++            approver = f"telegram:{who.get('username') or who.get('id', 'unknown')}"
+             action, _, key = (cq.get("data", "")).partition(":")
+             # 신규글: pub/del(숫자 post id) · 리프레시: rf/rfx(큐 항목 id)
+             if action not in ("pub", "del", "rf", "rfx") or not key:
+-                tg("answerCallbackQuery", {"callback_query_id": cq["id"]}, token, 15)
++                try:
++                    tg("answerCallbackQuery", {"callback_query_id": cq["id"]}, token, 15)
++                except Exception:
++                    pass
+                 continue
+             try:
+                 if action in ("pub", "del"):
+                     if not key.isdigit():
+                         raise ValueError("잘못된 post id")
+                     if action == "pub":
+-                        publish(key, blog); result = "✅ 발행됨"
++                        publish(key, blog, approver); result = "✅ 발행됨"
+                     else:
+                         discard(key, blog); result = "❌ 폐기됨"
+                 else:   # 리프레시 큐
+@@ -254,7 +292,7 @@
+                     elif item.get("status") not in (None, "pending"):
+                         result = f"이미 처리됨({item.get('status')})"
+                     elif action == "rf":
+-                        apply_refresh(item, blog)
++                        apply_refresh(item, blog, approver)
+                         item["status"] = "applied"; _save_queue(q); result = "✅ 리프레시 적용됨"
+                     else:
+                         item["status"] = "skipped"; _save_queue(q); result = "❌ 건너뜀"
+@@ -268,8 +306,11 @@
+                    {"chat_id": cq_chat, "message_id": msg["message_id"], "reply_markup": {}}, token, 15)
+             except Exception:
+                 pass
+-            tg("answerCallbackQuery",
+-               {"callback_query_id": cq["id"], "text": result, "show_alert": False}, token, 15)
++            try:
++                tg("answerCallbackQuery",
++                   {"callback_query_id": cq["id"], "text": result, "show_alert": False}, token, 15)
++            except Exception as e:   # 네트워크 오류로 프로세스 전체가 죽지 않게 한다
++                print("answerCallbackQuery 실패:", e, flush=True)
+ 
+         try:
+             OFFSET_FILE.write_text(str(offset))

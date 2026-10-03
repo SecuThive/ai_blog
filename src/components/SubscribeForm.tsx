@@ -8,6 +8,7 @@ export default function SubscribeForm({ compact = false }: { compact?: boolean }
   const [email, setEmail] = useState('');
   const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [msg, setMsg] = useState('');
+  const [mailSent, setMailSent] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -20,6 +21,7 @@ export default function SubscribeForm({ compact = false }: { compact?: boolean }
       });
       const data = await res.json();
       if (res.ok) {
+        setMailSent(data.welcomeEmailSent === true);
         setState('ok');
       } else {
         setState('error');
@@ -37,7 +39,7 @@ export default function SubscribeForm({ compact = false }: { compact?: boolean }
         <span className="subscribe-success-icon">✓</span>
         <div>
           <p className="subscribe-success-title">{dict.subscribe.successTitle}</p>
-          <p className="subscribe-success-desc">{dict.subscribe.successDesc}</p>
+          <p className="subscribe-success-desc">{mailSent ? dict.subscribe.successDesc : dict.subscribe.successDescNoEmail}</p>
         </div>
       </div>
     );

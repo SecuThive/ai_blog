@@ -1,4 +1,5 @@
 import Link from '@/i18n/link';
+import AdSenseLoader from '@/components/AdSenseLoader';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { makeFreshClient } from '@/lib/supabase';
@@ -140,7 +141,8 @@ function HeroV2({ posts, seriesCount, guideCount, subscriberCount, dict, locale 
   const stats = [
     { num: String(seriesCount), sub: 'ACTIVE SERIES' },
     { num: `${guideCount}+`, sub: 'ENGINEER GUIDES' },
-    { badge: true, sub: 'REVIEWED · UPDATED' },
+    // 글별 검토 기록이 없는 글이 대부분이므로 일괄 'REVIEWED' 표기를 쓰지 않는다. 실제 운영 방식(AI 초안)만 밝힌다.
+    { badge: true, sub: 'AI-ASSISTED DRAFTS' },
     // 구독자는 유의미해지기 전까지 숨김(미완성 지표처럼 보이는 '—' 제거)
     ...(subscriberCount >= 50
       ? [{ num: subscriberCount >= 1000 ? `${(subscriberCount / 1000).toFixed(1)}K` : String(subscriberCount), sub: 'SUBSCRIBERS' }]
@@ -187,7 +189,7 @@ function HeroV2({ posts, seriesCount, guideCount, subscriberCount, dict, locale 
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
                         </svg>
-                        CHECK
+                        AI
                       </span>
                     </div>
                   ) : (
@@ -230,11 +232,11 @@ function ServiceLaunchBanner({ locale }: { locale: Locale }) {
               <span className="service-launch-item-desc">{locale === 'en' ? 'A seven-stage digital puzzle demo.' : '단서를 따라 풀어가는 7단계 디지털 문제 체험판.'}</span>
               <span className="service-launch-item-action">{locale === 'en' ? 'Try the demo' : '체험판 시작'} <span aria-hidden="true">↗</span></span>
             </TrackedExternalLink>
-            <div className="service-launch-item service-launch-item--pending" aria-label="LABS coming soon">
+            <div className="service-launch-item service-launch-item--pending" aria-label="LABS coming soon" aria-disabled="true">
               <span className="service-launch-item-label">PRACTICE · LABS</span>
               <strong>LABS</strong>
               <span className="service-launch-item-desc">{locale === 'en' ? 'Hands-on technology labs are in preparation.' : '직접 다뤄보는 기술 실습 환경을 준비 중입니다.'}</span>
-              <span className="service-launch-item-action">COMING SOON</span>
+              <span className="service-launch-item-action">{locale === 'en' ? 'COMING SOON · not available yet' : 'COMING SOON · 아직 이용할 수 없음'}</span>
             </div>
             <TrackedExternalLink className="service-launch-item service-launch-item--moa" href="https://moa.thivelab.com/" path="/" event={{ name: 'product_card_click', path: '/', product: 'moa' }} aria-label={locale === 'en' ? 'Open MOA' : 'MOA 열기'}>
               <span className="service-launch-item-label">CREATIVE WORKSPACE · MOA</span>
@@ -242,11 +244,11 @@ function ServiceLaunchBanner({ locale }: { locale: Locale }) {
               <span className="service-launch-item-desc">{locale === 'en' ? 'Posters, menus, coupons, and review replies in one place.' : '홍보물·메뉴판·쿠폰·리뷰 답변을 한곳에서 만드세요.'}</span>
               <span className="service-launch-item-action">{locale === 'en' ? 'Try MOA' : 'MOA 바로가기'} <span aria-hidden="true">↗</span></span>
             </TrackedExternalLink>
-            <div className="service-launch-item service-launch-item--pending" aria-label="ENTERPRISE coming soon">
+            <div className="service-launch-item service-launch-item--pending" aria-label="ENTERPRISE coming soon" aria-disabled="true">
               <span className="service-launch-item-label">BUSINESS · ENTERPRISE</span>
               <strong>ENTERPRISE</strong>
               <span className="service-launch-item-desc">{locale === 'en' ? 'Security, AI and private challenge solutions are in preparation.' : '기업용 보안·AI·Private CTF 서비스를 준비 중입니다.'}</span>
-              <span className="service-launch-item-action">COMING SOON</span>
+              <span className="service-launch-item-action">{locale === 'en' ? 'COMING SOON · not available yet' : 'COMING SOON · 아직 이용할 수 없음'}</span>
             </div>
           </div>
         </div>
@@ -293,9 +295,6 @@ function DailyBriefing({ posts, locale, dict }: { posts: PostSummary[]; locale: 
               </div>
               <h3>{lead.title}</h3>
               <p>{lead.excerpt}</p>
-              <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', letterSpacing: '0.04em', display: 'flex', gap: 8 }}>
-                <span>REVIEWED · UPDATED</span>
-              </div>
             </div>
           </Link>
 
@@ -694,6 +693,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <HomeScrollReveal>
+      {/* 홈은 실제 글 목록이 있을 때만 광고 로더를 둔다(빈 홈 화면 제외). */}
+      <AdSenseLoader />
       <HeroV2 posts={posts} seriesCount={activeSeriesCount} guideCount={guideCount} subscriberCount={subscriberCount} dict={dict} locale={locale} />
       <ServiceLaunchBanner locale={locale} />
       <DailyBriefing posts={posts} locale={locale} dict={dict} />

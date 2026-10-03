@@ -286,8 +286,10 @@ export function SignalDashboard({ signals, heatmapDates }: { signals: SignalData
 }
 
 /* ===== Mag Latest (client — with working category filter) ===== */
-const MAG_FILTERS: { cat: string | null; label: (dict: ReturnType<typeof useT>['dict']) => string }[] = [
+const MAG_FILTERS: { cat: string | null; label: (dict: ReturnType<typeof useT>['dict'], locale: string) => string }[] = [
   { cat: null, label: (dict) => dict.home.filterAll },
+  { cat: '인프라', label: (_d, locale) => (locale === 'en' ? 'Infra' : '인프라') },
+  { cat: '보안', label: (_d, locale) => (locale === 'en' ? 'Security' : '보안') },
   { cat: 'AI & 자동화', label: () => 'AI' },
   { cat: '개발', label: (dict) => dict.nav.dev },
   { cat: 'IT 트렌드', label: () => 'IT' },
@@ -297,6 +299,8 @@ export function MagLatestSection({ posts }: { posts: MagPost[] }) {
   const { dict, locale } = useT();
   const [active, setActive] = useState<string | null>(null);
 
+  // 최신 글 목록에 해당 카테고리 글이 없으면 탭을 숨긴다. 빈 탭을 누르면 탭 줄까지 사라져 되돌아갈 수 없었다.
+  const tabs = MAG_FILTERS.filter(f => f.cat === null || posts.some(p => p.category === f.cat));
   const filtered = active ? posts.filter(p => p.category === active) : posts;
   const big = filtered[0];
   const rest = filtered.slice(1, 7);
@@ -323,13 +327,15 @@ export function MagLatestSection({ posts }: { posts: MagPost[] }) {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            {MAG_FILTERS.map(f => (
+            {tabs.length > 1 && tabs.map(f => (
               <button
                 key={String(f.cat)}
+                type="button"
                 className={`filter-tab${active === f.cat ? ' active' : ''}`}
+                aria-pressed={active === f.cat}
                 onClick={() => setActive(f.cat)}
               >
-                {f.label(dict)}
+                {f.label(dict, locale)}
               </button>
             ))}
             <Link href="/archive" className="section-link" style={{ marginLeft: 4 }}>
@@ -357,8 +363,6 @@ export function MagLatestSection({ posts }: { posts: MagPost[] }) {
               <p className="card-excerpt" style={{ WebkitLineClamp: 3 } as React.CSSProperties}>{big.excerpt}</p>
               <div className="card-foot">
                 <span>{formatTimeAgo(big.published_at, locale, dict)}</span>
-                <span className="dot" />
-                <span>REVIEWED · UPDATED</span>
               </div>
             </div>
           </Link>

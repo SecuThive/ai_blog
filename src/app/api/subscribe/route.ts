@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { Resend } from 'resend';
+import { unsubscribeHref } from '@/lib/unsubscribeToken';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
@@ -12,9 +13,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '유효한 이메일을 입력해주세요.' }, { status: 400 });
   }
 
-  const { error } = await supabaseAdmin()
+  const { data: inserted, error } = await supabaseAdmin()
     .from('subscribers')
-    .insert({ email });
+    .insert({ email })
+    .select('id')
+    .single();
 
   if (error) {
     if (error.code === '23505') {
@@ -23,9 +26,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '구독 처리 중 오류가 발생했습니다.' }, { status: 500 });
   }
 
-  if (process.env.RESEND_API_KEY) {
+  // 환영 메일을 실제로 보냈을 때만 화면에 "메일을 보냈다"고 안내한다.
+  let welcomeEmailSent = false;
+  if (process.env.RESEND_API_KEY && inserted?.id) {
+    const unsubscribeUrl = unsubscribeHref(Number(inserted.id));
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
+    const sent = await resend.emails.send({
       from: 'Nodelog <newsletter@thivelab.com>',
       to: email,
       subject: '✅ Nodelog 구독을 환영합니다!',
@@ -71,7 +77,7 @@ export async function POST(req: NextRequest) {
               최신 글 바로 보기 →
             </a>
             <p style="font-size:12px;color:#aaa;margin:24px 0 0;text-align:center;line-height:1.6">
-              구독 해지를 원하시면 <a href="${SITE_URL}/unsubscribe?email=${encodeURIComponent(email)}" style="color:#aaa">여기</a>를 클릭하세요.
+              구독 해지를 원하시면 <a href="${unsubscribeUrl}" style="color:#aaa">여기</a>를 클릭하세요.
             </p>
           </td>
         </tr>
@@ -82,8 +88,11 @@ export async function POST(req: NextRequest) {
 </html>`,
     }).catch((err: unknown) => {
       console.error('welcome email error:', err);
+      return null;
     });
+    if (sent && !sent.error) welcomeEmailSent = true;
+    else if (sent?.error) console.error('welcome email error:', sent.error);
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, welcomeEmailSent });
 }

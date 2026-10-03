@@ -104,7 +104,7 @@ if (!APPLY) { console.log('\n(dry-run) --apply 를 붙이면 실제 삽입합니
 
 // --- 삽입 ---
 const rows = GUIDES.map(g => ({
-  ...g, author: 'SecuThive', views: 0, status: 'published', created_at: now, updated_at: now,
+  ...g, author: 'SecuThive', views: 0, status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */, created_at: now, updated_at: now,
 }));
 const { data: inserted, error } = await sb.from('engineer_guides').insert(rows).select('id,slug,title,category');
 if (error) { console.error('삽입 실패:', error.message); process.exit(1); }

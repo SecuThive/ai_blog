@@ -4,6 +4,8 @@ import ArchiveLoadMore from '@/components/ArchiveLoadMore';
 import { isLocale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/messages';
 import { pageMetadata } from '@/i18n/metadata';
+import { titleForLocale } from '@/i18n/content';
+import type { Locale } from '@/i18n/config';
 
 // egress 절감: 예전엔 noStore()로 매 요청 DB를 조회했다. 경로가 ASCII라 ISR이 정상 동작하므로
 // 시간 기반 재생성으로 전환한다. 조회 에러는 throw → ISR이 빈 페이지를 캐시하지 않고 직전 정상본 유지.
@@ -15,8 +17,11 @@ interface PostRow {
   slug: string;
   category: string;
   published_at: string;
+}
+
+interface PostQueryRow extends PostRow {
   tags?: string[] | null;
-  content_evidence?: unknown;
+  en_title?: string | null;
 }
 
 type MonthMap = Map<string, PostRow[]>;
@@ -34,14 +39,25 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   });
 }
 
-async function getAllPosts(): Promise<PostRow[]> {
+// 2026-10: 예전엔 content_evidence 전체(영문 본문 포함)를 클라이언트 컴포넌트 props로 넘겨 HTML이
+// 약 5.6MB였다. 제목만 서버에서 언어별로 계산해 목록에 필요한 5개 필드만 넘긴다.
+async function getAllPosts(locale: Locale): Promise<PostRow[]> {
   const { data, error } = await makeFreshClient()
     .from('posts')
-    .select('id,title,slug,category,published_at,tags,content_evidence')
+    .select('id,title,slug,category,published_at,tags,en_title:content_evidence->en->>title')
     .eq('status', 'published')
     .order('published_at', { ascending: false });
   if (error) throw new Error(`archive fetch failed: ${error.code ?? ''} ${error.message}`);
-  return (data ?? []) as PostRow[];
+  return ((data ?? []) as unknown as PostQueryRow[]).map((p) => ({
+    id: p.id,
+    slug: p.slug,
+    category: p.category,
+    published_at: p.published_at,
+    title: titleForLocale(locale, p.title, {
+      tags: p.tags,
+      content_evidence: p.en_title ? { en: { title: p.en_title } } : null,
+    }),
+  }));
 }
 
 function groupByYearMonth(posts: PostRow[]): YearMap {
@@ -62,7 +78,7 @@ export default async function ArchivePage({ params }: { params: Promise<{ locale
   const { locale: raw } = await params;
   const locale = isLocale(raw) ? raw : 'ko';
   const dict = getDictionary(locale);
-  const posts = await getAllPosts();
+  const posts = await getAllPosts(locale);
   const grouped = groupByYearMonth(posts);
 
   const groupedArr = Array.from(grouped.entries()).map(([year, months]) => ({

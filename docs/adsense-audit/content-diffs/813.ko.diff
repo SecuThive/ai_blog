@@ -1,0 +1,38 @@
+--- 813.ko.before
++++ 813.ko.after
+@@ -21,9 +21,9 @@
+ 
+ | # | 에러 원문 | 계층 | 첫 확인 명령 | 흔한 오진 방향 |
+ |---|---|---|---|---|
+-| (a) | `psql: error: could not connect to server: Connection refused ... Is the server running on host "10.0.3.10" and accepting TCP/IP connections on port 5432?` | 네트워크 | `ss -lntp \| grep 5432` | pg_hba.conf 편집 (무의미) |
+-| (b) | `FATAL: no pg_hba.conf entry for host "10.0.3.51", user "app", database "prod", SSL off` | pg_hba | `SELECT * FROM pg_hba_file_rules;` | 방화벽/보안그룹 점검 |
+-| (c) | `FATAL: no pg_hba.conf entry for host "10.0.3.51", user "app", database "prod", SSL on` | pg_hba | 동일 + `hostnossl` 라인 확인 | "SSL을 꺼야 하나" 삽질 |
++| (a) | `psql: error: connection to server at "10.0.3.10", port 5432 failed: Connection refused` (libpq 14+; 13 이하는 `could not connect to server: Connection refused ... Is the server running on host "10.0.3.10" and accepting TCP/IP connections on port 5432?`) | 네트워크 | `ss -lntp \| grep 5432` | pg_hba.conf 편집 (무의미) |
++| (b) | `FATAL: no pg_hba.conf entry for host "10.0.3.51", user "app", database "prod", no encryption` (서버 14+; 13 이하는 `SSL off`) | pg_hba | `SELECT * FROM pg_hba_file_rules;` | 방화벽/보안그룹 점검 |
++| (c) | `FATAL: no pg_hba.conf entry for host "10.0.3.51", user "app", database "prod", SSL encryption` (서버 14+; 13 이하는 `SSL on`) | pg_hba | 동일 + `hostnossl` 라인 확인 | "SSL을 꺼야 하나" 삽질 |
+ | (d) | `FATAL: password authentication failed for user "app"` | 인증 | `SELECT rolname, substring(rolpassword,1,4) FROM pg_authid;` | pg_hba 재편집 (이미 통과함) |
+ | (e) | `psql: error: FATAL: Peer authentication failed for user "app"` | 인증 + 로컬 소켓 | `psql -h 127.0.0.1 -U app -d prod` | 비밀번호 재설정 반복 |
+ | (f) | `FATAL: sorry, too many clients already` | 세션 슬롯 (범위 밖) | `SHOW max_connections;` | 이미 pg_hba·인증 통과 상태 |
+@@ -32,7 +32,7 @@
+ 
+ **(a) 네트워크 계층.** 서버 프로세스가 죽었거나, `listen_addresses`가 `localhost`이거나, 방화벽/보안그룹/컨테이너 포트 매핑에서 막힌 상태입니다. 로컬 루프백에서 같은 증상이 나오는 경우의 일반 디버깅 절차는 [connection refused / ECONNREFUSED 127.0.0.1 30초 진단 런북](/blog/connection-refused-econnrefused-127001-30초-진단-런북)에 정리되어 있으니 그쪽을 먼저 보세요. 여기서는 PostgreSQL 고유 항목만 다룹니다.
+ 
+-**(b)와 (c)의 `SSL off` / `SSL on`은 원인이 아니라 "접속 방식 기록"입니다.** 서버가 "이 접속은 평문/TLS였다"고 사실을 진술하는 것뿐입니다. 그래서 해석은 정반대가 됩니다.
++**(b)와 (c)의 끝부분(14+ `no encryption` / `SSL encryption`, 13 이하 `SSL off` / `SSL on`)은 원인이 아니라 "접속 방식 기록"입니다.** 아래에서는 13 이하 표기로 설명합니다. 메시지 형식은 PostgreSQL 14에서 바뀌었습니다(서버 `auth.c`, libpq `fe-connect.c` 소스 기준). 서버가 "이 접속은 평문/TLS였다"고 사실을 진술하는 것뿐입니다. 그래서 해석은 정반대가 됩니다.
+ 
+ - `SSL off` → 클라이언트가 평문으로 붙었는데 서버에는 `hostssl` 라인만 있다. → 클라이언트에 `sslmode=require`를 주거나 `host` 라인을 만든다.
+ - `SSL on` → TLS로 붙었는데 `hostnossl`만 있거나, ADDRESS CIDR가 실제 소스 IP를 포함하지 않는다.
+@@ -249,9 +249,10 @@
+ |---|---|---|
+ | 9.6~13 | md5 | `include` 지시자 없음, `pg_hba_file_rules`는 10부터 |
+ | 14 | scram-sha-256으로 전환 | 기존 md5 사용자 재해싱 필요 |
+-| 15·16·17 | scram-sha-256 | `include`·`include_if_exists`·`include_dir`, 정규식 매칭(`/^app_.*`) 지원 |
+-
+-정규식 매칭 예시(PG 15+):
++| 15 | scram-sha-256 | 14와 같음 |
++| 16·17 | scram-sha-256 | `include`·`include_if_exists`·`include_dir`, 사용자·DB 이름 정규식 매칭(`/^app_.*`) 지원([PostgreSQL 16 릴리스 노트](https://www.postgresql.org/docs/release/16.0/)) |
++
++정규식 매칭 예시(PG 16+):
+ 
+ ```conf
+ hostssl  prod  "/^app_.*"  10.0.3.0/24  scram-sha-256

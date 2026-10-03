@@ -110,7 +110,7 @@ function SearchContent() {
                     const isGuide = p.source === 'guide';
                     const href = isGuide ? `/engineer/${p.slug}` : `/blog/${p.slug}`;
                     return (
-                      <Link key={`${p.source}-${p.id}`} href={href} className="card card-link" style={{ padding: 22, display: 'grid', gridTemplateColumns: '160px 1fr', gap: 22 }}>
+                      <Link key={`${p.source}-${p.id}`} href={href} className="card card-link search-result-card">
                         <div className={`card-thumb thumb-${tone}`} style={{ aspectRatio: '16/10', borderRadius: 8 }}>{p.category}</div>
                         <div>
                           <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>

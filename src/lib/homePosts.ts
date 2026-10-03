@@ -1,5 +1,6 @@
 import { makeFreshClient } from './supabase';
 import { NOINDEX_POST_SLUGS } from './noindexPosts';
+import { HISTORICAL_POST_SLUGS } from './historicalPosts';
 
 // 홈 편집 기준은 색인 정책과 별개다. 좋은 런북의 색인 상태는 유지한다.
 const PROMOTIONAL = /완벽|완전\s*가이드|필독|마스터/;
@@ -24,7 +25,8 @@ export async function getHomePostIds(limit: number, category?: string): Promise<
     const { data, error } = await query;
     if (error) throw error;
     for (const post of data ?? []) {
-      if (!NOINDEX_POST_SLUGS.has(post.slug) && !isPromotionalHomePost(post.title, post.slug)) {
+      // 기준 시점이 지난 회고 자료(historicalPosts)는 홈 추천·리딩 레인에 올리지 않는다.
+      if (!NOINDEX_POST_SLUGS.has(post.slug) && !HISTORICAL_POST_SLUGS.has(post.slug) && !isPromotionalHomePost(post.title, post.slug)) {
         ids.push(post.id);
         if (ids.length === limit) break;
       }

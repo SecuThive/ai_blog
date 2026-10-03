@@ -14,7 +14,7 @@ const guide = {
   difficulty: 'beginner',
   os_compat: ['Ubuntu', 'Debian'],
   author: 'Nodelog',
-  status: 'published',
+  status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */,
   views: 0,
   content: `## 왜 초기 설정이 중요한가
 

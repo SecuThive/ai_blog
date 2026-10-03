@@ -6,7 +6,6 @@ import { catTone } from '@/lib/utils';
 import { useT } from '@/i18n/provider';
 import { interpolate } from '@/i18n/messages';
 import { categoryLabel } from '@/i18n/categories';
-import { titleForLocale } from '@/i18n/content';
 
 interface PostRow {
   id: number;
@@ -14,8 +13,6 @@ interface PostRow {
   slug: string;
   category: string;
   published_at: string;
-  tags?: string[] | null;
-  content_evidence?: unknown;
 }
 
 interface MonthGroup { month: string; posts: PostRow[]; }
@@ -114,7 +111,7 @@ export default function ArchiveLoadMore({ grouped }: { grouped: YearGroup[] }) {
                               <span className={`badge badge-${tone}`} style={{ fontSize: 10.5 }}>{categoryLabel(p.category, locale)}</span>
                             </div>
                             <span style={{ fontSize: 14.5, color: 'var(--text-1)', letterSpacing: '-0.015em', lineHeight: 1.4 }}>
-                              {titleForLocale(locale, p.title, { tags: p.tags, content_evidence: p.content_evidence })}
+                              {/* 제목은 서버(archive/page.tsx)에서 언어별로 계산해 넘긴다. */}{p.title}
                             </span>
                           </div>
                         </Link>

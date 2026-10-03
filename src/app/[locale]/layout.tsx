@@ -8,7 +8,6 @@ import Footer from '@/components/Footer';
 import { Analytics } from '@vercel/analytics/next';
 import JsonLd from '@/components/JsonLd';
 import ThemeProvider from '@/components/ThemeProvider';
-import AdSenseScript from '@/components/AdSenseScript';
 import { LocaleProvider } from '@/i18n/provider';
 import { isLocale, locales } from '@/i18n/config';
 import { getDictionary } from '@/i18n/messages';
@@ -81,10 +80,10 @@ export async function generateMetadata({
     twitter: {
       card: 'summary_large_image',
     },
+    // index/follow는 기본값이라 레이아웃에서 출력하지 않는다. 출력하면 404 화면에 Next가 넣는 noindex와
+    // 'index, follow'가 함께 나가 신호가 충돌한다. 페이지별 robots는 각 페이지 메타데이터가 정한다.
     robots: {
-      index: true,
-      follow: true,
-      googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
+      googleBot: { 'max-image-preview': 'large', 'max-snippet': -1 },
     },
     verification: {
       google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
@@ -117,22 +116,12 @@ export default async function RootLayout({
   if (!isLocale(raw)) notFound();
   const locale = raw;
   const dict = getDictionary(locale);
-  const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID ?? 'ca-pub-2091277631590195';
-  const adsenseApproved = process.env.NEXT_PUBLIC_ADSENSE_APPROVED === 'true';
   const searchUrl = `${siteUrl('/search', locale)}?q={search_term_string}`;
   return (
     <html lang={locale} className={`${jetbrainsMono.variable} ${sourceSerif4.variable} ${inter.variable}`}>
       <head>
-        {/* 신청 중에는 소유 확인을 위해 정적 스니펫을 유지한다. 승인 후 Vercel에서
-            NEXT_PUBLIC_ADSENSE_APPROVED=true로 전환하면 아래 AdSenseScript가
-            고유 콘텐츠가 충분한 경로에서만 광고를 요청한다. */}
-        {!adsenseApproved && (
-          <script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`}
-            crossOrigin="anonymous"
-          />
-        )}
+        {/* AdSense 로더는 레이아웃 전역이 아니라 콘텐츠가 확인된 페이지(홈·실재하는 색인 글·가이드)에서만
+            <AdSenseLoader />로 출력한다. 범위 규칙: src/lib/adsense.ts */}
         {NAVER_CODES.map(code => (
           <meta key={code} name="naver-site-verification" content={code} />
         ))}
@@ -143,7 +132,6 @@ export default async function RootLayout({
             (noscript로 JS 비활성 환경 폴백 유지) */}
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
         <link
           id="pretendard-font"
           rel="stylesheet"
@@ -196,7 +184,6 @@ export default async function RootLayout({
         <main>{children}</main>
         <Footer />
         </LocaleProvider>
-        {adsenseApproved && <AdSenseScript adsenseId={adsenseId} />}
         <Analytics />
         </ThemeProvider>
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />

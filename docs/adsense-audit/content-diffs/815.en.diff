@@ -1,0 +1,117 @@
+--- 815.en.before
++++ 815.en.after
+@@ -37,7 +37,7 @@
+ - **SOPS + age**: If you also use KMS, `number of keys × $1.00` + decrypt API call cost. Using age keys only, infrastructure cost is **$0**
+ - **Vault self-hosted**: `EC2 instance + EBS + NLB` + **ops labor (hours/month × hourly rate)**
+ 
+-Splitting ops labor into its own row is the point of this calculation. For convenience, hourly rate is set at **₩50,000 (about $36)**. Plug in your team’s actual labor cost and recalculate.
++Splitting ops labor into its own row is the point of this calculation. For convenience, hourly rate is set at **₩50,000 (about $36)**. Plug in your team’s actual labor cost and recalculate. The ops hours in the tables (8 hours/month and so on) are also illustrative assumptions, not measurements; the conclusion only holds once you replace them with your team’s own time logs.
+ 
+ ### Scenario 1: 30 secrets / 50,000 API calls / 3 developers
+ 
+@@ -61,16 +61,22 @@
+ 
+ **This is where it flips.** SOPS infrastructure stays $0, but once you pass 300 secrets and 15 services, the burden of managing “who can decrypt what with which key” via `creation_rules` in `.sops.yaml` grows sharply. When a developer joins or leaves, you remove their key from the age recipient list and **re-encrypt every file**—and that work scales with the number of files.
+ 
+-Empirically, the break-even sits in the **100–150 secret range**. ASM cost scales linearly with secret count ($0.40) while ops time barely grows; SOPS costs $0 but ops time grows almost linearly with secret count. You’re trading `150 × $0.40 = $60` for about 1.7 hours of labor—and a single re-encryption pass already exceeds that.
++There is no single break-even secret count. Set the two monthly costs equal and you get:
++
++`N × $0.40 + (monthly API calls ÷ 10,000) × $0.05 = (SOPS ops hours − ASM ops hours) × hourly rate`
++
++With Scenario 2’s assumptions (SOPS 16 h, ASM 4 h, $36/h, 2M API calls) the right side is $432 and the left is `N × $0.40 + $10`, so ASM stays cheaper until N ≈ 1,055. If the ops-time gap is only 2 hours a month, the right side is $72 and SOPS becomes cheaper above N ≈ 155. The answer is far more sensitive to the **ops-time gap** than to the secret count, so log the time you actually spend adding, removing and re-encrypting keys for a month and plug that in.
+ 
+ ### Scenario 3: 1,000 secrets / multi-region, multi-cloud
+ 
+ | Item | Vault (HA 3 nodes × 2 regions) | AWS Secrets Manager (replication) | SOPS + age |
+ |---|---|---|---|
+ | Infrastructure | ≈ $290 | $0 | $0 |
+-| Secrets/API | - | 1,000 × $0.40 = $400 + extra replica-region charges + API cost → **$450+** | $0 |
++| Secrets/API | - | 1,000 primaries × $0.40 = $400 + 1,000 replicas × $0.40 = $400 (each replica is billed as a separate secret) + API cost → **$800+** | $0 |
+ | Ops labor | 40 hours/month = **$1,440** | 8 hours/month = $288 | Effectively unmanageable |
+-| **Monthly total** | **≈ $1,730** | **≈ $738** | Not recommended |
++| **Monthly total** | **≈ $1,730** | **≈ $1,090+** | Not recommended |
++
++The replica charge comes from the AWS Security Blog’s [cross-Region replication post](https://aws.amazon.com/blogs/security/how-to-replicate-secrets-aws-secrets-manager-multiple-regions/) (“each replica secret is billed as a separate secret”); unit prices follow [AWS Secrets Manager pricing](https://aws.amazon.com/secrets-manager/pricing/).
+ 
+ In this range SOPS drops out not on cost but on **operability**. If you are AWS-only, ASM is still cheaper; if you are multi-cloud or dynamic credentials are mandatory, Vault’s $1,730 is justified.
+ 
+@@ -117,17 +123,20 @@
+ |---|---|---|---|
+ | 1 | Must DB credentials be issued with a TTL at request time? | **Vault / OpenBao** | Go to 2 |
+ | 2 | Multi-cloud or on-prem in parallel? | **Vault / OpenBao** | Go to 3 |
+-| 3 | AWS-only and 150+ secrets? | **ASM + ESO** | Go to 4 |
++| 3 | AWS-only, and ASM comes out cheaper in the break-even formula above? | **ASM + ESO** | Go to 4 |
+ | 4 | Want manifests and secrets together in Git (GitOps)? | **SOPS + age** | Go to 5 |
+ | 5 | Is submitting **read** audit logs for secrets mandatory? | **ASM (CloudTrail)** | **SOPS + age** |
+ 
+-There is also a realistic hybrid: keep application config in Git with SOPS, and put only rotation-needed items like DB passwords in ASM. In the 100–200 secret range, that mix balances cost and ops burden best.
+-
+-## Do this today: five lines to encrypt .env with SOPS
++There is also a realistic hybrid: keep application config in Git with SOPS, and put only rotation-needed items like DB passwords in ASM. ASM charges only for the secrets stored in ASM, so this cuts cost when only part of your secrets need rotation.
++
++## Do this today: five steps to encrypt .env with SOPS
+ 
+ ```bash
+ # 1. age 키 생성 (개인키는 절대 커밋 금지)
++mkdir -p ~/.config/sops/age
+ age-keygen -o ~/.config/sops/age/keys.txt
++# On macOS sops defaults to ~/Library/Application Support/sops/age/keys.txt, so point it at this path
++export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
+ 
+ # 2. 공개키 확인 (age1... 로 시작하는 문자열)
+ grep "public key" ~/.config/sops/age/keys.txt
+@@ -150,12 +159,14 @@
+ 
+ Expected result: open `secrets/prod.enc.yaml` and the key names are readable, values have become `ENC[AES256_GCM,data:...]`, and a `sops:` metadata block is appended at the bottom. If values are still plaintext, `path_regex` in `.sops.yaml` doesn’t match the actual path—fix the path pattern first.
+ 
+-To verify decryption: `sops -d secrets/prod.enc.yaml`. A `no matching creation rules` error means a rule mismatch; `failed to get the data key` means `SOPS_AGE_KEY_FILE` does not point at the private-key path.
++To verify decryption: `sops -d secrets/prod.enc.yaml`. `no matching creation rules` appears when encrypting (`sops -e`) a path that no `path_regex` matches. `failed to get the data key` on decrypt means sops could not find the private key. The defaults are `~/.config/sops/age/keys.txt` on Linux and `~/Library/Application Support/sops/age/keys.txt` on macOS (when `XDG_CONFIG_HOME` is unset); anywhere else, set `SOPS_AGE_KEY_FILE` ([SOPS age docs](https://getsops.io/docs/usage/identities/age/)).
+ 
+ ### If you use ASM: minimal ESO YAML
+ 
++`external-secrets.io/v1` is available from ESO v0.16.2, and v0.17.0 stopped serving `v1beta1` ([v0.17.0 release notes](https://github.com/external-secrets/external-secrets/releases/tag/v0.17.0)). Older `v1beta1` examples will not apply on current ESO.
++
+ ```yaml
+-apiVersion: external-secrets.io/v1beta1
++apiVersion: external-secrets.io/v1
+ kind: SecretStore
+ metadata:
+   name: aws-secretsmanager
+@@ -170,7 +181,7 @@
+           serviceAccountRef:
+             name: external-secrets-sa
+ ---
+-apiVersion: external-secrets.io/v1beta1
++apiVersion: external-secrets.io/v1
+ kind: ExternalSecret
+ metadata:
+   name: app-db-secret
+@@ -216,14 +227,16 @@
+ There is no recovery. Prevention is the only answer. Specify multiple recipients at encrypt time.
+ 
+ ```bash
+-sops -e --age "age1개발자키,age1백업키,age1CI키" secrets/prod.yaml > secrets/prod.enc.yaml
+-# 이미 암호화된 파일에 수신자 추가
++sops -e --age "age1<dev-key>,age1<backup-key>,age1<ci-key>" secrets/prod.yaml > secrets/prod.enc.yaml
++# Add a recipient to an already-encrypted file: add the new public key to .sops.yaml first, then run
+ sops updatekeys secrets/prod.enc.yaml
+ ```
+ 
++To remove a recipient (someone leaving), delete the key from `.sops.yaml`, run `sops updatekeys`, then `sops rotate --in-place` to replace the data key ([SOPS key management](https://getsops.io/docs/usage/key-management/)). Old ciphertext in Git history can still be opened with the removed key, so rotate the secret values that person could see.
++
+ **3. You deleted an ASM secret and cannot recreate it under the same name**
+ 
+-ASM uses a 7–30 day recovery window by default, so a name in that window cannot be reused.
++ASM schedules deletion with a recovery window (30 days by default, configurable from 7 to 30), and a name in that window cannot be reused. If the secret has replicas, remove them first. After a forced delete, `aws secretsmanager describe-secret --secret-id prod/app/db` returning `ResourceNotFoundException` confirms it (there is a short delay).
+ 
+ ```bash
+ # 복구 (권장)
+@@ -237,7 +250,7 @@
+ ## FAQ
+ 
+ **Q. At what secret count should you move to AWS Secrets Manager?**
+-A. On infrastructure cost alone SOPS is always cheaper, but once you convert ops time to labor cost the crossover is in the **100–150 secret range**. At 150 secrets, ASM is `150 × $0.40 = $60`; at that scale, SOPS re-encryption and key management already exceed two hours a month.
++A. There is no fixed count. On infrastructure alone SOPS is always cheaper; once ops time is included, the break-even formula above decides. At 150 secrets, for example, ASM costs `150 × $0.40 = $60`, so if SOPS key management and re-encryption take about 1.7 more hours a month than ASM (at $36/h), ASM is cheaper.
+ 
+ **Q. Do we have to rip out Vault because of the BSL change?**
+ A. Internal use for running your own services is generally fine. Legal review is needed only if you provide or resell secret-management to customers on top of Vault. If you want to avoid license risk entirely, the OpenBao fork is the alternative.

@@ -40,11 +40,6 @@ export default async function SubscribePage({ params }: { params: Promise<{ loca
     { icon: '🤖', title: dict.pages.subscribeB3Title, desc: dict.pages.subscribeB3Desc },
     { icon: '🛠️', title: dict.pages.subscribeB4Title, desc: dict.pages.subscribeB4Desc },
   ];
-  const quotes = [
-    { role: dict.pages.subscribeQ1Role, text: dict.pages.subscribeQ1Text },
-    { role: dict.pages.subscribeQ2Role, text: dict.pages.subscribeQ2Text },
-    { role: dict.pages.subscribeQ3Role, text: dict.pages.subscribeQ3Text },
-  ];
 
   const titleLines = dict.pages.subscribeTitle.split('\n');
 
@@ -90,15 +85,7 @@ export default async function SubscribePage({ params }: { params: Promise<{ loca
               </div>
             </div>
 
-            <div className="subscribe-testimonials">
-              {quotes.map((s, i) => (
-                <div key={i} className="subscribe-testimonial">
-                  <div className="subscribe-testimonial-stars">★★★★★</div>
-                  <p className="subscribe-testimonial-text">&ldquo;{s.text}&rdquo;</p>
-                  <p className="subscribe-testimonial-role">{s.role}</p>
-                </div>
-              ))}
-            </div>
+            {/* 2026-10: 출처를 확인할 수 없는 구독자 후기(★★★★★)를 제거했다. 실제 후기를 받으면 동의를 얻어 다시 넣는다. */}
           </div>
         </div>
         <div className="subscribe-hero-glow subscribe-hero-glow--1" />
