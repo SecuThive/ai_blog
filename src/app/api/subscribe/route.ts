@@ -26,10 +26,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '구독 처리 중 오류가 발생했습니다.' }, { status: 500 });
   }
 
+  // 환영 메일을 실제로 보냈을 때만 화면에 "메일을 보냈다"고 안내한다.
+  let welcomeEmailSent = false;
   if (process.env.RESEND_API_KEY && inserted?.id) {
     const unsubscribeUrl = unsubscribeHref(Number(inserted.id));
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
+    const sent = await resend.emails.send({
       from: 'Nodelog <newsletter@thivelab.com>',
       to: email,
       subject: '✅ Nodelog 구독을 환영합니다!',
@@ -86,8 +88,11 @@ export async function POST(req: NextRequest) {
 </html>`,
     }).catch((err: unknown) => {
       console.error('welcome email error:', err);
+      return null;
     });
+    if (sent && !sent.error) welcomeEmailSent = true;
+    else if (sent?.error) console.error('welcome email error:', sent.error);
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, welcomeEmailSent });
 }

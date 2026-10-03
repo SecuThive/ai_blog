@@ -153,6 +153,7 @@ export function TableOfContents({ headings, children }: { headings: Heading[]; c
   };
 
   return (
+    <>
     <nav className="toc-rail" aria-label={dict.blog.toc}>
       <div className="toc-title">{dict.blog.toc}</div>
       <ul className="toc-list">
@@ -177,6 +178,18 @@ export function TableOfContents({ headings, children }: { headings: Heading[]; c
       </ul>
       {children}
     </nav>
+    {/* 960px 이하에서는 사이드 목차가 숨겨지므로 본문 앞에 접을 수 있는 목차를 둔다(h2만). */}
+    <details className="toc-mobile">
+      <summary>{dict.blog.toc}</summary>
+      <ol>
+        {headings.filter(h => h.level === 2).map(h => (
+          <li key={h.id}>
+            <a href={`#${h.id}`} onClick={() => trackEvent({ name: 'toc_click', path: pathname, heading_id: h.id })}>{h.text}</a>
+          </li>
+        ))}
+      </ol>
+    </details>
+    </>
   );
 }
 

@@ -232,11 +232,11 @@ function ServiceLaunchBanner({ locale }: { locale: Locale }) {
               <span className="service-launch-item-desc">{locale === 'en' ? 'A seven-stage digital puzzle demo.' : '단서를 따라 풀어가는 7단계 디지털 문제 체험판.'}</span>
               <span className="service-launch-item-action">{locale === 'en' ? 'Try the demo' : '체험판 시작'} <span aria-hidden="true">↗</span></span>
             </TrackedExternalLink>
-            <div className="service-launch-item service-launch-item--pending" aria-label="LABS coming soon">
+            <div className="service-launch-item service-launch-item--pending" aria-label="LABS coming soon" aria-disabled="true">
               <span className="service-launch-item-label">PRACTICE · LABS</span>
               <strong>LABS</strong>
               <span className="service-launch-item-desc">{locale === 'en' ? 'Hands-on technology labs are in preparation.' : '직접 다뤄보는 기술 실습 환경을 준비 중입니다.'}</span>
-              <span className="service-launch-item-action">COMING SOON</span>
+              <span className="service-launch-item-action">{locale === 'en' ? 'COMING SOON · not available yet' : 'COMING SOON · 아직 이용할 수 없음'}</span>
             </div>
             <TrackedExternalLink className="service-launch-item service-launch-item--moa" href="https://moa.thivelab.com/" path="/" event={{ name: 'product_card_click', path: '/', product: 'moa' }} aria-label={locale === 'en' ? 'Open MOA' : 'MOA 열기'}>
               <span className="service-launch-item-label">CREATIVE WORKSPACE · MOA</span>
@@ -244,11 +244,11 @@ function ServiceLaunchBanner({ locale }: { locale: Locale }) {
               <span className="service-launch-item-desc">{locale === 'en' ? 'Posters, menus, coupons, and review replies in one place.' : '홍보물·메뉴판·쿠폰·리뷰 답변을 한곳에서 만드세요.'}</span>
               <span className="service-launch-item-action">{locale === 'en' ? 'Try MOA' : 'MOA 바로가기'} <span aria-hidden="true">↗</span></span>
             </TrackedExternalLink>
-            <div className="service-launch-item service-launch-item--pending" aria-label="ENTERPRISE coming soon">
+            <div className="service-launch-item service-launch-item--pending" aria-label="ENTERPRISE coming soon" aria-disabled="true">
               <span className="service-launch-item-label">BUSINESS · ENTERPRISE</span>
               <strong>ENTERPRISE</strong>
               <span className="service-launch-item-desc">{locale === 'en' ? 'Security, AI and private challenge solutions are in preparation.' : '기업용 보안·AI·Private CTF 서비스를 준비 중입니다.'}</span>
-              <span className="service-launch-item-action">COMING SOON</span>
+              <span className="service-launch-item-action">{locale === 'en' ? 'COMING SOON · not available yet' : 'COMING SOON · 아직 이용할 수 없음'}</span>
             </div>
           </div>
         </div>

@@ -263,6 +263,7 @@
     "loading": "Working",
     "successTitle": "You're in.",
     "successDesc": "We sent a confirmation email.",
+    "successDescNoEmail": "You are subscribed. New posts will be sent to this address.",
     "error": "Already subscribed, or something went wrong.",
     "networkError": "Network error. Please try again.",
     "genericError": "Something went wrong.",
