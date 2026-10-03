@@ -1,0 +1,83 @@
+--- 814.en.before
++++ 814.en.after
+@@ -18,7 +18,7 @@
+ | `open /var/run/secrets/kubernetes.io/serviceaccount/token: no such file or directory` | automount disabled (SA or Pod level) | [automount precedence](#a-automount-precedence-the-pod-wins-over-the-sa) |
+ | `Unauthorized` (the single word, as-is in the body) | Token expired, or the app is caching an old token | [token caching](#c-the-trap-of-reading-the-token-once-and-caching-it) |
+ | `the server has asked for the client to provide credentials` | Token never attached to the request (wrong path or empty file) | [automount precedence](#a-automount-precedence-the-pod-wins-over-the-sa) |
+-| `token is expired` / `Token has expired` | TokenRequest default expiry (1 hour) + no re-read implemented | [token caching](#c-the-trap-of-reading-the-token-once-and-caching-it) |
++| `token is expired` / `Token has expired` | Token expiry (see the expiry notes in the table below) + app never re-reads the file | [token caching](#c-the-trap-of-reading-the-token-once-and-caching-it) |
+ | `serviceaccounts "xxx" not found` | SA never created, or namespace mismatch | [two-line diagnostic cut](#version-behavior-differences-and-a-two-line-diagnostic-cut) |
+ | You created an SA but `kubectl get secret` shows no token Secret | Policy change in 1.24+ (auto-creation removed) | [when you need a long-lived token](#d-when-you-need-a-long-lived-token-for-ci-or-external-systems) |
+ | You applied every fix and still get 401 | Audience mismatch / issuer config / node clock skew | [still getting 401](#still-getting-401-failure-branch-checklist) |
+@@ -29,12 +29,16 @@
+ 
+ | Version | Token form | Expiry | SA Secret auto-creation | Who renews |
+ |---|---|---|---|---|
+-| ~1.20 | Secret-based legacy JWT | None (never expires) | Yes (automatic on SA creation) | None (renewal not needed) |
+-| 1.21~1.23 | Projected bound token mounted by default | Default 1 hour (set on request) | Yes (still created) | kubelet auto-renews |
+-| 1.24~1.28 | Projected bound token only | Default 1 hour | **No (removed)** — use `kubectl create token` | kubelet |
+-| 1.29~1.31 | Projected bound token + usage tracking | Default 1 hour | No | kubelet; legacy token cleanup controller is active |
+-
+-From 1.29 onward, unused legacy SA tokens become cleanup candidates after a period of inactivity, and last-used time is tracked via labels/metrics. In other words, any pipeline that still depends on "a token Secret you created by hand a long time ago" is a ticking time bomb.
++| ~1.20 | Secret-based legacy JWT | None (never expires) | Yes (automatic on SA creation) | None |
++| 1.21 | Projected bound token mounted by default (BoundServiceAccountTokenVolume beta) | kubelet requests 3607 s; up to 1 year when extended (below) | Yes | kubelet |
++| 1.22~1.23 | Same (GA) | Same | Yes | kubelet |
++| 1.24~1.25 | Projected bound token | Same | **No** (LegacyServiceAccountTokenNoAutoGeneration beta) — use `kubectl create token` | kubelet |
++| 1.26~1.28 | Same | Same | No (GA). From 1.28 the legacy-token last-used label `kubernetes.io/legacy-token-last-used` is GA | kubelet |
++| 1.29+ | Same | Same | No. Cleanup of auto-generated legacy tokens (beta 1.29, GA 1.30) | kubelet + cleanup controller |
++
++**Expiry caveat**: kubelet requests projected tokens with `expirationSeconds: 3607`, but when kube-apiserver’s `--service-account-extend-token-expiration` is on (default true), admission-injected tokens are extended up to one year. On a default cluster the decoded `exp` can therefore be far later than one hour. Don’t diagnose on a one-hour assumption; check the real `exp` with the command below ([kube-apiserver flags](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/)). Managed services may set this flag differently, so check the provider’s docs.
++
++**Legacy-token cleanup scope**: from 1.29 the cleaner only handles **auto-generated** legacy token Secrets (the ones referenced from the ServiceAccount’s `secrets` field). After one unused year (default) it marks them invalid with the `kubernetes.io/legacy-token-invalid-since` label, and deletes them after another year. Manually created `kubernetes.io/service-account-token` Secrets are not cleaned up, but they never expire either, so a pipeline that depends on one carries a large blast radius if it leaks ([Managing Service Accounts](https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/)).
+ 
+ ### Three diagnostic commands (copy-paste ready)
+ 
+@@ -51,7 +55,10 @@
+ 
+ ```bash
+ kubectl -n <ns> exec <pod> -- ls -l /var/run/secrets/kubernetes.io/serviceaccount/
+-kubectl -n <ns> exec <pod> -- sh -c 'cat /var/run/secrets/kubernetes.io/serviceaccount/token' | cut -d. -f2 | base64 -d 2>/dev/null | jq '.exp, .iat, .aud, .sub'
++kubectl -n <ns> exec <pod> -- cat /var/run/secrets/kubernetes.io/serviceaccount/token \
++  | cut -d. -f2 | tr '_-' '/+' \
++  | awk '{n=length($0)%4; if(n) $0=$0 substr("==",1,4-n); print}' \
++  | base64 -d | jq '.exp, .iat, .aud, .sub'
+ ```
+ 
+ Expected healthy result: you see the three files `ca.crt`, `namespace`, and `token`, and the JSON prints `exp` (expiry epoch), `aud` (audience, usually `["https://kubernetes.default.svc"]`), and `sub` (`system:serviceaccount:<ns>:<sa>`).
+@@ -60,7 +67,8 @@
+ - `No such file or directory` → automount is disabled. Section (a).
+ - File exists but `exp` is in the past → the app likely never re-read the renewed file. Section (c).
+ - `aud` contains only an external value like `sts.amazonaws.com` → this is not an API-server audience. See the failure-branch section.
+-- `base64: invalid input` → the token file is empty or in a legacy format.
++- `base64: invalid input` or a jq parse error → the token file is empty or not a JWT. The JWT payload is unpadded base64url, so piping it straight into `base64 -d` fails even for valid tokens; that is why the command translates characters and restores padding first.
++- If the image has no `cat` (distroless), attach an ephemeral container with `kubectl debug`, or check issuance first with `kubectl create token`.
+ 
+ **3) Verify that token issuance itself works**
+ 
+@@ -89,7 +97,7 @@
+ kubectl -n <ns> get pod <pod> -o jsonpath='{.spec.serviceAccountName}{" podAutomount="}{.spec.automountServiceAccountToken}{"\n"}'
+ ```
+ 
+-The most commonly reported cause in production is a security-hardening policy (PSS restricted profile, Kyverno/OPA rules) that bulk-disables automount on the `default` SA. Keep the policy, but carve out a Pod-level exception only for workloads that actually need to call the API.
++A common cause is hardening (CIS Kubernetes Benchmark work, Kyverno/OPA policies) that bulk-disables automount on the `default` SA. Pod Security Standards (including restricted) do not check this field, so enabling PSS alone does not remove the token. Keep the policy, but carve out a Pod-level exception only for workloads that actually need to call the API.
+ 
+ ```yaml
+ spec:
+@@ -200,7 +208,7 @@
+ 
+ | Token type | How to revoke on leak |
+ |---|---|
+-| Projected bound token | No per-token cancel. Wait for expiry (default 1 hour), or **delete and recreate the SA** to force-invalidate every token for that SA. All Pods using that SA must be restarted |
++| Projected bound token | No per-token revoke API. **Deleting the Pod** the token is bound to invalidates that token. **Deleting and recreating the SA** invalidates every token for that SA, and all Pods using it must be restarted. Waiting for expiry can take up to a year because of the extension setting above |
+ | Legacy Secret token | Delete the Secret → immediately invalid |
+ | Node-bound token | Automatically invalid when the Pod/node is deleted (the binding target is gone) |
+ 
+@@ -248,7 +256,7 @@
+ **Q2. How do I tell 401 from 403 from logs alone?**
+ Split on the HTTP status code. 401 is "I don't know who you are" (missing/expired token or signature verification failure); 403 is "I know who you are, but you don't have permission." A 403 message usually includes the identity, like `User "system:serviceaccount:ns:sa" cannot list resource ...`. If the identity is printed, authentication succeeded — look at RBAC.
+ 
+-**Q3. The token expires every hour — do I have to restart the app every hour?**
++**Q3. The token rotates periodically — do I have to restart the app each time?**
+ No. kubelet renews the token file before it expires. The app just has to re-read the file. If a restart is required, that's a caching bug — apply the re-read pattern above.
+ 
+ **Q4. Can I set `expirationSeconds` very long (e.g. one year)?**
