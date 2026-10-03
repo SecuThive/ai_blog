@@ -74,7 +74,7 @@ const FAQ: Record<Locale, FaqCopy> = {
       {
         category: 'etc',
         q: '제휴 / 광고 / 콘텐츠 문의는 어디로 하나요?',
-        a: 'thive8564@gmail.com 로 메일을 보내주시거나, Contact 페이지의 폼을 이용해주세요. 평균 답변 시간은 영업일 기준 36시간입니다.',
+        a: 'thive8564@gmail.com 로 메일을 보내주시거나, Contact 페이지의 폼을 이용해주세요.',
       },
       {
         category: 'etc',
@@ -134,7 +134,7 @@ const FAQ: Record<Locale, FaqCopy> = {
       {
         category: 'etc',
         q: 'Where do I send partnership, ads, or content questions?',
-        a: 'Email thive8564@gmail.com or use the form on the contact page. Average reply time is 36 business hours.',
+        a: 'Email thive8564@gmail.com or use the form on the contact page.',
       },
       {
         category: 'etc',
