@@ -86,9 +86,59 @@ slug는 URL 유지를 위해 바꾸지 않았다(#469·#584·#402·#263·#265 sl
 
 #395·#720은 수치를 넣지 않았다(삭제·일반화만). 가격 수치는 어느 글에도 새로 넣지 않았다.
 
-## 남은 대상과 다음 배치 제안
-인벤토리 90행: 2024/2025가 나오는 발행 글 83행(posts 72, guides 11) + 편집 체크리스트의 다음 배치 목록 7행.
-시간 민감 23건: 배치 1 9건, 배치 2 9건 완료. 남은 5건 중 #734는 보류(공식 원문 확보 전 수정하지 않음), #704·#747·#326·#302 대기. 나머지 60행은 예시 데이터·코드의 날짜, CVE 번호, 역사적 사실이라 유지. guides 11편은 모두 명령 예시의 날짜·파일명이다.
-체크리스트 목록(#604, #665, #422, #74, #245, #17, #812)은 2024/2025 표현이 없어 이번 기준 밖이지만 주제상 시간 민감하므로 따로 검토한다.
+## 운영 DB 적용 (마일스톤 3, 2026-10-04 05:07 KST)
+- 적용 전 전체 백업: `~/project/nodelog-db/backups/stale-refresh-20261004-045921.dump` (pg_restore 전체 읽기 확인).
+- 행별 원래 값 복원 SQL: `~/project/nodelog-db/backups/stale-refresh-20261004-045921-restore/<id>.restore.sql` (#206·#743은 `206v3`·`743v3`, 직전 적용 상태로 되돌림).
+- 11건 시험(각 1행, 재실행 0행, ROLLBACK) → 적용(각 UPDATE 1, COMMIT) → content·title md5가 수정본과 일치. #245·#17은 행을 건드리지 않음(updated_at 그대로 확인).
+- 모두 KO 본문이 바뀌어 updated_at은 트리거로 갱신, published_at 유지. EN만 바뀐 글 없음.
+- 캐시 태그 11개 무효화, KO·EN URL 22개 모두 200, 새 문구 확인.
 
-다음 배치(마일스톤 3) 제안: #704, #747, #326, #302, 이어서 #604, #665, #422, #74, #245, #17, #812. #734는 보류 유지.
+## 배치 3 (11건 검토: 수정 9, 변경 없음 2) + 검수 반영 2건
+| id | 바뀐 내용 | 출처 |
+|---|---|---|
+| 704 | Redis 라이선스 "2024~2025년 RSAL→AGPL" → 7.2 이하 BSD-3, 7.4 RSALv2/SSPLv1(2024-03), 8.0부터 AGPLv3 선택 추가. 정책 표에 Redis 8.6의 LRM 2종 추가(10종), 근거 없는 "allkeys-lfu 채택 증가" 삭제 | redis.io licenses, eviction, valkey.io |
+| 747 | 출처 없는 "2025~2026년 트렌드"와 "90%" 삭제, pull.rebase 공식 문서 인용 | git-scm.com git-config |
+| 326 | 예시 제목의 "2024년" 삭제(수치 없음, 출처 블록 없음) | — |
+| 302 | 예시 제목 연도 삭제. 제목 60자·메타 설명 150~160자 기준 → Google 문서(길이 제한 없음, 잘림). "신뢰도 상승" 완화 | Google Search Central title links, snippets |
+| 604 | 현행 전자금융감독규정(2026-07-15 시행) 대조: 클라우드 이용절차 제8조의2→제14조의2, 없는 제17조의2→제13조·제19조, 보고 "계약 후 7영업일"→사유 발생일부터 3개월. 근거 없는 "2026 완화" 표 → 조문상 예외(제15조①3·5호, 제14조의2⑦). 정보보호위원회 심의·평가 결과 활용 반영 | law.go.kr 전자금융감독규정 |
+| 665 | "2026년 현재 등급제(하/중/상) 운영" → 고시(2023-01-31 시행) 원문: 상·중 등급은 별도 기준 후 시행, 종전 유형 신청 가능, SaaS 간편→하등급 인정 | law.go.kr 클라우드컴퓨팅서비스 보안인증에 관한 고시 |
+| 422 | TensorFlow Lite → LiteRT 이름 변경, PyTorch 직접 변환, NNAPI Android 15 지원 중단, 양자화 효과를 공식 수치로 | ai.google.dev/edge/litert, developer.android.com |
+| 74 | MLflow Tracing·Prompt Registry 반영(“수동 로깅 필요” 정정), 존재하지 않는 `wandb.sync(artifact)` → `Run.log_artifact()` | mlflow.org, docs.wandb.ai |
+| 812 | Calico WireGuard 오버헤드(합산하지 않음)·MTU 자동 감지·operator 설정, Flannel MTU 자동 계산, GCP 기본 1460 출처. 근거 없는 "사고 증가" 문장 삭제 | docs.tigera.io, flannel docs, cloud.google.com |
+| 245 | 확인함, 변경 없음(버전·수치 주장 없음) | — |
+| 17 | 확인함, 변경 없음 | — |
+| 206 (검수) | 2025년 지불 총액 "약 8.2억 달러 이상 / more than $820M", 28%를 추정치로 | chainalysis.com |
+| 743 (검수) | "유료 플랜 무제한" → "Pro·Team·Business 요금제는 무제한", 출처 줄에 수치 | docs.docker.com |
+
+### 배치 3에서 새로 넣은 수치·사실과 원문 URL
+| 글 | 수치·사실 | 원문 URL |
+|---|---|---|
+| #704 | maxmemory-policy 10종, LRM(allkeys-lrm·volatile-lrm)은 Redis 8.6부터 | https://redis.io/docs/latest/develop/reference/eviction/ |
+| #704 | 7.2 이하 BSD-3, 7.4 RSALv2/SSPLv1, 8.0 이상 RSALv2/SSPLv1/AGPLv3, 2024년 3월 변경 | https://redis.io/legal/licenses/ |
+| #704 | Valkey maxmemory 정책 8종(LRM 없음) | https://valkey.io/topics/lru-cache/ |
+| #747 | pull.rebase=true면 병합 대신 rebase | https://git-scm.com/docs/git-config#Documentation/git-config.txt-pullrebase |
+| #302 | `<title>` 길이 제한 없음, 기기 폭에 맞춰 잘림 | https://developers.google.com/search/docs/appearance/title-link |
+| #302 | 메타 설명 길이 제한 없음, 필요에 따라 잘림 | https://developers.google.com/search/docs/appearance/snippet |
+| #604 | 2026-07-15 시행, 금융위원회고시 제2026-29호, 제14조의2(사유 발생일부터 3개월 이내 보고, 제7항), 제15조제1항제3·5호, 제8조의2, 제13조, 제19조 | https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000282622 |
+| #665 | 과기정통부고시 제2023-4호(2023-01-31 시행), 제14조 등급 상·중·하, 부칙 제1조·제3조 | https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000218804 |
+| #422 | TensorFlow Lite는 이제 LiteRT, 새 기능은 LiteRT에만 | https://ai.google.dev/edge/litert/migration |
+| #422 | PyTorch → .tflite 변환 | https://ai.google.dev/edge/litert/conversion/pytorch/overview |
+| #422 | 전체 정수 양자화 4배 작아짐·3배 이상 빨라짐, 동적 범위 4배·2~3배 | https://ai.google.dev/edge/litert/models/post_training_quantization |
+| #422 | NNAPI Android 15에서 지원 중단 | https://developer.android.com/ndk/guides/neuralnetworks |
+| #74 | MLflow Tracing 한 줄 자동 트레이싱(`mlflow.openai.autolog()`) | https://mlflow.org/docs/latest/genai/tracing/ |
+| #74 | MLflow Prompt Registry | https://mlflow.org/docs/latest/genai/prompt-registry/ |
+| #74 | `wandb.Run.log_artifact()` | https://docs.wandb.ai/guides/artifacts/construct-an-artifact/ |
+| #812 | IPIP 20 B, VXLAN IPv4 50 B / IPv6 70 B, WireGuard IPv4 60 B / IPv6 80 B, GCE 1460 → IPIP 1440·VXLAN 1410, 자동 감지, `calicoNetwork.mtu` | https://docs.tigera.io/calico/latest/networking/configuring/mtu |
+| #812 | Flannel MTU 자동 계산(subnet.env) | https://github.com/flannel-io/flannel/blob/master/Documentation/configuration.md |
+| #812 | Flannel vxlan 백엔드 `MTU` 옵션 | https://github.com/flannel-io/flannel/blob/master/Documentation/backends.md |
+| #812 | GCP VPC 기본 MTU 1460 | https://cloud.google.com/vpc/docs/mtu |
+| #206 | 2025년 지불 총액 8.2억 달러 이상(more than $820M), 지불 비율 28%(추정치) | https://www.chainalysis.com/blog/crypto-ransomware-2026/ |
+| #743 | 6시간당 비인증 100회(IPv4·IPv6 /64), Personal 200회, Pro·Team·Business 무제한 | https://docs.docker.com/docker-hub/usage/ |
+
+## 전체 집계 (마일스톤 1~3 종료 시점)
+인벤토리 90행: 2024/2025가 나오는 발행 글 83행(posts 72, guides 11) + 체크리스트 대기 목록 7행.
+- 수정 완료 27건: 시간 민감 22건(배치 1 9건, 배치 2 9건, 배치 3 4건) + 대기 목록 중 사실이 낡았거나 틀린 5건(#604, #665, #422, #74, #812). #206·#743은 출처·표현 보강을 추가로 적용.
+- 확인함, 변경 없음 2건: #245, #17.
+- 보류 1건: #734(CSAP 제도 개편. 공식 원문을 검토하기 전에는 수정하지 않음).
+- 유지(시간 민감 아님) 60행: 예시 데이터·코드의 날짜, CVE 번호, 역사적 사실, guides 11편의 명령 예시.
+- 고치지 못한 항목과 이유는 `editorial-checklist.md` 참고.
