@@ -13,6 +13,7 @@ import remarkGfm from 'remark-gfm';
 import CodeBlock from '@/components/CodeBlock';
 import MermaidDiagram from '@/components/MermaidDiagram';
 import JsonLd from '@/components/JsonLd';
+import AdSenseScript from '@/components/AdSenseScript';
 import { findOfficialDocs } from '@/lib/officialDocs';
 import { TableOfContents, ProgressBar, ScrollToTopBtn, CopyLinkBtn, ShareBtn } from '@/app/[locale]/blog/[slug]/ArticleClient';
 import Comments, { type CommentRow } from '@/components/Comments';
@@ -373,6 +374,7 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
 
   return (
     <div>
+      <AdSenseScript />
       <ProgressBar />
       <ScrollToTopBtn />
       <JsonLd data={[techArticleSchema, breadcrumbSchema, ...(howToSchema ? [howToSchema] : [])]} />

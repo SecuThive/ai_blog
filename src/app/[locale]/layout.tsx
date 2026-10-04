@@ -1,14 +1,12 @@
 import type { Metadata, Viewport } from 'next';
-import Script from 'next/script';
 import { JetBrains_Mono, Source_Serif_4, Inter } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import '../globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Analytics } from '@vercel/analytics/next';
+import SiteAnalytics from '@/components/SiteAnalytics';
 import JsonLd from '@/components/JsonLd';
 import ThemeProvider from '@/components/ThemeProvider';
-import AdSenseScript from '@/components/AdSenseScript';
 import { LocaleProvider } from '@/i18n/provider';
 import { isLocale, locales } from '@/i18n/config';
 import { getDictionary } from '@/i18n/messages';
@@ -95,7 +93,6 @@ export async function generateMetadata({
 const PRETENDARD_CSS_URL =
   'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css';
 
-const GA_ID = 'G-WL5W341ZFQ';
 
 // 네이버 서치어드바이저 소유 확인 메타 태그 — 값 자체는 페이지 소스에 공개되는 정보지만,
 // 계정/사이트마다 달라지는 배포별 설정이므로 코드에 고정하지 않고 환경변수로 주입한다.
@@ -117,22 +114,10 @@ export default async function RootLayout({
   if (!isLocale(raw)) notFound();
   const locale = raw;
   const dict = getDictionary(locale);
-  const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID ?? 'ca-pub-2091277631590195';
-  const adsenseApproved = process.env.NEXT_PUBLIC_ADSENSE_APPROVED === 'true';
   const searchUrl = `${siteUrl('/search', locale)}?q={search_term_string}`;
   return (
     <html lang={locale} className={`${jetbrainsMono.variable} ${sourceSerif4.variable} ${inter.variable}`}>
       <head>
-        {/* 신청 중에는 소유 확인을 위해 정적 스니펫을 유지한다. 승인 후 Vercel에서
-            NEXT_PUBLIC_ADSENSE_APPROVED=true로 전환하면 아래 AdSenseScript가
-            고유 콘텐츠가 충분한 경로에서만 광고를 요청한다. */}
-        {!adsenseApproved && (
-          <script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`}
-            crossOrigin="anonymous"
-          />
-        )}
         {NAVER_CODES.map(code => (
           <meta key={code} name="naver-site-verification" content={code} />
         ))}
@@ -196,16 +181,8 @@ export default async function RootLayout({
         <main>{children}</main>
         <Footer />
         </LocaleProvider>
-        {adsenseApproved && <AdSenseScript adsenseId={adsenseId} />}
-        <Analytics />
+        <SiteAnalytics />
         </ThemeProvider>
-        <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
-        <Script id="ga4-init" strategy="afterInteractive">{`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', '${GA_ID}');
-        `}</Script>
       </body>
     </html>
   );

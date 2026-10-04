@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
 
-  if (!email || !email.includes('@')) {
+  if (!email || !email.includes('@') || body?.privacy_consent !== true) {
     return NextResponse.json({ error: '유효한 이메일을 입력해주세요.' }, { status: 400 });
   }
 
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
               최신 글 바로 보기 →
             </a>
             <p style="font-size:12px;color:#aaa;margin:24px 0 0;text-align:center;line-height:1.6">
-              구독 해지를 원하시면 <a href="${SITE_URL}/unsubscribe?email=${encodeURIComponent(email)}" style="color:#aaa">여기</a>를 클릭하세요.
+              구독 해지를 원하시면 <a href="${SITE_URL}/unsubscribe" style="color:#aaa">여기</a>를 클릭하세요.
             </p>
           </td>
         </tr>

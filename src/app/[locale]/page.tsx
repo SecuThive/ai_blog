@@ -12,6 +12,7 @@ import {
   type MagPost,
 } from '@/components/HomeClient';
 import SubscribeForm from '@/components/SubscribeForm';
+import AdSenseScript from '@/components/AdSenseScript';
 import PostThumb from '@/components/PostThumb';
 import TrackedLink from '@/components/TrackedLink';
 import TrackedExternalLink from '@/components/TrackedExternalLink';
@@ -140,7 +141,6 @@ function HeroV2({ posts, seriesCount, guideCount, subscriberCount, dict, locale 
   const stats = [
     { num: String(seriesCount), sub: 'ACTIVE SERIES' },
     { num: `${guideCount}+`, sub: 'ENGINEER GUIDES' },
-    { badge: true, sub: 'REVIEWED · UPDATED' },
     // 구독자는 유의미해지기 전까지 숨김(미완성 지표처럼 보이는 '—' 제거)
     ...(subscriberCount >= 50
       ? [{ num: subscriberCount >= 1000 ? `${(subscriberCount / 1000).toFixed(1)}K` : String(subscriberCount), sub: 'SUBSCRIBERS' }]
@@ -181,18 +181,7 @@ function HeroV2({ posts, seriesCount, guideCount, subscriberCount, dict, locale 
             <div className="heroX-meta">
               {stats.map((s, i) => (
                 <div key={i}>
-                  {s.badge ? (
-                    <div style={{ marginBottom: 6 }}>
-                      <span className="ai-tag" style={{ fontSize: 11 }}>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
-                        </svg>
-                        CHECK
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="stat-num">{s.num}</div>
-                  )}
+                  <div className="stat-num">{s.num}</div>
                   <div className="stat-sub">{s.sub}</div>
                 </div>
               ))}
@@ -694,6 +683,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <HomeScrollReveal>
+      <AdSenseScript />
       <HeroV2 posts={posts} seriesCount={activeSeriesCount} guideCount={guideCount} subscriberCount={subscriberCount} dict={dict} locale={locale} />
       <ServiceLaunchBanner locale={locale} />
       <DailyBriefing posts={posts} locale={locale} dict={dict} />

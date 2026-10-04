@@ -24,7 +24,7 @@ export default function ContactPage() {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, type, company, message }),
+        body: JSON.stringify({ name, email, type, company, message, privacy_consent: true }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -161,6 +161,7 @@ export default function ContactPage() {
                     <p style={{ color: 'var(--acc-rose)', fontSize: 13, margin: 0 }}>{errorMsg}</p>
                   )}
 
+                  <label style={{ fontSize: 12, lineHeight: 1.5 }}><input type="checkbox" required disabled={state === 'loading'} />{' '}{locale === 'ko' ? '답변을 위한 개인정보 처리에 동의합니다.' : 'I agree to the processing of my information for a reply.'} <Link href="/privacy">{locale === 'ko' ? '개인정보처리방침' : 'Privacy policy'}</Link></label>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
                     <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', letterSpacing: '0.03em' }}>
                       {copy.encrypted}

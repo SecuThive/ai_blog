@@ -12,6 +12,7 @@ import { findOfficialDocs } from '@/lib/officialDocs';
 import { NOINDEX_POST_SLUGS } from '@/lib/noindexPosts';
 import Link from '@/i18n/link';
 import JsonLd from '@/components/JsonLd';
+import AdSenseScript from '@/components/AdSenseScript';
 import RelatedContent, { type RelatedItem } from '@/components/RelatedContent';
 import TrackedLink from '@/components/TrackedLink';
 import TrackedExternalLink from '@/components/TrackedExternalLink';
@@ -446,6 +447,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
 
   return (
     <div>
+      {!NOINDEX_POST_SLUGS.has(post.slug) && <AdSenseScript />}
       <JsonLd data={[articleSchema, breadcrumbSchema]} />
       <ViewTracker postId={post.id} table="posts" />
       <ReadingPositionTracker slug={post.slug} />

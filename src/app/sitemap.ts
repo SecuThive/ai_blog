@@ -100,7 +100,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
   const CATEGORIES = ['AI & 자동화', 'IT 트렌드', '개발', '툴 리뷰', '보안', '인프라'];
-  const categoryPages = CATEGORIES.map(cat => entry(base, `/category/${encodeURIComponent(cat)}`, {
+  const categoryPages = CATEGORIES.filter(cat => catLast.has(cat)).map(cat => entry(base, `/category/${encodeURIComponent(cat)}`, {
     lastModified: catLast.get(cat) ? new Date(catLast.get(cat)!) : latestDate,
     changeFrequency: 'daily',
     priority: 0.8,
@@ -118,7 +118,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/about', changeFrequency: 'monthly' as const, priority: 0.5, lastModified: new Date('2026-07-31') },
     { path: '/contact', changeFrequency: 'monthly' as const, priority: 0.4, lastModified: new Date('2026-07-31') },
     { path: '/faq', changeFrequency: 'monthly' as const, priority: 0.4, lastModified: new Date('2026-07-31') },
-    { path: '/privacy', changeFrequency: 'yearly' as const, priority: 0.3, lastModified: new Date('2026-07-31') },
+    { path: '/privacy', changeFrequency: 'yearly' as const, priority: 0.3, lastModified: new Date('2026-10-02') },
     { path: '/terms', changeFrequency: 'yearly' as const, priority: 0.3, lastModified: new Date('2026-04-30') },
     { path: '/policy', changeFrequency: 'monthly' as const, priority: 0.4, lastModified: new Date('2026-07-31') },
     { path: '/author', changeFrequency: 'monthly' as const, priority: 0.4, lastModified: new Date('2026-07-31') },

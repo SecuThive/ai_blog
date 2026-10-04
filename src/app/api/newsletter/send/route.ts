@@ -174,7 +174,7 @@ function buildHtml(posts: Post[], email: string, weekStr: string): string {
             </div>
             <p style="font-size:11px;color:#bbb;margin:24px 0 0;text-align:center;line-height:1.7">
               본 메일은 Nodelog 뉴스레터를 구독하신 분께 발송됩니다.<br>
-              <a href="${SITE_URL}/unsubscribe?email=${encodeURIComponent(email)}" style="color:#bbb">구독 해지</a>
+              <a href="${SITE_URL}/unsubscribe" style="color:#bbb">구독 해지</a>
             </p>
           </td>
         </tr>

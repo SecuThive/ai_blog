@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useT } from '@/i18n/provider';
 import { formatTimeAgo } from '@/i18n/format';
 import { interpolate } from '@/i18n/messages';
+import Link from '@/i18n/link';
 
 export interface CommentRow {
   id: number;
@@ -64,13 +65,14 @@ export default function Comments({
   initialComments?: CommentRow[];
 }) {
   const t = useCopy(variant);
-  const { dict } = useT();
+  const { dict, locale } = useT();
   const [comments, setComments] = useState<CommentRow[]>(initialComments);
   const [name, setName] = useState('');
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [privacyConsent, setPrivacyConsent] = useState(false);
 
   // 답글 입력 상태 (열려 있는 부모 id 하나만 추적)
   const [replyTo, setReplyTo] = useState<number | null>(null);
@@ -117,6 +119,7 @@ export default function Comments({
         name: author.trim() || dict.comments.anonymous,
         content: body.trim(),
         parent_id: parentId,
+        privacy_consent: true,
       }),
     });
     const data = await res.json();
@@ -250,12 +253,13 @@ export default function Comments({
         {submitted && (
           <p role="status" style={{ color: 'var(--success)', fontSize: 13, margin: '0' }}>{t.success}</p>
         )}
+        <label style={{ fontSize: 12, lineHeight: 1.5 }}><input type="checkbox" checked={privacyConsent} onChange={e => setPrivacyConsent(e.target.checked)} />{' '}{locale === 'ko' ? '댓글 표시와 스팸 방지를 위한 정보 처리에 동의합니다.' : 'I agree to data processing for comments and spam prevention.'} <Link href="/privacy">{locale === 'ko' ? '개인정보처리방침' : 'Privacy policy'}</Link></label>
         <button
           type="submit"
-          disabled={submitting || !content.trim()}
+          disabled={submitting || !content.trim() || !privacyConsent}
           className="btn btn-primary btn-sm comment-submit"
           aria-label={t.submit}
-          aria-disabled={submitting || !content.trim()}
+          aria-disabled={submitting || !content.trim() || !privacyConsent}
         >
           {submitting ? t.submitting : t.submit}
         </button>
@@ -315,6 +319,7 @@ function CommentBody({
             {t.replyVerb}
           </button>
         )}
+        <a className="comment-action-btn" href={`mailto:thive8564@gmail.com?subject=${encodeURIComponent(`Nodelog comment report #${c.id}`)}`}>{locale === 'ko' ? '신고' : 'Report'}</a>
       </div>
     </>
   );
@@ -330,11 +335,12 @@ function ReplyForm({
   onCancel: () => void;
 }) {
   const t = useCopy(variant);
-  const { dict } = useT();
+  const { dict, locale } = useT();
   const [name, setName] = useState('');
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [privacyConsent, setPrivacyConsent] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -373,8 +379,9 @@ function ReplyForm({
         aria-required="true"
       />
       {err && <p role="alert" style={{ color: 'var(--danger)', fontSize: 13, margin: 0 }}>{err}</p>}
+      <label style={{ fontSize: 12, lineHeight: 1.5 }}><input type="checkbox" checked={privacyConsent} onChange={e => setPrivacyConsent(e.target.checked)} />{' '}{locale === 'ko' ? '답글 표시와 스팸 방지를 위한 정보 처리에 동의합니다.' : 'I agree to data processing for replies and spam prevention.'} <Link href="/privacy">{locale === 'ko' ? '개인정보처리방침' : 'Privacy policy'}</Link></label>
       <div style={{ display: 'flex', gap: 8 }}>
-        <button type="submit" disabled={busy || !body.trim()} className="btn btn-primary btn-sm">
+        <button type="submit" disabled={busy || !body.trim() || !privacyConsent} className="btn btn-primary btn-sm">
           {busy ? t.submitting : interpolate(dict.comments.replySubmit, { verb: t.replyVerb })}
         </button>
         <button type="button" className="btn btn-sm btn-ghost" onClick={onCancel}>{dict.comments.cancel}</button>
