@@ -54,3 +54,9 @@ X/SNS 첫 답글에 걸 글 4편의 KO·EN 본문 보강. 각 1행, updated_at�
 - 4편 SQL은 원문 md5 조건, 307/274는 옛 문자열이 있을 때만 바꿔 재실행하면 0행. ROLLBACK 시험: 6건 각 1행, 2회차 6건 0행, 결과 md5가 수정본과 일치.
 - 백업 `~/project/nodelog-db/backups/top4-refresh-20261006-104536.dump`, 행 복원 SQL `top4-refresh-20261006-104536-restore/{750,814,590,245,274,307}.restore.sql`(ROLLBACK으로 원문 md5 복원 확인).
 - 캐시 무효화 태그: #750 `post-9ab4ad78f30ef0be`, #814 `post-8e4f860e5d1a6779`, #590 `post-42b92446ebe64d63`, #245 `post-fbe4ca06111e451c`, #307 `post-7f748353ac1b17a6`, #274 `post-b273b4f94b2b3745`.
+
+## #307 FastAPI 예제: datetime import + lifespan (2026-10-06 10:49 KST, 운영 DB 적용, 편집자 승인)
+- posts #307 KO·EN 본문의 FastAPI+Redis 예제 코드만 수정: `from datetime import datetime` 추가(코드가 `datetime.now()` 사용), 폐기 예정인 `@app.on_event("startup")`을 `contextlib.asynccontextmanager` lifespan + `app = FastAPI(lifespan=lifespan)`으로 교체. 시작 로직(`await r.ping()`, 출력)은 그대로이고 원문에 shutdown 핸들러는 없었다. 본문에 on_event 언급·출처 블록이 없어 산문·링크는 바꾸지 않았다.
+- 검증: 수정 후 코드 블록을 추출해 `python -m py_compile` 통과(KO·EN), venv(fastapi 0.142.2, redis 8.1.0)에서 import 확인, fakeredis + TestClient로 lifespan 실행·캐시 미스→히트까지 확인.
+- SQL `sql/content-fixes/307-fastapi-lifespan.sql`(옛 블록이 있을 때만 바꾸므로 재실행하면 0행). ROLLBACK 시험: 1행, 2회차 0행. 1행 적용, published_at·status·slug 변경 없음.
+- 백업 `~/project/nodelog-db/backups/fix-307-lifespan-20261006-104858.dump`, 행 복원 SQL `fix-307-lifespan-20261006-104858-restore/307.restore.sql`(ROLLBACK으로 복원 확인). 캐시 태그 `post-7f748353ac1b17a6`.
