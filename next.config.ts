@@ -62,12 +62,8 @@ const nextConfig: NextConfig = {
       { source: "/feed", destination: "/rss", permanent: true },
       { source: "/feed.xml", destination: "/rss", permanent: true },
       { source: "/atom.xml", destination: "/rss", permanent: true },
-      // 2026-09-18 SEO: 502 cannibalization — blog duplicate → engineer canonical
-      {
-        source: "/blog/nginx-502-bad-gateway-원인-진단표복붙-명령어로-5분-해결",
-        destination: "/engineer/nginx-502-bad-gateway-fix",
-        permanent: true,
-      },
+      // nginx 502 블로그 중복 → /engineer/nginx-502-bad-gateway-fix 는 src/lib/postRedirects.ts에서 처리한다.
+      // (여기 있던 한글 source 규칙은 프로덕션에서 매칭되지 않아 404였다. 2026-10-06)
     ];
   },
   async headers() {
