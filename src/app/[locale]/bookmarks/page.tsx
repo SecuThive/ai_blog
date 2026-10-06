@@ -41,12 +41,17 @@ export default function BookmarksPage() {
   useEffect(() => {
     try {
       const stored = JSON.parse(localStorage.getItem('bookmarks') ?? '[]');
+      // localStorage는 마운트 후에만 읽을 수 있다(SSR HTML과 첫 렌더를 맞추기 위해 effect에서 읽음).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSlugs(Array.isArray(stored) ? stored : []);
     } catch { setSlugs([]); }
   }, []);
 
   useEffect(() => {
+    // 북마크 목록이 바뀔 때 로딩 상태를 외부 요청(fetch)과 맞춘다.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (slugs.length === 0) { setLoading(false); return; }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     // 한 번의 배치 요청으로 카드 컬럼만 가져온다(글마다 /api/posts/[slug] 호출 → 전체 본문 조회 +
     // 조회수 증가가 발생하던 문제 해소). 제목/요약은 서버에서 locale에 맞게 영문화된다.
