@@ -42,3 +42,15 @@
 - SQL `sql/content-fixes/419-llm-cache-hash.sql`(hash(user_query)가 남아 있을 때만 바꾸므로 재실행하면 0행). ROLLBACK 시험: 1행, 재실행 0행.
 - 백업 `~/project/nodelog-db/backups/fix-llm-hash-20261006-103420.dump`, 행 복원 SQL `fix-llm-hash-20261006-103420-restore/419.restore.sql`(ROLLBACK으로 원문 md5 복원 확인).
 - 캐시 무효화 태그 `post-fa62c04e0e44ba3a`(sha1(slug) 앞 16자, Vercel invalidate_by_tags).
+
+## 상위 4편 보강 + hash() 수정 (2026-10-06 10:45 KST, 운영 DB 적용, 편집자 요청)
+X/SNS 첫 답글에 걸 글 4편의 KO·EN 본문 보강. 각 1행, updated_at은 트리거가 갱신했고 published_at·status·slug·title은 그대로다. 4편은 content_evidence에 contentUpdatedAt(2026-10-06)·changeSummary·officialSources를 남겼다(verifiedAt은 넣지 않음).
+- 선정: ECONNREFUSED → #750(제목에 에러명, 같은 주제 중 범용 런북), SA 토큰 401 → #814(유일), CrashLoopBackOff → #590(조회수 최다, 중복 글 리다이렉트 대상), 에이전트 최소 권한 → #245(에이전트 보안 글 중 조회수 최다).
+- `sql/content-fixes/750-top4-econnrefused.sql`: 상단 에러 원문 + 원인→확인→해결 표, "80%" 삭제, REJECT도 refused, Node 17+/20+ `::1`·AggregateError, 2026-10 LTS(24·22, 20 EOL), curl 8.x·최신 psql 메시지, 리눅스 host-gateway, sudo·nft 명령.
+- `sql/content-fixes/814-top4-sa-token-401.sql`: 상단 표, 403 링크 오류(probe 글로 연결돼 있던 것) → #645, 버전표 기능 게이트 기준 정정 + 지원 버전 1.35~1.37, extend-token-expiration(최대 1년), base64url 디코딩 명령 수정(2곳), projected 예시 audience 생략·kube-root-ca.crt 추가·InClusterConfig 경로 주의, client-go·Python 클라이언트 1분 재읽기, 깨진 앵커 1개. 2026-10-03 batch2(미적용) 조사 내용을 다시 확인해 반영했다.
+- `sql/content-fixes/590-top4-crashloopbackoff.sql`: 상단 표, 90%·70%·"절반" 삭제, Secret 부재는 CreateContainerConfigError, `-o yaml` → `describe`(값 노출 방지), startupProbe 1.20 GA, 백오프 10~300초·10분 리셋·KubeletCrashLoopBackOffMax(1.35 beta), subPath 갱신 불가, `kubectl debug --copy-to`, 참고 문서 6개.
+- `sql/content-fixes/245-top4-agent-least-privilege.sql`: 상단 OWASP LLM06:2025 최소 권한 점검표, 서버 측 도구 인가 예제 코드(실행 확인), 정규식·시스템 프롬프트 재강조는 보조 수단(LLM01:2025), excerpt(KO·i18n.excerpt 태그·en.excerpt) 정리.
+- hash(): `sql/content-fixes/307-llm-cache-hash.sql`(FastAPI+Redis 캐시 키, 워커 간 공유 → sha256), `sql/content-fixes/274-ab-assign-hash.sql`(사용자별 A/B 고정 배정, 요청·워커·재시작 간 같아야 함 → sha256). KO·EN 모두.
+- 4편 SQL은 원문 md5 조건, 307/274는 옛 문자열이 있을 때만 바꿔 재실행하면 0행. ROLLBACK 시험: 6건 각 1행, 2회차 6건 0행, 결과 md5가 수정본과 일치.
+- 백업 `~/project/nodelog-db/backups/top4-refresh-20261006-104536.dump`, 행 복원 SQL `top4-refresh-20261006-104536-restore/{750,814,590,245,274,307}.restore.sql`(ROLLBACK으로 원문 md5 복원 확인).
+- 캐시 무효화 태그: #750 `post-9ab4ad78f30ef0be`, #814 `post-8e4f860e5d1a6779`, #590 `post-42b92446ebe64d63`, #245 `post-fbe4ca06111e451c`, #307 `post-7f748353ac1b17a6`, #274 `post-b273b4f94b2b3745`.
