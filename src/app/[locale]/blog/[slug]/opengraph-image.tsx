@@ -5,6 +5,8 @@ import { localizePost } from '@/i18n/content';
 import { categoryLabel } from '@/i18n/categories';
 import { getDictionary, interpolate } from '@/i18n/messages';
 import { fitOgExcerpt, fitOgTitle } from '@/i18n/ogFit';
+import { formatDate } from '@/i18n/format';
+import { readEditorialRecord, substantiveUpdate } from '@/lib/editorialRecord';
 
 export const revalidate = 86400;
 export const size = { width: 1200, height: 630 };
@@ -35,7 +37,7 @@ export default async function OgImage({ params }: { params: Promise<{ locale: st
 
   const { data } = await makeFreshClient()
     .from('posts')
-    .select('title,excerpt,category,author,content,tags,content_evidence')
+    .select('title,excerpt,category,content,tags,content_evidence,published_at')
     .eq('slug', decoded)
     .eq('status', 'published')
     .single();
@@ -43,15 +45,19 @@ export default async function OgImage({ params }: { params: Promise<{ locale: st
   const localized = data ? localizePost(data, locale) : null;
   const title    = localized?.title    ?? 'Nodelog';
   const category = data?.category ? categoryLabel(data.category, locale) : '';
-  // posts.author에는 생성 파이프라인의 역할명(Content Reviewer 등)이 들어 있어 사람 필자처럼 보이므로 쓰지 않는다.
-  const author   = dict.meta.authors;
+  // 하단에는 작성자·검토자 표기를 두지 않는다. posts.author에는 생성 파이프라인의 역할명(Content Reviewer 등)이
+  // 들어 있고, 사람이 검토했다는 기록(reviewed_at·verifiedAt)이 대부분의 글에 없기 때문이다.
+  // 대신 글 페이지와 같은 규칙의 날짜만 쓴다: 실질 변경 기록(contentUpdatedAt+changeSummary)이 있으면 업데이트일, 없으면 발행일.
+  const publishedAt = typeof data?.published_at === 'string' ? data.published_at : null;
+  const updatedAt = data ? substantiveUpdate(readEditorialRecord(data.content_evidence), publishedAt) : null;
+  const dateIso = updatedAt ?? publishedAt;
+  const dateLabel = dateIso ? `${updatedAt ? dict.blog.updated : dict.blog.published} ${formatDate(dateIso, locale)}` : '';
   const excerpt  = localized?.excerpt  ?? '';
   const mins = Math.max(1, Math.round(((localized?.content ?? data?.content ?? '').trim().split(/\s+/).length) / 200));
 
   const tone            = catTone(category);
   const { accent, rgb } = TONES[tone];
 
-  const initials   = author.replace(/[^a-zA-Z가-힣]/g, '').slice(0, 2).toUpperCase() || 'AI';
   const { text: shortTitle, fontSize: titleSize } = fitOgTitle(title);
   const shortExcerpt = fitOgExcerpt(excerpt, title.length);
 
@@ -130,18 +136,10 @@ export default async function OgImage({ params }: { params: Promise<{ locale: st
           background: `linear-gradient(90deg, ${accent}, transparent)`,
         }} />
 
-        {/* footer: author + reading time */}
+        {/* footer: date + reading time (작성자·검토 표기 없음) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{
-            width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
-            background: `rgba(${rgb},0.18)`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 12, fontWeight: 700, color: accent,
-          }}>
-            {initials}
-          </div>
-          <span style={{ fontSize: 14, color: '#565E72' }}>{author}</span>
-          <span style={{ fontSize: 14, color: '#2E3548' }}>·</span>
+          {dateLabel && <span style={{ fontSize: 14, color: '#565E72' }}>{dateLabel}</span>}
+          {dateLabel && <span style={{ fontSize: 14, color: '#2E3548' }}>·</span>}
           <span style={{ fontSize: 14, color: '#565E72' }}>{interpolate(dict.blog.readingTime, { min: mins })}</span>
         </div>
       </div>

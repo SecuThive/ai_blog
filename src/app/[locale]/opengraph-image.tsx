@@ -85,8 +85,8 @@ export default async function OgImage({ params }: { params: Promise<{ locale: st
           }}
         >
           {isEn
-            ? 'Practical IT, development, security, and infrastructure media — reviewed, corrected, and kept up to date.'
-            : 'AI 초안과 사람의 편집 검토로 만드는 IT·개발·보안·인프라 실무 미디어'}
+            ? 'Practical guides on IT, development, security, and infrastructure.'
+            : 'IT·개발·보안·인프라 실무 가이드 미디어'}
         </div>
       </div>
     ),
