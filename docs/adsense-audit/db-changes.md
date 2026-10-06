@@ -36,3 +36,9 @@
 - (마일스톤 3, 05:07 KST) posts #704, #747, #326, #302, #604, #665, #422, #74, #812 KO·EN 갱신, #206·#743 검수 표현 반영(각 1행). #245·#17은 변경 없음. 백업 `stale-refresh-20261004-045921.dump`, 복원 SQL `stale-refresh-20261004-045921-restore/`.
 - (배치 4, 05:14 KST, 사용자 승인) posts #734, #665 KO·EN 갱신(과기정통부·국정원 2026-04-20 보도자료 원문 + CSAP 고시). 백업 `stale-refresh-20261004-051233.dump`, 복원 SQL `stale-refresh-20261004-051233-restore/`.
 - (배치 5, 05:17 KST, 검수 반영) posts #734, #665 KO·EN에서 출처 없는 기간·비용 추정치 삭제. 행 단위 복원 SQL `stale-refresh-20261004-051233-restore/{734v5,665v5}.restore.sql`(기준 덤프 `stale-refresh-20261004-051233.dump`).
+
+## 예제 코드 수정: LLM 캐시 키 hash() → sha256 (2026-10-06 10:34 KST, 운영 DB 적용, 편집자 요청)
+- posts #419 KO 본문과 EN 본문(content_evidence.en.content)의 Redis 캐시 키 예제에서 `hash(user_query)`를 `hashlib.sha256(user_query.encode()).hexdigest()`로 바꾸고 `import hashlib`와 설명 주석 한 줄(내장 hash()는 PYTHONHASHSEED로 프로세스마다 값이 달라 워커 간 캐시가 공유되지 않음)을 추가했다. 1행 변경, updated_at은 트리거가 갱신, published_at·status·slug 변경 없음. contentUpdatedAt·changeSummary는 건드리지 않았다.
+- SQL `sql/content-fixes/419-llm-cache-hash.sql`(hash(user_query)가 남아 있을 때만 바꾸므로 재실행하면 0행). ROLLBACK 시험: 1행, 재실행 0행.
+- 백업 `~/project/nodelog-db/backups/fix-llm-hash-20261006-103420.dump`, 행 복원 SQL `fix-llm-hash-20261006-103420-restore/419.restore.sql`(ROLLBACK으로 원문 md5 복원 확인).
+- 캐시 무효화 태그 `post-fa62c04e0e44ba3a`(sha1(slug) 앞 16자, Vercel invalidate_by_tags).
