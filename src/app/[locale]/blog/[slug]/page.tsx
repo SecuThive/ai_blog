@@ -9,7 +9,7 @@ import { postCacheTag } from '@/lib/cacheTags';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
-import { POST_REDIRECTS } from '@/lib/postRedirects';
+import { POST_REDIRECTS, postRedirectPath } from '@/lib/postRedirects';
 import { findOfficialDocs } from '@/lib/officialDocs';
 import { NOINDEX_POST_SLUGS } from '@/lib/noindexPosts';
 import { readEditorialRecord, hasVerificationRecord, substantiveUpdate } from '@/lib/editorialRecord';
@@ -355,7 +355,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
   const decodedSlug = decodeURIComponent(slug);
   const redirectTarget = POST_REDIRECTS[decodedSlug];
   if (redirectTarget) {
-    permanentRedirect(withLocale(`/blog/${encodeURIComponent(redirectTarget)}`, locale));
+    permanentRedirect(withLocale(postRedirectPath(redirectTarget), locale));
   }
 
   const fetched = await getPost(slug);

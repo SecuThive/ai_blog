@@ -1,6 +1,7 @@
 import { unstable_cache } from 'next/cache';
 import { makeFreshClient } from '@/lib/supabase';
 import { NOINDEX_POST_SLUGS } from '@/lib/noindexPosts';
+import { POST_REDIRECTS } from '@/lib/postRedirects';
 import type { MetadataRoute } from 'next';
 import { withLocale } from '@/i18n/path';
 import { readEditorialRecord, substantiveUpdate } from '@/lib/editorialRecord';
@@ -100,7 +101,8 @@ function fullSitemap(base: string, data: SitemapData): MetadataRoute.Sitemap {
 
   // noindex 처리된 보강 대상 글은 sitemap에서도 제외 (색인 신호 일관성)
   const posts = data.posts
-    .filter(p => !NOINDEX_POST_SLUGS.has(p.slug))
+    // 리다이렉트 맵에 있는 slug는 DB 상태와 무관하게 제출하지 않는다(코드 배포와 DB 변경 사이의 불일치 방지).
+    .filter(p => !NOINDEX_POST_SLUGS.has(p.slug) && !Object.hasOwn(POST_REDIRECTS, p.slug))
     .map(p => entry(base, `/blog/${encodeURIComponent(p.slug)}`, {
       lastModified: new Date(
         substantiveUpdate(
