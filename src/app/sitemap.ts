@@ -76,7 +76,7 @@ function corePages(base: string, latest: Date | null, latestGuide: Date | null):
     { path: '/about', changeFrequency: 'monthly' as const, priority: 0.5, lastModified: new Date('2026-10-03') },
     { path: '/contact', changeFrequency: 'monthly' as const, priority: 0.4, lastModified: new Date('2026-07-31') },
     { path: '/faq', changeFrequency: 'monthly' as const, priority: 0.4, lastModified: new Date('2026-10-03') },
-    { path: '/privacy', changeFrequency: 'yearly' as const, priority: 0.3, lastModified: new Date('2026-10-03') },
+    { path: '/privacy', changeFrequency: 'yearly' as const, priority: 0.3, lastModified: new Date('2026-10-06') },
     { path: '/terms', changeFrequency: 'yearly' as const, priority: 0.3, lastModified: new Date('2026-04-30') },
     { path: '/policy', changeFrequency: 'monthly' as const, priority: 0.4, lastModified: new Date('2026-10-03') },
     { path: '/author', changeFrequency: 'monthly' as const, priority: 0.4, lastModified: new Date('2026-10-03') },
@@ -152,7 +152,8 @@ function fullSitemap(base: string, data: SitemapData): MetadataRoute.Sitemap {
       priority: 0.6,
     }));
 
-  const categoryPages = CATEGORIES.map(cat => entry(base, `/category/${encodeURIComponent(cat)}`, {
+  // 글이 하나도 없는 카테고리는 제출하지 않는다(main 10971e6).
+  const categoryPages = CATEGORIES.filter(cat => catLast.has(cat)).map(cat => entry(base, `/category/${encodeURIComponent(cat)}`, {
     lastModified: catLast.get(cat) ? new Date(catLast.get(cat)!) : latestDate,
     changeFrequency: 'daily',
     priority: 0.8,

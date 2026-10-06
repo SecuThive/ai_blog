@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
 
-  if (!email || !email.includes('@')) {
+  if (!email || !email.includes('@') || body?.privacy_consent !== true) {
     return NextResponse.json({ error: '유효한 이메일을 입력해주세요.' }, { status: 400 });
   }
 

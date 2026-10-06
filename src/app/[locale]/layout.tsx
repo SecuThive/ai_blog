@@ -1,11 +1,10 @@
 import type { Metadata, Viewport } from 'next';
-import Script from 'next/script';
 import { JetBrains_Mono, Source_Serif_4, Inter } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import '../globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Analytics } from '@vercel/analytics/next';
+import SiteAnalytics from '@/components/SiteAnalytics';
 import JsonLd from '@/components/JsonLd';
 import ThemeProvider from '@/components/ThemeProvider';
 import { LocaleProvider } from '@/i18n/provider';
@@ -94,7 +93,6 @@ export async function generateMetadata({
 const PRETENDARD_CSS_URL =
   'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css';
 
-const GA_ID = 'G-WL5W341ZFQ';
 
 // 네이버 서치어드바이저 소유 확인 메타 태그 — 값 자체는 페이지 소스에 공개되는 정보지만,
 // 계정/사이트마다 달라지는 배포별 설정이므로 코드에 고정하지 않고 환경변수로 주입한다.
@@ -184,15 +182,8 @@ export default async function RootLayout({
         <main>{children}</main>
         <Footer />
         </LocaleProvider>
-        <Analytics />
+        <SiteAnalytics />
         </ThemeProvider>
-        <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
-        <Script id="ga4-init" strategy="afterInteractive">{`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', '${GA_ID}');
-        `}</Script>
       </body>
     </html>
   );

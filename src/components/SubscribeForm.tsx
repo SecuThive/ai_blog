@@ -2,13 +2,15 @@
 
 import { useState } from 'react';
 import { useT } from '@/i18n/provider';
+import Link from '@/i18n/link';
 
 export default function SubscribeForm({ compact = false }: { compact?: boolean }) {
-  const { dict } = useT();
+  const { dict, locale } = useT();
   const [email, setEmail] = useState('');
   const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [msg, setMsg] = useState('');
   const [mailSent, setMailSent] = useState(false);
+  const [privacyConsent, setPrivacyConsent] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -17,7 +19,7 @@ export default function SubscribeForm({ compact = false }: { compact?: boolean }
       const res = await fetch('/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, privacy_consent: privacyConsent }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -62,12 +64,13 @@ export default function SubscribeForm({ compact = false }: { compact?: boolean }
             disabled={state === 'loading'}
           />
         </div>
-        <button type="submit" className="btn btn-primary subscribe-btn" disabled={state === 'loading'}>
+        <button type="submit" className="btn btn-primary subscribe-btn" disabled={state === 'loading' || !privacyConsent}>
           {state === 'loading'
             ? <span className="subscribe-btn-loading"><span className="subscribe-spinner" />{dict.subscribe.loading}</span>
             : compact ? dict.subscribe.buttonCompact : dict.subscribe.button}
         </button>
       </form>
+      <label style={{ display: 'block', marginTop: 9, fontSize: 12, lineHeight: 1.5 }}><input type="checkbox" checked={privacyConsent} onChange={e => setPrivacyConsent(e.target.checked)} />{' '}{locale === 'ko' ? '뉴스레터 발송을 위한 이메일 처리에 동의합니다.' : 'I agree to the use of my email for the newsletter.'} <Link href="/privacy">{locale === 'ko' ? '개인정보처리방침' : 'Privacy policy'}</Link></label>
       {state === 'error' && (
         <p className="subscribe-error">{msg}</p>
       )}

@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   const rawParent = body?.parent_id;
   const parentId = typeof rawParent === 'number' && Number.isInteger(rawParent) ? rawParent : null;
 
-  if (!content || !post_slug) {
+  if (!content || !post_slug || body?.privacy_consent !== true) {
     return NextResponse.json({ error: '필수 항목 누락' }, { status: 400 });
   }
 
