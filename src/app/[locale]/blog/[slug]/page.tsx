@@ -1,4 +1,6 @@
 import { unstable_cache } from 'next/cache';
+import AdSenseLoader from '@/components/AdSenseLoader';
+import { isAdEligiblePost } from '@/lib/adsense';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { catTone, publicTags, DEFAULT_ROBOTS, MIN_DISPLAY_VIEWS } from '@/lib/utils';
 import { rankRelated, isStronglyRelated } from '@/lib/related';
@@ -10,9 +12,10 @@ import { notFound, permanentRedirect } from 'next/navigation';
 import { POST_REDIRECTS } from '@/lib/postRedirects';
 import { findOfficialDocs } from '@/lib/officialDocs';
 import { NOINDEX_POST_SLUGS } from '@/lib/noindexPosts';
+import { readEditorialRecord, hasVerificationRecord, substantiveUpdate } from '@/lib/editorialRecord';
+import { historicalNote } from '@/lib/historicalPosts';
 import Link from '@/i18n/link';
 import JsonLd from '@/components/JsonLd';
-import AdSenseScript from '@/components/AdSenseScript';
 import RelatedContent, { type RelatedItem } from '@/components/RelatedContent';
 import TrackedLink from '@/components/TrackedLink';
 import TrackedExternalLink from '@/components/TrackedExternalLink';
@@ -369,12 +372,25 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
   const headings = extractHeadings(content);
   const authorInitials = 'NT';
   const dateStr = post.published_at ? formatDate(post.published_at, locale) : '';
-  const modifiedDate = post.updated_at ?? post.published_at;
+  // "업데이트" 날짜는 편집자가 남긴 실질 변경 기록(contentUpdatedAt + changeSummary)만 쓴다.
+  // posts.updated_at은 번역 일괄 추가 같은 배치 작업에도 갱신되므로 독자·검색엔진에 노출하지 않는다.
+  const record = readEditorialRecord(fetched.content_evidence);
+  const showRecord = hasVerificationRecord(record);
+  const contentUpdatedAt = substantiveUpdate(record, post.published_at);
+  const modifiedDate = contentUpdatedAt ?? post.published_at;
   const modifiedDateStr = modifiedDate ? formatDate(modifiedDate, locale) : '';
-  const hasMeaningfulUpdate = Boolean(
-    post.updated_at
-    && post.published_at
-    && new Date(post.updated_at).getTime() > new Date(post.published_at).getTime() + 60_000
+  const hasMeaningfulUpdate = Boolean(contentUpdatedAt);
+  const historical = historicalNote(post.slug);
+  const evidence = post.content_evidence;
+  const commandsRunOn = evidence?.testEnvironment?.testedAt || record.environment;
+  const hasLegacyEvidence = Boolean(
+    evidence && (
+      evidence.testEnvironment
+      || (evidence.verification?.commands?.length && commandsRunOn)
+      || evidence.beforeAfter?.before || evidence.beforeAfter?.after
+      || evidence.cautions?.length
+      || record.sources.length > 0
+    )
   );
 
   const [relatedPosts, adjacent, seriesCtx, relatedGuides, comments] = await Promise.all([
@@ -447,7 +463,8 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
 
   return (
     <div>
-      {!NOINDEX_POST_SLUGS.has(post.slug) && <AdSenseScript />}
+      {/* 실재하는 색인 글이고 본문이 렌더링될 때만 광고 로더. noindex 글·영어 대체 화면·404 제외. */}
+      {isAdEligiblePost(post.slug, showBody) && <AdSenseLoader />}
       <JsonLd data={[articleSchema, breadcrumbSchema]} />
       <ViewTracker postId={post.id} table="posts" />
       <ReadingPositionTracker slug={post.slug} />
@@ -478,6 +495,19 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
             <p className="i18n-fallback">{dict.common.fallbackNotice}</p>
           )}
           <p className="article-deck">{post.excerpt}</p>
+          {historical && (
+            <aside className="i18n-fallback historical-note" role="note" aria-label={interpolate(dict.blog.historicalTitle, { asOf: historical.asOf })}>
+              <strong>{interpolate(dict.blog.historicalTitle, { asOf: historical.asOf })}</strong>
+              <span> — {interpolate(dict.blog.historicalBody, { asOf: historical.asOf, published: dateStr })}</span>
+              <span style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 14px', marginTop: 8 }}>
+                {historical.currentSlug && <Link href={`/blog/${historical.currentSlug}`}>{dict.blog.historicalCurrent}</Link>}
+                <span>{dict.blog.historicalSources}:</span>
+                {historical.currentSources.map(src => (
+                  <a key={src.url} href={src.url} target="_blank" rel="noopener noreferrer">{src.label} ↗</a>
+                ))}
+              </span>
+            </aside>
+          )}
 
           <div className="article-byline">
             <Link href="/author" className="meta-item" title={dict.blog.viewAuthorTitle}>
@@ -492,7 +522,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
             </span>
             {hasMeaningfulUpdate && (
               <span className="meta-item">
-                {dict.blog.updated} <time dateTime={post.updated_at ?? undefined}>{modifiedDateStr}</time>
+                {dict.blog.updated} <time dateTime={contentUpdatedAt ?? undefined}>{modifiedDateStr}</time>
               </span>
             )}
             <span className="meta-item">
@@ -631,45 +661,61 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
               <p className="i18n-fallback">{dict.common.fallbackNotice}</p>
             )}
 
-            {post.content_evidence && (
+            {/* 검증 블록은 실제 기록이 있을 때만 렌더링한다. content_evidence에는 영문 번역(en)만 있는
+                글이 대부분이므로 객체 존재 여부로 판단하면 빈 "확인 정보" 제목이 모든 글에 붙는다. */}
+            {evidence && (showRecord || hasLegacyEvidence) && (
               <section className="editorial-note" aria-labelledby="verification-evidence-title">
-                <div className="editorial-note-head" id="verification-evidence-title">{dict.blog.verification}</div>
-                {post.content_evidence.testEnvironment && (
+                <div className="editorial-note-head" id="verification-evidence-title">{showRecord ? dict.blog.recordTitle : dict.blog.verification}</div>
+                {showRecord && (
+                  <dl className="editorial-record">
+                    <div><dt>{dict.blog.recordVerifiedAt}</dt><dd><time dateTime={record.verifiedAt ?? undefined}>{record.verifiedAt}</time></dd></div>
+                    {!(locale === 'en' && containsHangul(record.reviewScope)) && (
+                      <div><dt>{dict.blog.recordScope}</dt><dd>{record.reviewScope}</dd></div>
+                    )}
+                    {record.environment && !(locale === 'en' && containsHangul(record.environment)) && (
+                      <div><dt>{dict.blog.recordEnv}</dt><dd>{record.environment}</dd></div>
+                    )}
+                    {record.changeSummary && !(locale === 'en' && containsHangul(record.changeSummary)) && (
+                      <div><dt>{dict.blog.recordChange}</dt><dd>{record.changeSummary}</dd></div>
+                    )}
+                  </dl>
+                )}
+                {evidence.testEnvironment && (
                   <div>
                     <strong>{dict.blog.testEnv}</strong>
                     <p className="editorial-note-body">
                       {[
-                        post.content_evidence.testEnvironment.os,
-                        ...(post.content_evidence.testEnvironment.software ?? []),
-                        post.content_evidence.testEnvironment.testedAt
-                          ? `${dict.blog.testedOn} ${post.content_evidence.testEnvironment.testedAt}`
+                        evidence.testEnvironment.os,
+                        ...(evidence.testEnvironment.software ?? []),
+                        evidence.testEnvironment.testedAt
+                          ? `${dict.blog.testedOn} ${evidence.testEnvironment.testedAt}`
                           : null,
                       ].filter(Boolean).join(' · ')}
                     </p>
                   </div>
                 )}
-                {post.content_evidence.verification?.commands?.length ? (
+                {evidence.verification?.commands?.length && commandsRunOn ? (
                   <div>
                     <strong>{dict.blog.commands}</strong>
-                    <CodeBlock code={post.content_evidence.verification.commands.join('\n')} lang="shell" />
-                    {post.content_evidence.verification.result && !(locale === 'en' && containsHangul(post.content_evidence.verification.result)) && (
-                      <p>{post.content_evidence.verification.result}</p>
+                    <CodeBlock code={evidence.verification.commands.join('\n')} lang="shell" />
+                    {evidence.verification.result && !(locale === 'en' && containsHangul(evidence.verification.result)) && (
+                      <p>{evidence.verification.result}</p>
                     )}
                   </div>
                 ) : null}
-                {(post.content_evidence.beforeAfter?.before || post.content_evidence.beforeAfter?.after) && !(locale === 'en' && containsHangul(`${post.content_evidence.beforeAfter.before ?? ''} ${post.content_evidence.beforeAfter.after ?? ''}`)) && (
+                {(evidence.beforeAfter?.before || evidence.beforeAfter?.after) && !(locale === 'en' && containsHangul(`${evidence.beforeAfter.before ?? ''} ${evidence.beforeAfter.after ?? ''}`)) && (
                   <div className="grid-2">
-                    <div><strong>{dict.blog.before}</strong><p>{post.content_evidence.beforeAfter.before}</p></div>
-                    <div><strong>{dict.blog.after}</strong><p>{post.content_evidence.beforeAfter.after}</p></div>
+                    <div><strong>{dict.blog.before}</strong><p>{evidence.beforeAfter.before}</p></div>
+                    <div><strong>{dict.blog.after}</strong><p>{evidence.beforeAfter.after}</p></div>
                   </div>
                 )}
-                {post.content_evidence.cautions?.length && !(locale === 'en' && post.content_evidence.cautions.some(containsHangul)) ? (
-                  <div><strong>{dict.blog.cautions}</strong><ul>{post.content_evidence.cautions.map(item => <li key={item}>{item}</li>)}</ul></div>
+                {evidence.cautions?.length && !(locale === 'en' && evidence.cautions.some(containsHangul)) ? (
+                  <div><strong>{dict.blog.cautions}</strong><ul>{evidence.cautions.map(item => <li key={item}>{item}</li>)}</ul></div>
                 ) : null}
-                {post.content_evidence.officialSources?.length ? (
+                {record.sources.length ? (
                   <div className="editorial-note-refs">
-                    <span className="refs-label">{dict.blog.officialDocs}</span>
-                    {post.content_evidence.officialSources.map(source => (
+                    <span className="refs-label">{showRecord ? dict.blog.recordSources : dict.blog.officialDocs}</span>
+                    {record.sources.map(source => (
                       <TrackedExternalLink key={source.url} href={source.url} path={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer">{locale === 'en' && containsHangul(source.label) ? source.url.replace(/^https?:\/\//, '').split('/')[0] : source.label} ↗</TrackedExternalLink>
                     ))}
                   </div>
@@ -701,10 +747,11 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
                 {' · '}
                 <a href="mailto:thive8564@gmail.com">{dict.blog.reportEmail}</a>
               </p>
+              {!showRecord && <p className="editorial-note-body"><strong>{dict.blog.noRecord}</strong></p>}
               <div className="editorial-note-meta">
                 {post.reviewed_at && post.reviewed_by && <><span>{dict.blog.editorialOwner} · {post.reviewed_by}</span><span className="sep">·</span></>}
                 <span>{dict.blog.published} · <time dateTime={post.published_at ?? undefined}>{dateStr}</time></span>
-                {hasMeaningfulUpdate && <><span className="sep">·</span><span>{dict.blog.updated} · <time dateTime={post.updated_at ?? undefined}>{modifiedDateStr}</time></span></>}
+                {hasMeaningfulUpdate && <><span className="sep">·</span><span>{dict.blog.updated} · <time dateTime={contentUpdatedAt ?? undefined}>{modifiedDateStr}</time></span></>}
               </div>
               {officialDocs.length > 0 && (
                 <div className="editorial-note-refs">

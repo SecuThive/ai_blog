@@ -1,0 +1,38 @@
+--- 813.en.before
++++ 813.en.after
+@@ -21,9 +21,9 @@
+ 
+ | # | Error text | Layer | First check command | Common wrong turn |
+ |---|---|---|---|---|
+-| (a) | `psql: error: could not connect to server: Connection refused ... Is the server running on host "10.0.3.10" and accepting TCP/IP connections on port 5432?` | Network | `ss -lntp \| grep 5432` | Editing pg_hba.conf (pointless) |
+-| (b) | `FATAL: no pg_hba.conf entry for host "10.0.3.51", user "app", database "prod", SSL off` | pg_hba | `SELECT * FROM pg_hba_file_rules;` | Checking firewalls/security groups |
+-| (c) | `FATAL: no pg_hba.conf entry for host "10.0.3.51", user "app", database "prod", SSL on` | pg_hba | Same + check `hostnossl` lines | “Do I need to turn SSL off?” rabbit hole |
++| (a) | `psql: error: connection to server at "10.0.3.10", port 5432 failed: Connection refused` (libpq 14+; 13 and earlier: `could not connect to server: Connection refused ... Is the server running on host "10.0.3.10" and accepting TCP/IP connections on port 5432?`) | Network | `ss -lntp \| grep 5432` | Editing pg_hba.conf (pointless) |
++| (b) | `FATAL: no pg_hba.conf entry for host "10.0.3.51", user "app", database "prod", no encryption` (server 14+; `SSL off` on 13 and earlier) | pg_hba | `SELECT * FROM pg_hba_file_rules;` | Checking firewalls/security groups |
++| (c) | `FATAL: no pg_hba.conf entry for host "10.0.3.51", user "app", database "prod", SSL encryption` (server 14+; `SSL on` on 13 and earlier) | pg_hba | Same + check `hostnossl` lines | “Do I need to turn SSL off?” rabbit hole |
+ | (d) | `FATAL: password authentication failed for user "app"` | Auth | `SELECT rolname, substring(rolpassword,1,4) FROM pg_authid;` | Re-editing pg_hba (already passed) |
+ | (e) | `psql: error: FATAL: Peer authentication failed for user "app"` | Auth + local socket | `psql -h 127.0.0.1 -U app -d prod` | Repeatedly resetting the password |
+ | (f) | `FATAL: sorry, too many clients already` | Session slots (out of scope) | `SHOW max_connections;` | Network/pg_hba/auth already passed |
+@@ -32,7 +32,7 @@
+ 
+ **(a) Network layer.** The server process is down, `listen_addresses` is `localhost`, or a firewall/security group/container port mapping is blocking you. If the same symptom appears on local loopback, follow the general debug procedure in [connection refused / ECONNREFUSED 127.0.0.1 30-second diagnostic runbook](/blog/connection-refused-econnrefused-127001-30초-진단-런북) first. This post covers only PostgreSQL-specific items.
+ 
+-**(b) and (c): `SSL off` / `SSL on` are not the cause — they are a record of how the client connected.** The server is only stating “this connection was plaintext/TLS.” Interpretation is therefore the opposite of what people assume.
++**(b) and (c): the trailing part (14+: `no encryption` / `SSL encryption`; 13 and earlier: `SSL off` / `SSL on`) is not the cause — it is a record of how the client connected.** The text below uses the 13-and-earlier wording; the format changed in PostgreSQL 14 (server `auth.c` and libpq `fe-connect.c` source). The server is only stating “this connection was plaintext/TLS.” Interpretation is therefore the opposite of what people assume.
+ 
+ - `SSL off` → the client connected in plaintext, but the server only has `hostssl` lines. → Give the client `sslmode=require`, or add a `host` line.
+ - `SSL on` → the client connected with TLS, but you only have `hostnossl`, or the ADDRESS CIDR does not include the real source IP.
+@@ -249,9 +249,10 @@
+ |---|---|---|
+ | 9.6–13 | md5 | No `include` directive; `pg_hba_file_rules` from 10 |
+ | 14 | Switched to scram-sha-256 | Existing md5 users must be rehashed |
+-| 15·16·17 | scram-sha-256 | `include`·`include_if_exists`·`include_dir`, regex matching (`/^app_.*`) |
+-
+-Regex matching example (PG 15+):
++| 15 | scram-sha-256 | Same as 14 |
++| 16·17 | scram-sha-256 | `include`·`include_if_exists`·`include_dir`, regex matching of user and database names (`/^app_.*`) ([PostgreSQL 16 release notes](https://www.postgresql.org/docs/release/16.0/)) |
++
++Regex matching example (PG 16+):
+ 
+ ```conf
+ hostssl  prod  "/^app_.*"  10.0.3.0/24  scram-sha-256

@@ -1,33 +1,62 @@
-'use client';
+import type { Metadata } from 'next';
+import UnsubscribeForm from '@/components/UnsubscribeForm';
+import { isLocale } from '@/i18n/config';
+import { UNSUBSCRIBE_CONTACT } from '@/lib/unsubscribeToken';
 
-import { useState } from 'react';
-import { useT } from '@/i18n/provider';
+// 수신거부 화면: 검색 색인·광고 대상 아님. 토큰 서명 검증은 POST /api/unsubscribe에서만 한다.
+export const dynamic = 'force-dynamic';
 
-export default function UnsubscribePage() {
-  const { locale } = useT();
-  const [email, setEmail] = useState('');
-  const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
-  const [error, setError] = useState('');
-  async function submit(event: React.FormEvent) {
-    event.preventDefault();
-    setState('loading');
-    try {
-      const response = await fetch('/api/unsubscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email }) });
-      if (!response.ok) throw new Error((await response.json()).error ?? 'Request failed');
-      setState('ok');
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Request failed');
-      setState('error');
-    }
-  }
-  return <div className="container" style={{ maxWidth: 560, paddingTop: 80, paddingBottom: 100 }}>
-    <h1>{locale === 'ko' ? '뉴스레터 구독 해지' : 'Unsubscribe from newsletter'}</h1>
-    <p>{locale === 'ko' ? '구독에 사용한 이메일을 입력하세요. 주소는 페이지 URL에 포함되지 않습니다.' : 'Enter the address you subscribed with. It will not appear in the page URL.'}</p>
-    {state === 'ok' ? <p role="status">{locale === 'ko' ? '구독 해지 요청을 처리했습니다.' : 'Your unsubscribe request has been processed.'}</p> : <form onSubmit={submit}>
-      <label htmlFor="unsubscribe-email">{locale === 'ko' ? '이메일' : 'Email'}</label>
-      <input id="unsubscribe-email" className="input" type="email" required value={email} onChange={event => setEmail(event.target.value)} autoComplete="email" />
-      {state === 'error' && <p role="alert">{error}</p>}
-      <button className="btn btn-primary" type="submit" disabled={state === 'loading'}>{locale === 'ko' ? '구독 해지' : 'Unsubscribe'}</button>
-    </form>}
-  </div>;
+const COPY = {
+  ko: {
+    title: '뉴스레터 구독 해지',
+    lead: '아래 버튼을 누르면 이 메일 주소로 Nodelog 뉴스레터가 더 이상 발송되지 않습니다.',
+    legacy: '예전 메일의 해지 링크는 보안상 더 이상 사용하지 않습니다. 가장 최근에 받은 메일의 해지 링크를 쓰거나, 아래 주소로 해지를 요청해 주세요.',
+    missing: '해지 링크가 올바르지 않습니다. 메일의 링크를 다시 열거나, 아래 주소로 해지를 요청해 주세요.',
+    contact: '이메일로 요청',
+  },
+  en: {
+    title: 'Unsubscribe from the newsletter',
+    lead: 'Press the button below to stop receiving the Nodelog newsletter at this address.',
+    legacy: 'Unsubscribe links in older emails are no longer accepted for security reasons. Use the link in the most recent email, or ask us by email below.',
+    missing: 'This unsubscribe link is not valid. Open the link from the email again, or ask us by email below.',
+    contact: 'Request by email',
+  },
+} as const;
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : 'ko';
+  return { title: COPY[locale].title, robots: { index: false, follow: false } };
+}
+
+export default async function UnsubscribePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ t?: string | string[]; legacy?: string }>;
+}) {
+  const { locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : 'ko';
+  const c = COPY[locale];
+  const sp = await searchParams;
+  const token = typeof sp.t === 'string' && /^\d{1,15}\.[A-Za-z0-9_-]{32}$/.test(sp.t) ? sp.t : null;
+  const mailto = `mailto:${UNSUBSCRIBE_CONTACT}?subject=${encodeURIComponent(locale === 'ko' ? 'Nodelog 뉴스레터 구독 해지 요청' : 'Nodelog newsletter unsubscribe request')}`;
+
+  return (
+    <main style={{ maxWidth: 560, margin: '0 auto', padding: '72px 24px 96px' }}>
+      <h1 style={{ fontSize: 28, fontWeight: 700, margin: '0 0 16px', color: 'var(--text-1)' }}>{c.title}</h1>
+      {token ? (
+        <>
+          <p style={{ color: 'var(--text-2)', lineHeight: 1.7, margin: '0 0 24px' }}>{c.lead}</p>
+          <UnsubscribeForm token={token} locale={locale} />
+        </>
+      ) : (
+        <p style={{ color: 'var(--text-2)', lineHeight: 1.7, margin: '0 0 24px' }}>{sp.legacy ? c.legacy : c.missing}</p>
+      )}
+      <p style={{ marginTop: 32, fontSize: 14, color: 'var(--text-3)' }}>
+        <a href={mailto} style={{ color: 'var(--acc-blue)' }}>{c.contact}</a> · {UNSUBSCRIBE_CONTACT}
+      </p>
+    </main>
+  );
 }

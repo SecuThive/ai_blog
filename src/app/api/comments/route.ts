@@ -13,7 +13,11 @@ export async function GET(req: NextRequest) {
     .eq('status', 'approved')
     .order('created_at', { ascending: true });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    // DB 오류 원문은 화면에 내보내지 않는다.
+    console.error('comments error:', error.message);
+    return NextResponse.json({ error: '댓글 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.' }, { status: 500 });
+  }
   return NextResponse.json({ comments: data ?? [] });
 }
 
@@ -68,6 +72,10 @@ export async function POST(req: NextRequest) {
     .from('comments')
     .insert({ post_slug, name: name.slice(0, 50), content, ip_hash: ipHash, parent_id: resolvedParent });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    // DB 오류 원문은 화면에 내보내지 않는다.
+    console.error('comments error:', error.message);
+    return NextResponse.json({ error: '댓글 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.' }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }

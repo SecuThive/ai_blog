@@ -2514,7 +2514,7 @@ async function publishPost(post: typeof POSTS[0]) {
       tags: post.tags,
       author: post.author,
       agent_role: post.agent_role,
-      status: 'published',
+      status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */,
     }),
   });
 

@@ -14,12 +14,15 @@ const PASSTHROUGH_PREFIXES = [
   '/icon',
 ];
 
+// 경로 값에 '.'이 들어갈 수 있는 콘텐츠 라우트. 정적 파일로 오인해 로캘 rewrite를 건너뛰면 404가 된다.
+const CONTENT_PREFIXES = ['/blog/', '/engineer/', '/tag/', '/series/', '/category/'];
+
 function shouldPassthrough(pathname: string): boolean {
   if (PASSTHROUGH_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return true;
   }
-  // Static files in /public (llms.txt, images, etc.)
-  if (pathname.includes('.') && !pathname.startsWith('/blog/') && !pathname.startsWith('/engineer/')) {
+  // Static files in /public (llms.txt, images, etc.). 콘텐츠 라우트(태그 'Node.js' 같은 값 포함)는 제외한다.
+  if (pathname.includes('.') && !CONTENT_PREFIXES.some((p) => pathname.startsWith(p))) {
     return true;
   }
   return false;
@@ -36,7 +39,7 @@ export default function proxy(request: NextRequest) {
     const stripped = pathname.replace(/^\/ko/, '') || '/';
     const url = request.nextUrl.clone();
     url.pathname = stripped;
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(url, 308);
   }
 
   // English lives at /en/...
@@ -51,6 +54,12 @@ export default function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)',
+    // 위 패턴은 '.'이 들어간 경로를 모두 제외하므로, 값에 '.'이 올 수 있는 콘텐츠 라우트는 따로 매칭한다.
+    '/blog/:path*',
+    '/engineer/:path*',
+    '/tag/:path*',
+    '/series/:path*',
+    '/category/:path*',
   ],
 };
 

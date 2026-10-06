@@ -1,0 +1,10 @@
+--- 656.en.before
++++ 656.en.after
+@@ -78,6 +78,6 @@
+ - Check in the vendor's documentation (data processing addendum, DPA) whether input data is used for training and how long it is retained, and keep evidence that training opt-out is enabled (settings screenshot, contract clause).
+ 
+ **Prevention**
+-- Add the five steps above to the intake form for new SaaS, and record an annual review of each processor.
++- Add the five steps above to the intake form for new SaaS, and record processor reviews on a cycle set by data risk. Review again regardless of the cycle when the contract is renewed, a sub-processor changes, or training-use terms change.
+ - Where interpretations differ, check the PIPC's guidelines and Q&A and get legal review. This article is not legal advice.
+ 

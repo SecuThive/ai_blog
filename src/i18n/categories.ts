@@ -57,3 +57,8 @@ export function categoryHref(cat: string, locale: Locale): string {
   const slug = locale === 'en' ? (CAT_TO_SLUG[cat] ?? cat) : cat;
   return `/category/${slug}`;
 }
+
+/** 실제 운영 중인 블로그 카테고리인지(한국어 이름 기준). 임의 값은 404로 처리한다. */
+export function isKnownCategory(cat: string): boolean {
+  return Object.prototype.hasOwnProperty.call(CAT_TO_SLUG, cat);
+}

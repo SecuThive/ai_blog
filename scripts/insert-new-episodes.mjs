@@ -1074,9 +1074,9 @@ async function main() {
       tags: p.tags,
       author: p.author,
       agent_role: p.agent_role,
-      status: 'published',
+      status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */,
       views: 0,
-      published_at: p.published_at,
+      published_at: null /* 공개일은 승인 시점에 기록. 과거 날짜를 미리 넣지 않는다 */,
       cover_image: null,
     };
 

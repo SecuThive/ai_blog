@@ -1,4 +1,5 @@
 import Link from '@/i18n/link';
+import AdSenseLoader from '@/components/AdSenseLoader';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { EngineerGuide } from '@/lib/types';
@@ -13,7 +14,6 @@ import remarkGfm from 'remark-gfm';
 import CodeBlock from '@/components/CodeBlock';
 import MermaidDiagram from '@/components/MermaidDiagram';
 import JsonLd from '@/components/JsonLd';
-import AdSenseScript from '@/components/AdSenseScript';
 import { findOfficialDocs } from '@/lib/officialDocs';
 import { TableOfContents, ProgressBar, ScrollToTopBtn, CopyLinkBtn, ShareBtn } from '@/app/[locale]/blog/[slug]/ArticleClient';
 import Comments, { type CommentRow } from '@/components/Comments';
@@ -374,7 +374,8 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
 
   return (
     <div>
-      <AdSenseScript />
+      {/* 실재하는 가이드이고 본문이 렌더링될 때만 광고 로더(영어 대체 화면 제외). */}
+      {showBody && <AdSenseLoader />}
       <ProgressBar />
       <ScrollToTopBtn />
       <JsonLd data={[techArticleSchema, breadcrumbSchema, ...(howToSchema ? [howToSchema] : [])]} />

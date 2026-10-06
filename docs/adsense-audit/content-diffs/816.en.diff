@@ -1,0 +1,178 @@
+--- 816.en.before
++++ 816.en.after
+@@ -107,7 +107,7 @@
+ curl -vI https://example.com 2>&1 | grep -Ei 'expire date|start date|SSL certificate|issuer'
+ ```
+ 
+-If you get `SSL certificate problem: unable to get local issuer certificate` but the browser is fine, that is almost certainly (c). Browsers fetch the missing intermediate via AIA and self-correct; curl, Java, and older mobile stacks do not.
++If you get `SSL certificate problem: unable to get local issuer certificate` but the browser is fine, that is almost certainly (c). Chrome, Edge, Safari and others download the missing intermediate from the AIA (Authority Information Access) URL, and Firefox fills it in from a preloaded intermediate list. [Firefox intermediate preloading](https://wiki.mozilla.org/Security/CryptoEngineering/Intermediate_Preloading) curl, Java, and older mobile stacks do neither, so the server must send the chain.
+ 
+ ### 4) Pin down the certificate path actually being served
+ 
+@@ -139,29 +139,40 @@
+ ss -tlnp | grep :443
+ PID=$(pgrep -f 'nginx: master' | head -1)
+ ps -o pid,lstart,cmd -p "$PID"
+-sudo lsof -p "$PID" | grep -i pem
+-stat -c '%n %y' /etc/letsencrypt/live/example.com/fullchain.pem
+-```
+-
+-If the `ps -o lstart` value is **earlier** than the certificate file's mtime, that process has never read the new certificate.
++stat -L -c '%n %y' /etc/letsencrypt/live/example.com/fullchain.pem   # -L: time of the file the symlink points to
++```
++
++If the `ps -o lstart` value is **earlier** than the certificate file's mtime, the process did not read the new certificate at start-up. But `nginx -s reload` and `systemctl reload` re-read config and certificates without changing the master PID or start time, so use this only as supporting evidence and decide with the fingerprint comparison above. nginx does not keep certificate files open after reading them, so `lsof` cannot show this (the `lsof` step from the previous version was removed).
+ 
+ ### 6) no shared cipher family — confirming (d)
+ 
+ If nginx `error.log` has the following line, you can forget about dates and chains.
+ 
+ ```text
+-SSL_do_handshake() failed (SSL: error:1408A0C1:SSL routines:ssl3_get_client_hello:no shared cipher)
+-```
++SSL_do_handshake() failed (SSL: error:1408A0C1:SSL routines:ssl3_get_client_hello:no shared cipher)   # OpenSSL 1.0.x
++SSL_do_handshake() failed (SSL: error:0A0000C1:SSL routines::no shared cipher)                         # OpenSSL 3.x
++```
++
++The error code format depends on the server's OpenSSL version, so search for the string `no shared cipher`.
+ 
+ Walk the supported protocols yourself and see where it breaks.
+ 
+ ```bash
+-for p in tls1 tls1_1 tls1_2 tls1_3; do
++for p in tls1_2 tls1_3; do
+   printf '%-8s ' "$p"
+-  echo | openssl s_client -connect example.com:443 -servername example.com -$p 2>&1 \
+-    | grep -qE 'Verify return code|Cipher is' && echo OK || echo FAIL
++  openssl s_client -brief -connect example.com:443 -servername example.com -$p </dev/null 2>&1 \
++    | grep -q 'CONNECTION ESTABLISHED' && echo OK || echo FAIL
+ done
+-```
++# To test TLS 1.0/1.1 as well (an OpenSSL 3.x client only tries them at security level 0)
++for p in tls1 tls1_1; do
++  printf '%-8s ' "$p"
++  openssl s_client -brief -connect example.com:443 -servername example.com -$p \
++    -cipher 'DEFAULT:@SECLEVEL=0' </dev/null 2>&1 \
++    | grep -q 'CONNECTION ESTABLISHED' && echo OK || echo FAIL
++done
++```
++
++The previous loop also counted the `Cipher is (NONE)` line printed on failure, so it always reported OK. Decide on `CONNECTION ESTABLISHED` from `-brief` instead. Also, an OpenSSL 3.x client does not use anything below TLS 1.2 at the default security level (1), so a `-tls1` FAIL may not be the server's doing. [OpenSSL security levels](https://docs.openssl.org/3.0/man3/SSL_CTX_set_security_level/)
+ 
+ If only TLS 1.2/1.3 are OK and 1.0/1.1 FAIL, that is a **correct security configuration**. The failing clients are old stacks, so raise the client rather than lower the server. Conversely, if TLS 1.2 also FAILs, suspect a mismatch between the `ssl_ciphers` setting and the key type (RSA/ECDSA). Serving an RSA-key certificate while leaving only ECDSA-only cipher suites will blow up with `no shared cipher` as-is.
+ 
+@@ -260,27 +271,27 @@
+ 
+     ssl_protocols TLSv1.2 TLSv1.3;
+     ssl_session_cache shared:SSL:10m;
+-    ssl_stapling on;
+-    ssl_stapling_verify on;
+ }
+ ```
+ 
+ `cert.pem` is the leaf only; `fullchain.pem` is leaf + intermediate CA. One line of difference and depth 1 disappears.
+ 
++**OCSP stapling depends on the CA.** Let's Encrypt stopped including OCSP URLs in certificates on 2025-05-07 and turned off its OCSP responders on 2025-08-06. With a Let's Encrypt certificate issued since then, `ssl_stapling on;` makes nginx log a warning that there is no OCSP responder URL and skip stapling. That is why `ssl_stapling on; ssl_stapling_verify on;` was removed from the corrected config. Enable it only for certificates from a CA that still provides OCSP, together with `ssl_trusted_certificate` and `resolver`. [Let's Encrypt ending OCSP](https://letsencrypt.org/2024/12/05/ending-ocsp/) · [nginx ssl_stapling](https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_stapling)
++
+ ### Key–certificate match and chain verification
+ 
+ ```bash
+-# 키와 인증서가 같은 쌍인지 (두 해시가 같아야 정상)
+-openssl x509 -noout -modulus -in /etc/letsencrypt/live/example.com/cert.pem | openssl sha256
+-openssl rsa  -noout -modulus -in /etc/letsencrypt/live/example.com/privkey.pem | openssl sha256
+-
+-# 체인 검증
++# Do the key and certificate match? Compare public-key hashes (works for RSA and ECDSA; both must match)
++openssl x509 -in /etc/letsencrypt/live/example.com/cert.pem -noout -pubkey | openssl sha256
++sudo openssl pkey -in /etc/letsencrypt/live/example.com/privkey.pem -pubout | openssl sha256
++
++# Chain verification
+ openssl verify -untrusted /etc/letsencrypt/live/example.com/chain.pem \
+   /etc/letsencrypt/live/example.com/cert.pem
+-# 기대 출력: cert.pem: OK
+-```
+-
+-For an ECDSA key, compare public keys with `openssl ec -noout -text | grep pub -A3` instead of `openssl rsa`.
++# Expected output: cert.pem: OK
++```
++
++The previous version used `openssl rsa -modulus`, but since certbot 2.0 the default key for new certificates is ECDSA (P-256), and `openssl rsa` fails on it. The `-pubkey` / `pkey -pubout` comparison above works for either key type. [certbot changelog](https://github.com/certbot/certbot/blob/master/certbot/CHANGELOG.md)
+ 
+ ### Apply order
+ 
+@@ -297,10 +308,10 @@
+ ### Bind reload to renewal (the proper way)
+ 
+ ```bash
+-# certbot
++# Hook for a single run (treat it as applying to this renew run; use the hook file below for a permanent hook)
+ sudo certbot renew --deploy-hook "systemctl reload nginx"
+ 
+-# 또는 훅 파일로 고정
++# Permanent hook file: certbot runs it after every successful renewal
+ sudo tee /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh >/dev/null <<'EOF'
+ #!/bin/sh
+ /usr/bin/nginx -t && /bin/systemctl reload nginx
+@@ -308,6 +319,8 @@
+ sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh
+ ```
+ 
++The hook file runs only when a certificate was actually renewed. After adding it, run `sudo certbot renew --dry-run` to confirm the hook runs, then check the socket fingerprint again. [certbot user guide: renewal hooks](https://eff-certbot.readthedocs.io/en/stable/using.html)
++
+ acme.sh does the same job with `--reloadcmd`.
+ 
+ ```bash
+@@ -317,7 +330,7 @@
+   --reloadcmd "nginx -t && systemctl reload nginx"
+ ```
+ 
+-As the industry discussion about stepwise shortening of certificate lifetimes (from 90 days toward even shorter cycles) continues, manual renewal is effectively ceasing to be an option. Paradoxically, the shorter the cycle, the **higher the incidence of missed-reload outages**. Renewal success and service rollout are separate events. For concrete timelines and policy, check CA/Browser Forum and each CA's official notices directly.
++Under CA/Browser Forum Ballot SC-081, the maximum validity of public TLS certificates drops, by issuance date, to 200 days from 2026-03-15, 100 days from 2027-03-15, and 47 days from 2029-03-15. [CA/B Forum Ballot SC-081v3](https://cabforum.org/2025/04/11/ballot-sc081v3-introduce-schedule-of-reducing-validity-and-data-reuse-periods/) The more often you renew, the **more chances a missed reload has to cause an outage**. Renewal success and service rollout are separate events. Check your CA's notices for the lifetime it actually issues.
+ 
+ ### Rollback
+ 
+@@ -327,14 +340,17 @@
+ sudo cp -a /etc/letsencrypt/live/example.com /root/incident-$(date +%Y%m%d%H%M)/
+ sudo journalctl -u nginx --since "1 hour ago" > /root/incident-nginx.log
+ 
+-# 이전 버전으로 심볼릭 링크 되돌리기 (예: 12 → 11)
++# Point the symlinks back to the previous version (e.g. 12 → 11): switch all four files to the same number
++N=11
+ cd /etc/letsencrypt/live/example.com
+-sudo ln -sf ../../archive/example.com/fullchain11.pem fullchain.pem
+-sudo ln -sf ../../archive/example.com/privkey11.pem   privkey.pem
++for f in cert chain fullchain privkey; do
++  sudo ln -sfn "../../archive/example.com/${f}${N}.pem" "${f}.pem"
++done
++sudo openssl x509 -in fullchain.pem -noout -enddate      # confirm it is still valid first
+ sudo nginx -t && sudo systemctl reload nginx
+ ```
+ 
+-Rollback only makes sense if the previous certificate is still within its validity period. Rolling back to an expired one makes the situation worse.
++Rollback only makes sense if the previous certificate is still within its validity period. Rolling back to an expired one makes the situation worse. Reverting only some files leaves a mismatched key and certificate, and nginx will not start. The next `certbot renew` recreates the links with a new number, so a rollback is a stopgap until the cause is fixed.
+ 
+ ---
+ 
+@@ -407,9 +423,10 @@
+ 
+ ```bash
+ # crontab -e
+-0 9 * * * /usr/local/bin/tls-expiry-check.sh >> /var/log/tls-expiry.log 2>&1 || \
+-  curl -s -X POST -H 'Content-Type: application/json' \
+-    -d "{\"text\":\"[TLS] 인증서 만료 경고 발생 - $(hostname)\"}" "$WEBHOOK_URL"
++# cron does not support shell line continuation (\): keep each command on one line.
++# cron has none of your login shell's variables, so define the webhook URL in the crontab itself.
++WEBHOOK_URL=https://hooks.example.com/REPLACE_ME
++0 9 * * * /usr/local/bin/tls-expiry-check.sh >> /var/log/tls-expiry.log 2>&1 || curl -s -X POST -H 'Content-Type: application/json' -d "{\"text\":\"[TLS] certificate expiry warning - $(hostname)\"}" "$WEBHOOK_URL"
+ ```
+ 
+ **systemd service + timer (recommended):**
+@@ -462,7 +479,7 @@
+ A. Diff the file fingerprint against the socket fingerprint. If the value from `openssl x509 -in fullchain.pem -noout -fingerprint -sha256` differs from the fingerprint you get via `openssl s_client`, a missed reload is confirmed. `nginx -t && systemctl reload nginx` clears it immediately; to prevent recurrence, bind reload to renewal with `--deploy-hook`.
+ 
+ **Q. The browser is fine, but curl and the Java app get `unable to get local issuer certificate`.**
+-A. High likelihood of a missing intermediate CA chain (no depth 1). Browsers fetch the missing piece via AIA; other stacks do not. Check that nginx `ssl_certificate` is not pointing at `cert.pem`, switch it to `fullchain.pem`, and reload. If after that `Verify return code: 0` but a specific client still fails, from that point it is a client trust-store problem.
++A. High likelihood of a missing intermediate CA chain (no depth 1). Browsers fill in the missing piece via AIA download or a preloaded intermediate list; other stacks do not. Check that nginx `ssl_certificate` is not pointing at `cert.pem`, switch it to `fullchain.pem`, and reload. If after that `Verify return code: 0` but a specific client still fails, from that point it is a client trust-store problem.
+ 
+ **Q. nginx error.log keeps logging `no shared cipher`.**
+ A. This is a negotiation failure, not a certificate date problem. Typical cases: the server turned off TLS 1.0/1.1 and an old client is connecting, or you left only ECDSA-only suites in `ssl_ciphers` while serving an RSA-key certificate. First confirm which version it breaks on with the `-tls1_2` and `-tls1_3` options, then align the cipher list with the key type.

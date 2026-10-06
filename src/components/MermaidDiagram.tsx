@@ -5,7 +5,7 @@ import { translateMermaid } from '@/i18n/english';
 import type { Locale } from '@/i18n/config';
 
 function fitMermaidSvg(svg: string): string {
-  let out = svg.replace(/\s(width|height)="[^"]*"/g, '');
+  const out = svg.replace(/\s(width|height)="[^"]*"/g, '');
   if (!/\sviewBox=/.test(out)) return out;
   return out.replace('<svg ', '<svg width="100%" preserveAspectRatio="xMidYMid meet" ');
 }

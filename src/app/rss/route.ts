@@ -43,7 +43,7 @@ export async function GET() {
       <link>${siteUrl}/blog/${p.slug}</link>
       <guid isPermaLink="true">${siteUrl}/blog/${p.slug}</guid>
       <description>${cdata(p.excerpt)}</description>
-      <author><![CDATA[Nodelog 기술 편집팀]]></author>
+      <author><![CDATA[Nodelog 편집]]></author>
       <category>${cdata(p.category)}</category>
       <pubDate>${new Date(p.published_at).toUTCString()}</pubDate>
     </item>`).join('\n');

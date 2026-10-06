@@ -1830,7 +1830,7 @@ async function run() {
 
     const { error } = await supabase.from('engineer_guides').insert({
       ...g,
-      status: 'published',
+      status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */,
       views: 0,
     });
 

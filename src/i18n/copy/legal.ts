@@ -3,6 +3,8 @@ import type { Locale } from '../config';
 export interface LegalSection {
   title: string;
   body: string;
+  /** 본문 아래에 실제 하이퍼링크로 표시할 외부 문서(200 응답을 확인한 URL만). */
+  links?: { label: string; url: string }[];
 }
 
 export interface LegalDoc {
@@ -50,34 +52,64 @@ const PRIVACY: Record<Locale, LegalDoc> = {
     title: '개인정보처리방침',
     lead: 'Nodelog(thivelab.com)가 수집하는 정보의 범위, 사용 방식, 그리고 사용자의 권리를 명확하게 안내합니다.',
     eyebrow: 'PRIVACY POLICY',
-    updated: '최종 업데이트 · 2026.10.02 (권리 요청·변경 안내 표현 및 광고 설정 링크 정정) · 최초 적용일 2026.06.02',
+    updated: '최종 업데이트 · 2026.10.06 (제3자 광고·웹 비콘·IP 고지, Cloudflare·jsDelivr 추가, 구독 해지 방식 변경, 권리 요청·변경 안내 표현 정정) · 최초 적용일 2026.06.02',
     contact: '이 정책에 대해 궁금한 점이 있다면 {email} 로 문의해주세요.',
     sections: [
       { title: '1. 수집하는 정보', body: '① 뉴스레터: 구독 신청 시 이메일 주소를 수집합니다. ② 댓글: 작성 시 입력한 이름(별명 가능)과 댓글 내용, 도배 방지를 위한 IP 주소의 일방향 해시값을 수집합니다. ③ 문의 폼: 이름, 이메일, 소속(선택), 문의 내용을 수집합니다. ④ 이용 분석·광고: 페이지 방문, 이용 시간, 기기·브라우저 정보와 쿠키·광고 식별자가 처리될 수 있습니다.' },
       { title: '2. 정보의 사용 목적', body: '뉴스레터 이메일은 발송과 구독 상태 관리에 사용됩니다. 댓글 정보는 댓글 표시와 어뷰징 방지에, 문의 정보는 답변과 이력 관리에 사용됩니다. 분석 데이터는 사이트 이용 분석과 품질 개선에, 광고 데이터는 광고 게재 및 성과 측정에 사용될 수 있습니다.' },
-      { title: '3. 보관 기간', body: '구독 해지 시 해당 이메일을 비활성 상태로 변경하고 발송 대상에서 제외합니다. 기록 삭제는 thive8564@gmail.com 로 요청할 수 있습니다. 댓글·문의 기록은 삭제 요청을 확인한 뒤 처리합니다. 각 항목의 구체적인 보관 기간과 광고·분석 업체 설정은 운영 기록으로 확인해 추가 고지할 예정입니다.' },
-      { title: '4. 제3자 제공 및 처리 위탁', body: '당사는 사용자의 개인정보를 판매하지 않습니다. 서비스 운영 과정에서 광고: Google AdSense, 분석: Google Analytics·Vercel Analytics, 메일 발송: Resend를 사용할 수 있습니다. 게시물과 서비스 데이터는 자체 운영 PostgreSQL 데이터베이스에 보관합니다. 외부 서비스의 쿠키·데이터 처리는 각 사업자의 정책을 따르며 일부 처리는 국외 서버에서 이루어질 수 있습니다.' },
+      { title: '3. 보관 기간', body: '뉴스레터 구독을 해지하면 해당 이메일은 발송 대상에서 즉시 제외(비활성 처리)됩니다. 이메일 주소 자체의 삭제를 원하면 아래 연락처로 요청해 주세요. 댓글은 삭제 요청을 확인한 뒤 처리하며, 문의 내역은 답변과 분쟁 대응에 필요한 기간 동안 보관 후 삭제합니다. 광고·분석 데이터와 쿠키의 보관 기간은 각 제공업체(Google·Vercel 등)의 정책과 운영 설정을 따릅니다.' },
+      { title: '4. 제3자 제공 및 처리 위탁', body: '당사는 사용자의 개인정보를 판매하지 않습니다. 서비스 운영 과정에서 광고: Google AdSense, 분석: Google Analytics·Vercel Analytics, 메일 발송: Resend, 보안·전송: Cloudflare, 웹 글꼴 전송: jsDelivr를 사용합니다. 게시물과 서비스 데이터는 운영자가 직접 관리하는 PostgreSQL 데이터베이스에 보관합니다. 외부 서비스의 쿠키·데이터 처리는 각 사업자의 정책을 따르며 일부 처리는 국외 서버에서 이루어질 수 있습니다.', links: [
+        { label: 'Google 개인정보처리방침', url: 'https://policies.google.com/privacy' },
+        { label: 'Vercel Web Analytics 개인정보 안내', url: 'https://vercel.com/docs/analytics/privacy-policy' },
+        { label: 'Resend 개인정보처리방침', url: 'https://resend.com/legal/privacy-policy' },
+      ] },
       { title: '5. 사용자의 권리', body: '사용자는 자신의 정보에 대한 열람, 정정, 삭제, 처리 정지를 thive8564@gmail.com 로 요청할 수 있습니다. 요청 내용을 확인하고 처리 결과를 회신합니다.' },
-      { title: '6. 쿠키 및 광고', body: '본 사이트의 분석 서비스와 광고 서비스는 쿠키 또는 유사 식별자를 사용할 수 있습니다. Google을 포함한 제3자 광고 사업자는 본 사이트와 다른 사이트 방문 정보를 이용해 맞춤형 광고를 제공할 수 있습니다. Google 광고 설정은 이 페이지 아래의 링크에서 열 수 있습니다. 브라우저에서도 쿠키를 관리할 수 있습니다. EEA·영국·스위스의 광고 동의 방식은 계정 설정을 확인 중입니다.' },
-      { title: '7. AI 도구 및 콘텐츠 피드백', body: '자료 조사, 콘텐츠 구조화와 초안 작성 과정에서 AI 도구를 보조적으로 활용할 수 있습니다. 글의 출처·검증 범위는 해당 페이지에 표시된 자료와 기록을 기준으로 확인할 수 있습니다. 사용자가 보낸 오류 제보와 콘텐츠 피드백은 해당 글의 정정과 사이트 품질 개선을 위해 검토할 수 있으며, 자체 추천 모델 학습에는 사용하지 않습니다. 별도 동의 없이 개인 식별 정보를 공개하지 않습니다.' },
-      { title: '8. 정책 변경', body: '이 정책을 변경하면 본 페이지에 변경 내용과 날짜를 표시합니다.' },
+      { title: '6. 쿠키·웹 비콘 및 광고', body: '본 사이트는 로그인 기능이 없어 자체 세션 쿠키를 쓰지 않습니다. 화면 테마, 북마크, 최근 검색어는 사용자의 브라우저 저장소(localStorage)에만 보관되며 서버로 전송되지 않습니다. 이용 분석(Google Analytics)과 광고(Google AdSense)를 위해 쿠키가 사용됩니다. Google을 포함한 제3자 광고 사업자는 광고 게재 과정에서 사용자의 브라우저에 쿠키를 저장하거나 읽을 수 있고, 웹 비콘이나 IP 주소를 이용해 정보를 수집할 수 있습니다. Google은 광고 쿠키를 사용해 사용자가 본 사이트와 다른 웹사이트를 방문한 기록을 기반으로 Google과 파트너가 광고를 게재하도록 할 수 있습니다. 맞춤형 광고는 아래 Google 광고 설정이나 YourAdChoices에서 해제할 수 있고, 브라우저 설정에서 쿠키를 차단할 수도 있습니다. 단, 쿠키를 차단하면 일부 기능이 제한될 수 있습니다.', links: [
+        { label: 'Google 광고 설정(내 광고 센터, 맞춤 광고 해제)', url: 'https://myadcenter.google.com/' },
+        { label: 'Google이 파트너 사이트·앱의 정보를 사용하는 방식', url: 'https://policies.google.com/technologies/partner-sites' },
+        { label: 'Google 광고 기술', url: 'https://policies.google.com/technologies/ads' },
+        { label: 'YourAdChoices(DAA) 맞춤 광고 해제', url: 'https://youradchoices.com/' },
+      ] },
+      { title: '7. 보안·전송 서비스(Cloudflare, jsDelivr)', body: '사이트 트래픽은 Cloudflare를 거칩니다. Cloudflare는 악성 트래픽 차단을 위해 접속 IP 주소와 요청 정보를 처리하며, 봇 감지 스크립트가 보안 쿠키(cf_clearance)를 설정할 수 있습니다. Cloudflare Web Analytics가 켜져 있으면 Cloudflare가 방문 통계를 위한 스크립트(static.cloudflareinsights.com)를 페이지에 넣을 수 있습니다. 본문 글꼴(Pretendard)은 jsDelivr CDN에서 불러오므로 글꼴 요청 시 사용자의 IP 주소와 브라우저 정보가 jsDelivr에 전달됩니다.', links: [
+        { label: 'Cloudflare 개인정보처리방침', url: 'https://www.cloudflare.com/privacypolicy/' },
+        { label: 'Cloudflare 쿠키 안내', url: 'https://developers.cloudflare.com/fundamentals/reference/policies-compliances/cloudflare-cookies/' },
+        { label: 'Cloudflare Web Analytics 수집 범위', url: 'https://developers.cloudflare.com/web-analytics/data-metrics/data-origin-and-collection/' },
+        { label: 'jsDelivr 개인정보처리방침', url: 'https://www.jsdelivr.com/terms/privacy-policy' },
+      ] },
+      { title: '8. AI 도구 및 콘텐츠 피드백', body: '글 대부분의 초안 작성에 AI 도구를 사용했습니다. 글의 출처·검증 범위는 해당 페이지에 표시된 자료와 기록을 기준으로 확인할 수 있습니다. 사용자가 보낸 오류 제보와 콘텐츠 피드백은 해당 글의 정정과 사이트 품질 개선을 위해 검토할 수 있으며, 자체 추천 모델 학습에는 사용하지 않습니다. 별도 동의 없이 개인 식별 정보를 공개하지 않습니다.' },
+      { title: '9. 정책 변경', body: '이 정책을 변경하면 본 페이지에 변경 내용과 날짜를 표시합니다.' },
     ],
   },
   en: {
     title: 'Privacy policy',
     lead: 'What Nodelog (thivelab.com) collects, how we use it, and your rights.',
     eyebrow: 'PRIVACY POLICY',
-    updated: 'Last updated · 2 Oct 2026 (rights, change notices, and ad links) · First effective 2 Jun 2026',
+    updated: 'Last updated · 6 Oct 2026 (third-party ads, web beacons and IP notice; Cloudflare and jsDelivr; new unsubscribe method; rights and change-notice wording) · First effective 2 Jun 2026',
     contact: 'Questions about this policy? Write to {email}.',
     sections: [
       { title: '1. Information we collect', body: '(1) Newsletter: email address when you subscribe. (2) Comments: the name you enter (a nickname is fine), the comment text, and a one-way hash of the IP address to limit spam. (3) Contact form: name, email, organization (optional), and the message. (4) Analytics and ads: page views, time on site, device and browser data, and cookies or advertising identifiers may be processed.' },
       { title: '2. Why we use it', body: 'Newsletter emails are used to send the newsletter and manage subscription status. Comment data is used to display comments and prevent abuse. Contact data is used to reply and keep a record of the request. Analytics data is used to understand site use and improve the site; ad data may be used to serve and measure ads.' },
-      { title: '3. How long we keep it', body: 'Unsubscribing marks the email inactive and removes it from the mailing list. You can request deletion at thive8564@gmail.com. We handle comment and contact deletion requests after review. Specific retention periods and ad or analytics provider settings still need to be checked against operating records and added here.' },
-      { title: '4. Processors and third parties', body: 'We do not sell personal information. We may use Google AdSense for ads, Google Analytics and Vercel Analytics for analytics, and Resend for email. Posts and service data are stored in a self-hosted PostgreSQL database. External services process cookies and data under their own policies, and some processing may take place outside Korea.' },
+      { title: '3. How long we keep it', body: 'When you unsubscribe, your email is immediately excluded from sending (marked inactive). To have the address itself deleted, contact us below. Comments are handled after we confirm a deletion request. Contact records are kept as long as needed to reply and handle disputes, then deleted. Retention of ads, analytics, and cookies follows each provider (Google, Vercel, and others) and our settings.' },
+      { title: '4. Processors and third parties', body: 'We do not sell personal information. We may use Google AdSense for ads, Google Analytics and Vercel Analytics for analytics, Resend for email, Cloudflare for security and delivery, and jsDelivr for web fonts. Posts and service data are stored in a PostgreSQL database managed by the site operator. External services process cookies and data under their own policies, and some processing may take place outside Korea.', links: [
+        { label: 'Google privacy policy', url: 'https://policies.google.com/privacy' },
+        { label: 'Vercel Web Analytics privacy', url: 'https://vercel.com/docs/analytics/privacy-policy' },
+        { label: 'Resend privacy policy', url: 'https://resend.com/legal/privacy-policy' },
+      ] },
       { title: '5. Your rights', body: 'You may request access, correction, deletion, or a pause in processing by emailing thive8564@gmail.com. We will review the request and reply with the result.' },
-      { title: '6. Cookies and ads', body: 'Our analytics and advertising services may use cookies or similar identifiers. Third-party advertisers including Google may use visits to this and other sites to provide personalized ads. Google ad settings are linked below this policy. You can also manage cookies in your browser. Consent settings for ads in the EEA, UK and Switzerland still need account-level review.' },
-      { title: '7. AI tools and content feedback', body: 'We may use AI tools to assist research, structuring, and drafting. Check each page for its stated sources and verification scope. Error reports and content feedback may be reviewed to correct the article and improve the site. We do not use them to train our own recommendation models. We do not publish personally identifying information without separate consent.' },
-      { title: '8. Changes to this policy', body: 'If this policy changes, we will note the change and date on this page.' },
+      { title: '6. Cookies, web beacons and ads', body: 'The site has no login, so it sets no session cookies of its own. Theme, bookmarks and recent searches stay in your browser storage (localStorage) and are not sent to our server. Cookies are used for analytics (Google Analytics) and ads (Google AdSense). Third parties, including Google, may place or read cookies on your browser, or use web beacons or IP addresses to collect information, as a result of ad serving on this site. Google’s use of advertising cookies enables it and its partners to serve ads based on your visits to this site and other sites. You can opt out of personalized ads in Google My Ad Center or at YourAdChoices below, and you can block cookies in your browser. Blocking cookies may limit some features.', links: [
+        { label: 'Google My Ad Center (opt out of personalized ads)', url: 'https://myadcenter.google.com/' },
+        { label: 'How Google uses information from sites or apps that use its services', url: 'https://policies.google.com/technologies/partner-sites' },
+        { label: 'How Google uses cookies in advertising', url: 'https://policies.google.com/technologies/ads' },
+        { label: 'YourAdChoices (DAA) opt-out', url: 'https://youradchoices.com/' },
+      ] },
+      { title: '7. Security and delivery services (Cloudflare, jsDelivr)', body: 'Traffic to the site passes through Cloudflare, which processes IP addresses and request data to block malicious traffic; its bot-detection script may set a security cookie (cf_clearance). If Cloudflare Web Analytics is enabled, Cloudflare may add a statistics script (static.cloudflareinsights.com) to pages. The body font (Pretendard) is loaded from the jsDelivr CDN, so your IP address and browser information are sent to jsDelivr when the font is requested.', links: [
+        { label: 'Cloudflare privacy policy', url: 'https://www.cloudflare.com/privacypolicy/' },
+        { label: 'Cloudflare cookies', url: 'https://developers.cloudflare.com/fundamentals/reference/policies-compliances/cloudflare-cookies/' },
+        { label: 'What Cloudflare Web Analytics collects', url: 'https://developers.cloudflare.com/web-analytics/data-metrics/data-origin-and-collection/' },
+        { label: 'jsDelivr privacy policy', url: 'https://www.jsdelivr.com/terms/privacy-policy' },
+      ] },
+      { title: '8. AI tools and content feedback', body: 'Most articles were drafted with AI tools. Check each page for its stated sources and verification scope. Error reports and content feedback may be reviewed to correct the article and improve the site. We do not use them to train our own recommendation models. We do not publish personally identifying information without separate consent.' },
+      { title: '9. Changes to this policy', body: 'If this policy changes, we will note the change and date on this page.' },
     ],
   },
 };
@@ -87,13 +119,13 @@ const POLICY: Record<Locale, LegalDoc> = {
     title: '편집 정책',
     lead: 'Nodelog가 콘텐츠를 만들고 검토하는 원칙을 외부에 공개합니다.',
     eyebrow: 'EDITORIAL POLICY',
-    updated: '최종 업데이트 · 2026.09.30 · 적용 시작일 2026.05.01',
+    updated: '최종 업데이트 · 2026.10.03 · 적용 시작일 2026.05.01',
     contact: '편집 정책에 대한 문의는 {email} 로 보내주세요.',
     sections: [
-      { title: '1. AI 사용 범위', body: 'Nodelog는 자료 조사, 콘텐츠 구조화 및 초안 작성 과정에서 AI 도구를 활용할 수 있습니다. 글에 기재된 출처·테스트 환경·검증일과 실제 검토 기록을 구분해 표시하며, 검토 기록이 없는 글에 완료 표기를 붙이지 않습니다.' },
-      { title: '2. 사실 확인', body: '핵심 주장과 명령어는 관련 공식 문서와 1차 자료를 우선 확인하는 것을 원칙으로 합니다. 확인된 적용 환경이나 버전은 글에 명시하며, 확인되지 않은 경우 이를 검증 완료로 표시하지 않습니다. 출처가 미비한 기존 글은 순차적으로 보강하거나 검색 색인에서 제외합니다.' },
-      { title: '3. 후원 콘텐츠', body: '스폰서가 있는 글은 상단에 "후원"이라는 명확한 표기와 함께 별도의 색상으로 구분됩니다. 후원사는 글의 내용에 개입할 수 없습니다.' },
-      { title: '4. 정정', body: '오류 제보가 접수되면 관련 자료를 확인합니다. 내용에 영향을 주는 오류는 정정하고, 필요한 경우 수정일과 정정 사실을 글에 표시합니다.' },
+      { title: '1. AI 사용 범위', body: 'Nodelog의 글 대부분은 AI 도구로 초안을 작성했습니다. 발행 여부는 운영자가 결정합니다. 2026년 7월 31일부터 글 등록 API는 발행 승인과 담당자 이름이 없으면 초안으로 보류하지만, 그 이전 글과 운영자 스크립트로 일괄 등록된 글에는 글별 검토 기록이 없습니다. 검토 기록이 없는 글에 검토·검증 완료 표기를 붙이지 않습니다.' },
+      { title: '2. 사실 확인과 검증 기록', body: '운영자가 확인한 글에는 확인일, 확인 범위(확인한 것과 하지 않은 것), 실제로 명령을 실행했다면 그 환경, 확인한 출처를 검증 기록으로 남기고 그 경우에만 표시합니다. 공식 문서를 읽은 것과 명령을 실행해 본 것은 구분해 적습니다. 출처가 미비한 기존 글은 순차적으로 보강하거나 검색 색인에서 제외합니다.' },
+      { title: '3. 후원 콘텐츠', body: '현재 후원·제휴 글은 없습니다. 후원을 받는 글이 생기면 상단에 "후원"을 명확히 표기하며, 후원사는 글의 내용에 개입할 수 없습니다.' },
+      { title: '4. 정정과 날짜 표시', body: '오류 제보가 접수되면 관련 자료를 확인합니다. 내용에 영향을 주는 오류는 정정하고 변경 요약과 날짜를 글에 표시합니다. 번역 추가·태그 정리 같은 작업은 업데이트로 표시하지 않으며, 최초 발행일은 바꾸지 않습니다. 기준 시점이 지난 글은 그 시점의 자료임을 표시합니다.' },
       { title: '5. 콘텐츠 품질 관리', body: '중복되거나 독자에게 제공하는 고유 정보가 부족한 글은 통합·보강하거나 검색 색인에서 제외합니다. 발행 후에도 공식 문서 변경과 독자 피드백을 반영해 콘텐츠를 수정할 수 있습니다.' },
     ],
   },
@@ -101,13 +133,13 @@ const POLICY: Record<Locale, LegalDoc> = {
     title: 'Editorial policy',
     lead: 'How Nodelog researches, reviews, and publishes — in the open.',
     eyebrow: 'EDITORIAL POLICY',
-    updated: 'Last updated · 30 Sep 2026 · Effective 1 May 2026',
+    updated: 'Last updated · 3 Oct 2026 · Effective 1 May 2026',
     contact: 'Questions about editorial policy? Write to {email}.',
     sections: [
-      { title: '1. How we use AI', body: 'Nodelog may use AI tools for research, structuring, and drafting. We distinguish the sources, test environment, verification date, and recorded review status of each article; an article without a review record is not marked as reviewed.' },
-      { title: '2. Fact checking', body: 'We aim to check key claims and commands against official docs and primary sources. We state a verified environment or version when one is available and do not claim verification when it is not. Older pieces with thin sourcing are strengthened over time or dropped from search.' },
-      { title: '3. Sponsored content', body: 'Sponsored posts are labeled “Sponsored” at the top and given a distinct color. Sponsors do not control the substance of the piece.' },
-      { title: '4. Corrections', body: 'When we receive an error report, we check the sources. Errors that change the meaning are corrected, and when needed we note the correction and the date on the page.' },
+      { title: '1. How we use AI', body: 'Most Nodelog articles were drafted with AI tools. The site operator decides what is published. Since 31 July 2026 the posting API holds a post as a draft unless publication is approved with a named reviewer, but earlier posts and posts bulk-inserted by operator scripts have no per-article review record. Articles without a review record are not marked as reviewed or verified.' },
+      { title: '2. Fact checking and verification records', body: 'When the operator checks an article, we record the check date, its scope (what was and was not checked), the environment if commands were actually run, and the sources checked, and we show this only in that case. Reading official docs and running a command are recorded separately. Older pieces with thin sourcing are strengthened over time or dropped from search.' },
+      { title: '3. Sponsored content', body: 'There is no sponsored or affiliate content today. If a post is sponsored, it will be labeled “Sponsored” at the top, and sponsors will not control its substance.' },
+      { title: '4. Corrections and dates', body: 'When we receive an error report, we check the sources. Errors that change the meaning are corrected, with a change summary and date on the page. Adding a translation or tidying tags is not shown as an update, and the original publish date is never changed. Articles past their reference date are labeled as such.' },
       { title: '5. Quality control', body: 'Duplicate or thin pieces are merged, expanded, or removed from search. After publication we may still update content when official docs change or readers send feedback.' },
     ],
   },

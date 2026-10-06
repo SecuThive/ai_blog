@@ -1,0 +1,207 @@
+--- 817.en.before
++++ 817.en.after
+@@ -2,7 +2,7 @@
+ 
+ "Please confirm whether our company is in scope for Docker Desktop’s paid license."
+ 
+-It’s one of the emails engineering leads in Korea dread most. Docker Desktop requires a paid subscription for commercial use in organizations above a certain size (based on employee count and annual revenue). The exact thresholds and prices change frequently, so **you must check the latest terms on Docker’s official pricing page.** Every amount mentioned in this article is a hypothetical figure used to illustrate the calculation method.
++It’s one of the emails engineering leads in Korea dread most. Under Docker’s subscription terms, Docker Desktop is free for small businesses with **fewer than 250 employees and less than $10 million in annual revenue**, and for personal use, education, and non-commercial open source; other organizations need a paid Pro, Team, or Business subscription for professional use (checked October 2026). [Docker Desktop license agreement](https://docs.docker.com/subscription/desktop-license/) Questions that need interpretation, such as whether affiliates are counted together, should be settled against the agreement text with Legal. Amounts in this article use public prices as of October 2026 to illustrate the method; exchange rates, taxes, and discounts are not included.
+ 
+ The problem is that “then let’s just use a free alternative” is not as simple as it sounds. Integration tests that use Testcontainers start failing, internal scripts that hardcode `/var/run/docker.sock` stop working, and bind-mount performance for `node_modules` on macOS feels noticeably different. Save a few million KRW on licenses only to burn a full day of 20 developers, and the economics flip.
+ 
+@@ -22,7 +22,7 @@
+ 
+ ```text
+ Q1. Is our organization in scope for Docker Desktop’s paid license?
+-    (Based on employee count / annual revenue — check the official pricing page)
++    (In scope if 250+ employees or $10M+ annual revenue — check the agreement text)
+  ├─ NO  → Keep using it for free. Treat the rest of this article as performance-tuning reference only.
+  └─ YES → Go to Q2
+ 
+@@ -59,9 +59,10 @@
+ docker run --rm hello-world
+ ```
+ 
+-Expected result: the `Hello from Docker!` message is printed. If it fails, first check that the VM is Running with `colima status`. The downsides: no GUI, you have to dig through logs yourself when something breaks, and support load grows if any teammates are not CLI-native.
+-
+-> As of 2026-09. Prices, versions, and license terms change frequently—recheck the official docs.
++Expected result: the `Hello from Docker!` message is printed. If it fails, first check that the VM is Running with `colima status`. `--vm-type vz` uses Apple’s Virtualization.framework on macOS 13 or later. By default colima mounts only your home directory (`/Users/$USER`) into the VM, so bind-mounting any other path shows **an empty directory with no error**. Add the path under `mounts` in `~/.colima/default/colima.yaml` and run `colima restart`. [colima FAQ](https://github.com/abiosoft/colima/blob/main/docs/FAQ.md) The downsides: no GUI, you have to dig through logs yourself when something breaks, and support load grows if any teammates are not CLI-native.
++
++> Prices and terms checked October 2026. Prices, versions, and license terms change—recheck the official docs before applying.
++
+ 
+ ---
+ 
+@@ -70,22 +71,23 @@
+ The real cost of free tools is **labor hours**. The calculations below use these formulas.
+ 
+ ```text
+-Commercial tool annual cost = monthly price per seat × number of developers × 12
++Commercial tool annual cost = monthly price per seat × number of developers × 12 + switching hours × number of developers × hourly rate
+ Open-source annual cost = (initial setup hours + annual troubleshooting hours) × number of developers × hourly rate
+ ```
+ 
+ Assumptions (all examples):
+ - Developer hourly rate: 60,000 KRW (a rough assumption based on converting annual salary)
+-- Docker Desktop paid plan: $9/person/month ≈ 12,000 KRW
+-- OrbStack team plan: $8/person/month ≈ 11,000 KRW
++- Exchange rate: $1 = 1,400 KRW
++- Docker Desktop: for several people under a company account, **Team** ($15 per user per month billed annually, up to 100 users) or **Business** ($24 per user per month) is the realistic plan; Pro ($9) is a single-user subscription. The tables use Team at $15 ≈ 21,000 KRW. [Docker pricing](https://www.docker.com/pricing/)
++- OrbStack: commercial use needs **Pro** at $8 per user per month ($96 a year) ≈ 11,000 KRW [OrbStack pricing](https://orbstack.dev/pricing). A commercial tool still takes time to install and verify, so we add 1 switching hour per person. Annual troubleshooting is assumed similar to the current Docker Desktop and set to 0.
+ - Open-source initial setup: 3 hours per person; annual troubleshooting: 6 hours per person → 9 hours total
+ 
+ ### 5-person team
+ 
+ | Tool | Formula | Annual cost |
+ |---|---|---|
+-| Docker Desktop | 12,000 × 5 × 12 | 720,000 KRW |
+-| OrbStack | 11,000 × 5 × 12 | 660,000 KRW |
++| Docker Desktop (Team) | 21,000 × 5 × 12 | 1,260,000 KRW |
++| OrbStack Pro | 11,000 × 5 × 12 + 1h × 5 × 60,000 | 960,000 KRW |
+ | Rancher Desktop | 9h × 5 × 60,000 | 2,700,000 KRW |
+ | Podman Desktop | 9h × 5 × 60,000 | 2,700,000 KRW |
+ 
+@@ -93,8 +95,8 @@
+ 
+ | Tool | Formula | Annual cost |
+ |---|---|---|
+-| Docker Desktop | 12,000 × 20 × 12 | 2,880,000 KRW |
+-| OrbStack | 11,000 × 20 × 12 | 2,640,000 KRW |
++| Docker Desktop (Team) | 21,000 × 20 × 12 | 5,040,000 KRW |
++| OrbStack Pro | 11,000 × 20 × 12 + 1h × 20 × 60,000 | 3,840,000 KRW |
+ | Rancher Desktop | 9h × 20 × 60,000 | 10,800,000 KRW |
+ | Podman Desktop | 9h × 20 × 60,000 | 10,800,000 KRW |
+ 
+@@ -102,20 +104,21 @@
+ 
+ | Tool | Formula | Annual cost |
+ |---|---|---|
+-| Docker Desktop | 12,000 × 50 × 12 | 7,200,000 KRW |
+-| OrbStack | 11,000 × 50 × 12 | 6,600,000 KRW |
++| Docker Desktop (Team) | 21,000 × 50 × 12 | 12,600,000 KRW |
++| OrbStack Pro | 11,000 × 50 × 12 + 1h × 50 × 60,000 | 9,600,000 KRW |
+ | Rancher Desktop | 9h × 50 × 60,000 | 27,000,000 KRW |
+ | Podman Desktop | 9h × 50 × 60,000 | 27,000,000 KRW |
+ 
+-> All unit prices are assumptions; you must verify the latest figures on the official pricing pages.
+-> As of 2026-09. Prices, versions, and license terms change frequently—recheck the official docs.
++> With Docker Business ($24), a 50-person team comes to 20,160,000 KRW a year. Prices are public list prices as of October 2026; labor hours are assumptions.
+ 
+ ### How to read this table
+ 
+ Looking at the numbers alone, you get the paradox that “free tools cost more.” But several important caveats apply.
+ 
+ - **Labor hours are largely one-time.** The initial 3 hours happen only in year one. If you write an internal standard install script and roll it out, that drops to 20 minutes per person. Then a 50-person team’s year-2 cost is not `(0.33h + 6h) × 50 × 60,000 ≈ 19,000,000 KRW`; if you also cut troubleshooting time in half, it comes down to around `3h × 50 × 60,000 = 9,000,000 KRW`.
+-- **License fees, by contrast, recur every year.** Look at a 3-year cumulative view and a crossover point appears.
++- **License fees, by contrast, recur every year.** The break-even from year two can be computed directly:
++  `break-even annual troubleshooting hours per person = monthly price per seat × 12 ÷ hourly rate`
++  With Team, `21,000 × 12 ÷ 60,000 = 4.2 hours`. If open-source troubleshooting after the switch stays under 4.2 hours per person per year, open source is cheaper from year two; above that it stays more expensive. With Business it is `33,600 × 12 ÷ 60,000 ≈ 6.7 hours`.
+ - **If actual labor hours differ from these assumptions, the conclusion flips.** If the team has container experts, troubleshooting can drop to 1–2 hours; if you use Testcontainers and a complex Compose stack, it can exceed 20 hours.
+ 
+ **The key takeaway: free is not always cheaper.** Don’t copy this table as-is—plug your team’s actual hourly rate and expected labor hours into the formula above and recalculate. The cost-comparison methodology itself is the same approach covered in [GitHub Actions vs GitLab CI Pricing: Hands-on Calculations Across 3 Scenarios](/blog/github-actions-vs-gitlab-ci-요금-비교-3개-시나리오-실전-계산).
+@@ -144,24 +147,27 @@
+ | rootless | Partial support | VM isolation | Supported | **Daemonless and rootless by default** |
+ | Korean UI / Korea support | English UI; global support contracts available | English UI; no confirmed Korean distributor | English UI; SUSE-family partners exist | English UI; Red Hat partner channels |
+ 
+-> As of 2026-09. Prices, versions, and license terms change frequently—recheck the official docs.
+ 
+ If you want to measure this yourself, run a minimal reproduction script like the following.
+ 
+ ```bash
+-# 1) 콜드 부팅 체감 측정 (도구 종료 후 실행)
+-time docker info > /dev/null
+-
+-# 2) 바인드 마운트 파일 I/O 측정
+-mkdir -p /tmp/iotest && cd /tmp/iotest
+-docker run --rm -v "$PWD":/w -w /w alpine sh -c \
+-  'time (for i in $(seq 1 5000); do echo x > f_$i; done)'
+-
+-# 3) 빌드 시간 측정 (캐시 없이)
+-docker build --no-cache -t bench:local .
+-```
+-
+-Expected result: step 1 responds within 1 second if the daemon is up. If there’s no response or you see `Cannot connect to the Docker daemon`, the context is misconfigured—start with `docker context ls` in the next section.
++# 1) Runtime start-up time: quit the tool completely, keep only the start command of the tool you are measuring
++start=$(date +%s)
++docker desktop start          # or: open -a OrbStack / colima start / podman machine start / rdctl start
++until docker info >/dev/null 2>&1; do sleep 1; done
++echo "ready in $(( $(date +%s) - start ))s"
++
++# 2) Bind-mount file I/O: run under your home directory (colima's default mount scope)
++mkdir -p ~/iotest && cd ~/iotest
++time docker run --rm -v "$PWD":/w -w /w alpine \
++  sh -c 'for i in $(seq 1 5000); do echo x > f_$i; done'
++cd ~ && rm -rf ~/iotest
++
++# 3) Build time (no cache, same Dockerfile for each tool)
++time docker build --no-cache -t bench:local .
++```
++
++How to read it: `time` runs in the host shell, so container start-up is included. Compare **the median of three runs per tool on the same machine** rather than absolute values. If step 1 keeps waiting, use `docker context ls` to confirm the current context points to the tool you just started. `docker desktop start` works only on Docker Desktop versions that include the Docker Desktop CLI. [Docker Desktop CLI](https://docs.docker.com/desktop/features/desktop-cli/) The previous version used `time docker info`, which only measures an already-running daemon’s response, and `time ( ... )` inside the container, which does not work in alpine’s default shell.
+ 
+ For how volume-mount strategy affects performance, we covered the concepts in [Docker Volumes vs Bind Mounts — A Complete Guide to Data Persistence](/engineer/docker-volume-bind-mount-guide).
+ 
+@@ -244,18 +250,26 @@
+ 
+ This is the most common tripwire. CI scripts, Testcontainers, and some IDE plugins hardcode the socket path.
+ 
+-```bash
+-# Podman 소켓을 표준 경로로 심볼릭 링크
+-sudo ln -sf "$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}')" \
+-  /var/run/docker.sock
+-
+-# Testcontainers 전용 설정 (~/.testcontainers.properties)
+-docker.host=unix:///var/run/docker.sock
+-testcontainers.reuse.enable=true
+-ryuk.container.privileged=true
+-```
+-
+-Ryuk (the cleanup container) commonly fails in rootless environments. Work around it with `TESTCONTAINERS_RYUK_DISABLED=true`, but leftover containers may not be cleaned up, so add a post-cleanup step in CI.
++On macOS, a `/var/run/docker.sock` link made by hand with `ln -sf` breaks on reboot or machine re-creation. The official Podman installer also installs `podman-mac-helper`, which manages this link. If you installed another way (for example Homebrew) and the link is missing, run it once (needs admin rights; the official package path is `/opt/podman/bin`).
++
++```bash
++sudo podman-mac-helper install
++podman machine stop && podman machine start
++ls -l /var/run/docker.sock          # should point to podman.sock
++```
++
++For Testcontainers, set the Podman configuration from the official docs as environment variables.
++
++```bash
++# macOS
++export DOCKER_HOST="unix://$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}')"
++export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock
++# Linux rootless Podman
++export DOCKER_HOST="unix://${XDG_RUNTIME_DIR}/podman/podman.sock"
++export TESTCONTAINERS_RYUK_DISABLED=true
++```
++
++With rootless Podman the official docs say to disable Ryuk (the cleanup container). Finished test containers are then not removed automatically, so add a cleanup step in CI (for example, removing containers labeled `org.testcontainers=true`). The old `ryuk.container.privileged=true` is no longer needed from Testcontainers for Java 1.19.0. [Testcontainers: supported runtimes](https://java.testcontainers.org/supported_docker_environment/)
+ 
+ ### ③ File permissions and UID mapping
+ 
+@@ -311,7 +325,7 @@
+ 2. **You already use enterprise security scanning and policy-management features** — management capabilities like image vulnerability scanning and registry access control have to be reassembled with separate tools on the free alternatives.
+ 3. **Non-engineering roles also use Docker** — if PMs and QA start and stop containers via a GUI, a CLI-heavy alternative leads to a surge in support requests.
+ 4. **A vendor support contract is an audit requirement** — on finance and public-sector projects, if “official vendor support” is on the checklist, switching to open source actually increases audit risk.
+-5. **A small team whose developer hourly rate dwarfs the license fee** — burning 45 hours to save 720,000 KRW a year on a 5-person team is a clear loss.
++5. **A small team inside an organization that needs licenses** — for a 5-person team in a large group, saving 1,260,000 KRW a year (Team) costs 45 hours (2,700,000 KRW at 60,000 KRW/hour). A standalone small company may be free in the first place, so check the license criteria first.
+ 
+ ---
+ 
+@@ -331,14 +345,13 @@
+ - CI/CD pipeline fails due to local-runtime differences
+ - Primary project’s development cycle (build + test) time increases by 30% or more
+ 
+-> As of 2026-09. Prices, versions, and license terms change frequently—recheck the official docs.
+ 
+ ---
+ 
+ ## FAQ
+ 
+ **Q1. What exactly are the criteria for Docker Desktop’s paid license?**
+-A. They are based on the organization’s employee count and annual revenue, and both the thresholds and prices change frequently. That’s also why this article does not pin down specific numbers. **Check the current terms yourself on Docker’s official pricing and subscription-terms pages, and make the call together with Legal and Procurement.** In particular, whether subsidiaries and affiliates are counted together can be interpreted differently, so official confirmation is essential.
++A. As of October 2026 the agreement makes Docker Desktop free for businesses with **fewer than 250 employees and less than $10 million in annual revenue** and for personal, education, and non-commercial open-source use; other professional use needs a Pro, Team, or Business subscription. [Docker Desktop license agreement](https://docs.docker.com/subscription/desktop-license/) Where interpretation differs, such as counting subsidiaries and affiliates, decide against the agreement text with Legal and Procurement.
+ 
+ **Q2. If we switch to Podman Desktop, do we have to relearn the existing `docker` commands?**
+ A. For the most part, you keep using them as-is. `podman` has high command compatibility with the docker CLI, and you can keep existing scripts via `alias docker=podman` or the `DOCKER_HOST` environment variable. However, because it is rootless, permissions and networking behave differently—review the “five things that commonly break” section above beforehand.

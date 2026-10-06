@@ -1,5 +1,50 @@
 import type { NextConfig } from "next";
 
+// AdSense(광고 코드·프레임·트래픽 품질·동의 메시지), GA4, Cloudflare Web Analytics, Vercel Analytics.
+const ADSENSE_SCRIPT = [
+  "https://pagead2.googlesyndication.com",
+  "https://tpc.googlesyndication.com",
+  "https://*.googlesyndication.com",
+  "https://partner.googleadservices.com",
+  "https://googleads.g.doubleclick.net",
+  "https://*.adtrafficquality.google",
+  "https://fundingchoicesmessages.google.com",
+  "https://www.google.com",
+  "https://www.gstatic.com",
+];
+const ADSENSE_FRAME = [
+  "https://googleads.g.doubleclick.net",
+  "https://tpc.googlesyndication.com",
+  "https://*.googlesyndication.com",
+  "https://*.adtrafficquality.google",
+  "https://fundingchoicesmessages.google.com",
+  "https://www.google.com",
+];
+const ADSENSE_CONNECT = [
+  "https://pagead2.googlesyndication.com",
+  "https://*.googlesyndication.com",
+  "https://googleads.g.doubleclick.net",
+  "https://*.adtrafficquality.google",
+  "https://fundingchoicesmessages.google.com",
+  "https://www.google.com",
+];
+const GA = ["https://www.google-analytics.com", "https://*.google-analytics.com", "https://*.analytics.google.com"];
+
+const CSP = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
+  ["script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com", ...ADSENSE_SCRIPT, "https://static.cloudflareinsights.com", "https://va.vercel-scripts.com"].join(' '),
+  "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
+  "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com data:",
+  "img-src 'self' data: blob: https:",
+  ["connect-src 'self'", ...GA, ...ADSENSE_CONNECT, "https://cloudflareinsights.com", "https://*.vercel-analytics.com", "https://*.supabase.co"].join(' '),
+  ["frame-src 'self'", ...ADSENSE_FRAME].join(' '),
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+].join('; ');
+
 const nextConfig: NextConfig = {
   // 응답에서 프레임워크 버전을 공개하지 않는다.
   poweredByHeader: false,
@@ -33,25 +78,13 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), browsing-topics=()" },
-          // 현재 레이아웃의 GA4·AdSense·Pretendard를 허용하면서 기본 실행·임베드 범위를 닫는다.
+          // 현재 레이아웃의 GA4·AdSense·Cloudflare Web Analytics·Pretendard를 허용하면서 기본 실행·임베드 범위를 닫는다.
           // inline은 Next/GA 초기화 스니펫에 필요하며, 데이터·코드에는 inline HTML을 실행하지 않는다.
-          {
-            key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              "base-uri 'self'",
-              "form-action 'self'",
-              "object-src 'none'",
-              "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com https://partner.googleadservices.com https://*.googlesyndication.com https://va.vercel-scripts.com",
-              "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
-              "font-src 'self' https://cdn.jsdelivr.net data:",
-              "img-src 'self' data: blob: https:",
-              "connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.vercel-analytics.com https://*.supabase.co",
-              "frame-src 'self' https://googleads.g.doubleclick.net https://*.googlesyndication.com",
-              "worker-src 'self' blob:",
-              "manifest-src 'self'",
-            ].join('; '),
-          },
+          // AdSense 도메인 목록은 Google의 CSP 안내(support.google.com/adsense/answer/16283098)를 기준으로 한다.
+          // 그 안내는 nonce 기반 strict CSP만 공식 지원하고 도메인 목록은 바뀔 수 있다고 밝힌다.
+          // nonce는 요청마다 렌더링을 강제해 ISR 캐시를 잃으므로 지금은 목록 방식을 쓰고,
+          // 배포 뒤 브라우저 콘솔·Report-Only로 위반을 확인한다(docs/adsense-audit/decisions.md).
+          { key: "Content-Security-Policy", value: CSP },
         ],
       },
     ];

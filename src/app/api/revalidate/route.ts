@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { postCacheTag, guideCacheTag } from '@/lib/cacheTags';
+import { SITEMAP_CACHE_TAG } from '@/lib/sitemapData';
 
 // 앱 라우트는 app/[locale]/... 이고, ko는 proxy.ts가 접두사 없는 URL을 /ko/...로 rewrite한다.
 // 그래서 목록 경로는 접두사 없는 형태(기존 호출 유지)와 /ko·/en 실제 라우트 경로를 모두 무효화한다.
@@ -30,6 +31,8 @@ export async function POST(req: NextRequest) {
   // 목록·홈·sitemap·RSS (ISR 페이지만 — category/tag/series 상세 목록은 noStore 동적이라 불필요)
   for (const p of ['', '/trending', '/series', '/tags', '/archive', '/recommend']) revalidateLocalized(p);
   revalidatePath('/sitemap.xml');
+  // sitemap 페이지는 동적이지만 DB 조회 결과는 데이터 캐시('sitemap' 태그, SWR)를 거친다.
+  revalidateTag(SITEMAP_CACHE_TAG, 'max');
   revalidatePath('/rss');
 
   // 예전엔 revalidatePath('/blog/[slug]', 'page')로 발행 1건마다 "모든" 상세 페이지를 무효화해

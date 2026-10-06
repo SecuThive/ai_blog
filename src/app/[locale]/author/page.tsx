@@ -55,7 +55,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ locale:
     inLanguage: locale,
     mainEntity: {
       '@type': 'Organization',
-      name: locale === 'en' ? 'Nodelog editorial team' : 'Nodelog 기술 편집팀',
+      name: locale === 'en' ? 'Nodelog editorial' : 'Nodelog 편집',
       url: authorUrl,
       description: copy.description,
       knowsAbout: copy.areas,

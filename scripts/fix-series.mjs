@@ -492,7 +492,7 @@ async function generateAndInsertEpisodes() {
         tags: [...ep.tags, `series:${ep.seriesName}`],
         author: ep.author,
         agent_role: ep.agent_role,
-        status: 'published',
+        status: 'draft' /* 발행은 승인 경로로만(docs/adsense-audit/pipeline.md) */,
         views: 0,
         published_at: publishedAt.toISOString(),
         cover_image: null,

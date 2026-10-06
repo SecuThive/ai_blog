@@ -79,10 +79,10 @@ export async function generateMetadata({
     twitter: {
       card: 'summary_large_image',
     },
+    // index/follow는 기본값이라 레이아웃에서 출력하지 않는다. 출력하면 404 화면에 Next가 넣는 noindex와
+    // 'index, follow'가 함께 나가 신호가 충돌한다. 페이지별 robots는 각 페이지 메타데이터가 정한다.
     robots: {
-      index: true,
-      follow: true,
-      googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
+      googleBot: { 'max-image-preview': 'large', 'max-snippet': -1 },
     },
     verification: {
       google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
@@ -118,6 +118,8 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={`${jetbrainsMono.variable} ${sourceSerif4.variable} ${inter.variable}`}>
       <head>
+        {/* AdSense 로더는 레이아웃 전역이 아니라 콘텐츠가 확인된 페이지(홈·실재하는 색인 글·가이드)에서만
+            <AdSenseLoader />로 출력한다. 범위 규칙: src/lib/adsense.ts */}
         {NAVER_CODES.map(code => (
           <meta key={code} name="naver-site-verification" content={code} />
         ))}
@@ -128,7 +130,6 @@ export default async function RootLayout({
             (noscript로 JS 비활성 환경 폴백 유지) */}
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
         <link
           id="pretendard-font"
           rel="stylesheet"

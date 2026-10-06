@@ -1,0 +1,73 @@
+--- 640.en.before
++++ 640.en.after
+@@ -23,10 +23,15 @@
+ If you have a server console or an existing admin session, inspect logs from the same time.
+ 
+ ```bash
+-# 배포판에 따라 서비스 이름은 ssh 또는 sshd
++# The service is named ssh or sshd depending on the distribution
+ sudo journalctl -u ssh -u sshd --since '15 minutes ago' --no-pager
+ sudo ss -ltnp
+ ```
++
++**What you see depends on version and distribution.**
++- Ubuntu 22.10 and later (including 24.04 LTS) use systemd socket activation (`ssh.socket`) by default. It is normal for `ss -ltnp` to show `systemd`, not `sshd`, holding port 22. After changing `Port` or `ListenAddress`, run `sudo systemctl daemon-reload && sudo systemctl restart ssh.socket` so the socket is reopened. [Ubuntu: sshd socket-based activation](https://discourse.ubuntu.com/t/sshd-now-uses-socket-based-activation-ubuntu-22-10-and-later/30189)
++- From OpenSSH 9.8, per-connection work runs in a separate `sshd-session` binary, so some log lines are tagged `sshd-session` rather than `sshd`. Searching only for `sshd` can miss them. [OpenSSH 9.8 release notes](https://www.openssh.com/txt/release-9.8)
++- Check the server's OpenSSH version with `ssh -V` (client from the same package) or the package manager (`dpkg -l openssh-server`, `rpm -q openssh-server`).
+ 
+ If the server has no records at all, also check the destination, port, intermediate firewalls, and NAT path. A successful ping only confirms ICMP replies; it does not guarantee that the SSH port is working.
+ 
+@@ -60,6 +65,25 @@
+ 
+ First check whether automation jobs open many connections at once. After considering reducing deployment concurrency and reusing connections, adjust the limit to match server capacity and security policy. If the situation was caused by attack traffic, raising the limit alone can increase load.
+ 
++## 3-1. OpenSSH 9.8+: when one source keeps being refused for a while
++
++From OpenSSH 9.8, `PerSourcePenalties` is **on by default**. Source addresses that repeatedly fail authentication, or connect repeatedly without completing it, accrue penalty time; above a threshold, new connections from that address (and its `PerSourceNetBlockSize` range) are refused until the penalty expires. It typically shows up as a deployment tool retrying with a wrong key, or a whole office behind one NAT exit being blocked together. [OpenSSH 9.8 release notes](https://www.openssh.com/txt/release-9.8)
++
++```bash
++ssh -V                                  # below 9.8 this section does not apply
++sudo sshd -T | grep -iE 'persourcepenalt|persourcenetblocksize'
++sudo journalctl -u ssh -u sshd --since '1 hour ago' --no-pager | grep -i penalt
++```
++
++**How to decide:** if penalty-related log lines show the source IP and access recovers on its own after a while, this feature is the likely cause. Fix what produced the repeated failures first (wrong key, expired account, aggressive retries). Exempt only ranges you fully trust, such as a management network.
++
++```text
++# /etc/ssh/sshd_config (or sshd_config.d/*.conf) — replace the example range with your management network
++PerSourcePenaltyExemptList 192.0.2.0/24
++```
++
++Broad exemptions weaken brute-force protection, so do not add shared NAT or whole cloud ranges. Check option names and defaults for your server version in the [sshd_config manual](https://man.openbsd.org/sshd_config#PerSourcePenalties).
++
+ ## 4. Check per-account policies and sshd status
+ 
+ ```bash
+@@ -69,13 +93,7 @@
+ 
+ In environments with `Match` conditions, do not infer a specific connection's settings from a plain `sshd -T` dump alone. An administrator can pass the actual user, remote address, and so on to `sshd -T -C` to inspect the effective configuration. Before running it, check supported options in the local `man sshd`.
+ 
+-Apply configuration changes only after a syntax check, while keeping an existing admin session open. Example for environments where the service name is `ssh`:
+-
+-```bash
+-sudo sshd -t && sudo systemctl reload ssh
+-```
+-
+-Then, from a separate terminal, confirm that a new connection succeeds before closing the existing session. If the listening process went down, first fix the startup-failure cause in the journal.
++If you need to change the configuration, follow the order in **Verifying Changes and Preventing Recurrence** below (keep a session open → syntax check → reload → test from a new terminal). If the listening process went down, first fix the startup-failure cause in the journal.
+ 
+ ## 5. Check hosts.deny only on legacy environments
+ 
+@@ -115,10 +133,10 @@
+ sudo journalctl -u ssh -u sshd --since "1 hour ago" | grep -Ei 'MaxStartups|penalt|refused|reset'
+ ```
+ 
+-"past MaxStartups" points to the unauthenticated-connection limit; penalty-related lines may point to PerSourcePenalties, introduced in OpenSSH 9.8, which refuses sources with repeated authentication failures for a period. The latter often shows up when automation retries with a wrong key.
++"past MaxStartups" points to the unauthenticated-connection limit; penalty-related lines point to PerSourcePenalties (section 3-1 above).
+ 
+ **Prevention**
+ - For sources that open many connections (deployment and monitoring tools), enable connection reuse (`ControlMaster`/`ControlPersist`) to cut new connections.
+ - Keep internet brute-force attempts from reaching sshd by restricting sources at the firewall or moving SSH behind a VPN or bastion.
+-- Periodically collect `ss -tn state established '( sport = :22 )' | wc -l` to know normal concurrency, which gives you a basis for tuning limits.
++- Periodically collect `ss -Htn state established '( sport = :22 )' | wc -l` to know normal concurrency, which gives you a basis for tuning limits. Without `-H` (no header) the header line is counted too. The value includes authenticated sessions, so for `MaxStartups` (unauthenticated connections) also check the "past MaxStartups" log lines. [ss manual](https://man7.org/linux/man-pages/man8/ss.8.html)
+ 
