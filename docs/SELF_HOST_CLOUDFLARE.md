@@ -22,9 +22,10 @@ Cloudflare Tunnel은 Next.js 서버를 대신 실행하지 않는다. 이 컴퓨
    `curl -I http://127.0.0.1:3103/`이 200, 없는 글이 404인지 확인한다.
 3. `.env.local`의 `SUPABASE_*`, `RESEND_API_KEY`, `BLOG_API_KEY`,
    `CRON_SECRET`, `INDEXNOW_SECRET`, 광고 설정을 운영 값과 대조한다.
-   `UNSUBSCRIBE_TOKEN_SECRET`은 기존에 발송한 해지 링크를 유지하려면 Vercel에서
-   사용한 **같은 값**이 필요하다. 모르면 구형 링크의 버튼이 실패하며 안내된
-   이메일 처리 경로를 사용해야 한다. 임의 값으로 동일하다고 주장하지 않는다.
+   `UNSUBSCRIBE_TOKEN_SECRET`은 새 서버에 새 값으로 설정되어 있다. 이전
+   Vercel 값은 확인되지 않아 구형 메일의 서명 링크는 검증되지 않는다. 해당
+   수신자는 해지 화면에 안내된 이메일로 요청할 수 있다. 기존 링크를 복원하려면
+   이전 값을 확인한 뒤 교체해야 한다.
 4. Cloudflare 계정의 `thivelab.com` Zone에서 원격 관리 Tunnel을 생성하거나
    기존 Tunnel에 경로를 추가한다. 공개 호스트 `www.thivelab.com`의 서비스 URL은
    `http://127.0.0.1:3103`으로 지정한다. 공개 콘텐츠에 Access 로그인 정책을

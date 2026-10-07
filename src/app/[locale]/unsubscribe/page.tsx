@@ -10,14 +10,14 @@ const COPY = {
   ko: {
     title: '뉴스레터 구독 해지',
     lead: '아래 버튼을 누르면 이 메일 주소로 Nodelog 뉴스레터가 더 이상 발송되지 않습니다.',
-    legacy: '예전 메일의 해지 링크는 보안상 더 이상 사용하지 않습니다. 가장 최근에 받은 메일의 해지 링크를 쓰거나, 아래 주소로 해지를 요청해 주세요.',
+    legacy: '예전 메일의 해지 링크는 더 이상 사용할 수 없습니다. 아래 이메일로 구독 해지를 요청해 주세요.',
     missing: '해지 링크가 올바르지 않습니다. 메일의 링크를 다시 열거나, 아래 주소로 해지를 요청해 주세요.',
     contact: '이메일로 요청',
   },
   en: {
     title: 'Unsubscribe from the newsletter',
     lead: 'Press the button below to stop receiving the Nodelog newsletter at this address.',
-    legacy: 'Unsubscribe links in older emails are no longer accepted for security reasons. Use the link in the most recent email, or ask us by email below.',
+    legacy: 'Unsubscribe links in older emails may no longer work. Please request removal by email below.',
     missing: 'This unsubscribe link is not valid. Open the link from the email again, or ask us by email below.',
     contact: 'Request by email',
   },

@@ -2,7 +2,7 @@
 //
 // - 링크에 이메일을 넣지 않는다(URL은 분석 도구·로그·Referer로 새기 쉽다). 대신 subscribers.id와
 //   서버 비밀키로 만든 HMAC 서명을 쓴다: /unsubscribe?t=<id>.<sig>
-// - 비밀키: UNSUBSCRIBE_TOKEN_SECRET (32자 이상 무작위 문자열). Vercel 환경변수에 운영자가 직접 설정해야 한다.
+// - 비밀키: UNSUBSCRIBE_TOKEN_SECRET (32자 이상 무작위 문자열). 운영 서버 환경변수에 설정한다.
 //   미설정이면 토큰을 만들지도 검증하지도 않는다(메일에는 이메일 회신 방식의 해지 안내만 들어간다).
 // - 링크를 여는 것(GET)만으로는 해지하지 않는다. 메일 보안 스캐너가 링크를 미리 열어도 해지되지 않도록
 //   /unsubscribe 화면에서 버튼을 눌러 POST /api/unsubscribe 로 처리한다.
