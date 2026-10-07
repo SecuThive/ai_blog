@@ -34,6 +34,12 @@ export default function proxy(request: NextRequest) {
 
   const first = pathname.split('/').filter(Boolean)[0];
 
+  // next start may pass an internal locale rewrite through Proxy again. Keep the
+  // rewritten /ko route internal instead of redirecting it back to the public URL.
+  if (request.headers.get('x-thivelab-internal-locale') === 'ko' && first === defaultLocale) {
+    return NextResponse.next();
+  }
+
   // Default locale is unprefixed: /ko/... → /...
   if (first === defaultLocale) {
     const stripped = pathname.replace(/^\/ko/, '') || '/';
@@ -48,7 +54,9 @@ export default function proxy(request: NextRequest) {
   // No locale prefix → rewrite internally to /ko/...
   const url = request.nextUrl.clone();
   url.pathname = pathname === '/' ? `/${defaultLocale}` : `/${defaultLocale}${pathname}`;
-  return NextResponse.rewrite(url);
+  const headers = new Headers(request.headers);
+  headers.set('x-thivelab-internal-locale', defaultLocale);
+  return NextResponse.rewrite(url, { request: { headers } });
 }
 
 export const config = {
@@ -62,4 +70,3 @@ export const config = {
     '/category/:path*',
   ],
 };
-

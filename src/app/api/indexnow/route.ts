@@ -8,12 +8,9 @@ const HOST = new URL(SITE_URL).hostname;
 const INTERNAL_SECRET = process.env.INDEXNOW_SECRET;
 
 export async function POST(req: NextRequest) {
-  // Optional: protect with a secret header
-  if (INTERNAL_SECRET) {
-    const secret = req.headers.get('x-indexnow-secret');
-    if (secret !== INTERNAL_SECRET) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  if (!INTERNAL_SECRET) return NextResponse.json({ error: 'Not configured' }, { status: 503 });
+  if (req.headers.get('x-indexnow-secret') !== INTERNAL_SECRET) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   let urls: string[] = [];
@@ -58,17 +55,12 @@ export async function POST(req: NextRequest) {
 }
 
 // GET: submit the full sitemap's recent URLs (last 50 posts + guides)
-// Called by Vercel Cron (Authorization: Bearer ${CRON_SECRET}) or manually
+// Called by the local scheduler (Authorization: Bearer ${CRON_SECRET}).
 export async function GET(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const auth = req.headers.get('authorization');
-    const secret = req.headers.get('x-indexnow-secret') ?? req.nextUrl.searchParams.get('secret');
-    const bearerOk = auth === `Bearer ${cronSecret}`;
-    const headerOk = secret === (INTERNAL_SECRET ?? cronSecret);
-    if (!bearerOk && !headerOk) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  if (!cronSecret) return NextResponse.json({ error: 'Not configured' }, { status: 503 });
+  if (req.headers.get('authorization') !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   // Dynamically import to avoid bundling supabase in edge

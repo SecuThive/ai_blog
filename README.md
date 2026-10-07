@@ -11,7 +11,7 @@
 [![React](https://img.shields.io/badge/React-19.2-149ECA?style=flat-square&logo=react&logoColor=white)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Vercel](https://img.shields.io/badge/Deployed_on-Vercel-111827?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com)
+[![Cloudflare Tunnel](https://img.shields.io/badge/Hosting_Migration-In_Progress-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/)
 
 **공식 문서와 1차 자료를 추적하고, AI의 속도에 사람의 판단을 더합니다.**
 
@@ -91,7 +91,7 @@ flowchart LR
     C --> D[("PostgreSQL · PostgREST")]
     C -->|"revalidatePath"| E["Next.js App Router"]
     D --> E
-    E --> F["Vercel"]
+    E --> F["Node.js · PM2 · Cloudflare Tunnel"]
     F --> G["thivelab.com"]
     G --> H["검색 · 댓글 · 구독 · 피드백"]
     H --> D
@@ -102,7 +102,7 @@ flowchart LR
 ### 기술 스택
 
 <p>
-  <img src="https://skillicons.dev/icons?i=nextjs,react,ts,tailwind,postgres,vercel&theme=dark" alt="Next.js, React, TypeScript, Tailwind CSS, PostgreSQL, Vercel">
+  <img src="https://skillicons.dev/icons?i=nextjs,react,ts,tailwind,postgres,cloudflare&theme=dark" alt="Next.js, React, TypeScript, Tailwind CSS, PostgreSQL, Cloudflare">
 </p>
 
 | Layer | Technology | Responsibility |
@@ -110,7 +110,7 @@ flowchart LR
 | Web | Next.js 16 · React 19 · TypeScript | App Router, RSC, Route Handler, Metadata |
 | Content | React Markdown · remark-gfm | Markdown 및 GFM 본문 렌더링 |
 | Data | 자체 운영 PostgreSQL · PostgREST | 콘텐츠, 댓글, 구독자, 문의와 API 접근 제어 |
-| Delivery | Vercel · ISR · Cron | 배포, 캐시 재검증, 예약 작업, Analytics |
+| Delivery | Node.js · PM2 · Cloudflare Tunnel · ISR | 자체 호스팅, 캐시 재검증, HTTPS 공개 |
 | Messaging | Resend | 구독, 뉴스레터, 문의 알림 |
 | Discovery | IndexNow · JSON-LD · RSS | 검색엔진 갱신과 콘텐츠 배포 |
 
@@ -158,9 +158,9 @@ npm run dev
 | `RESEND_API_KEY` | 구독·문의·뉴스레터 이메일 발송 |
 | `NEWSLETTER_API_KEY` | 뉴스레터 발송 엔드포인트 인증 |
 | `INDEXNOW_SECRET` | 수동 IndexNow 제출 보호 |
-| `CRON_SECRET` | Vercel Cron 요청 검증 |
+| `CRON_SECRET` | 로컬 IndexNow 예약 작업 인증 |
+| `UNSUBSCRIBE_TOKEN_SECRET` | 기존 뉴스레터 구독 해지 링크 검증. 이전 배포 값 유지 필요 |
 | `NEXT_PUBLIC_ADSENSE_ID` | Google AdSense 게시자 ID |
-| `NEXT_PUBLIC_ADSENSE_APPROVED` | 광고 스크립트 활성화 플래그 |
 | `GOOGLE_SITE_VERIFICATION` | Google 사이트 소유권 확인 |
 | `NAVER_SITE_VERIFICATION` | Naver 사이트 소유권 확인 |
 | `GSC_SERVICE_ACCOUNT_JSON` | 운영 스크립트의 Search Console 인증 |
@@ -207,7 +207,7 @@ ai-blog/
 ├── supabase-schema.sql        # 핵심 데이터베이스 스키마
 ├── comments-schema.sql        # 댓글 스키마
 ├── next.config.ts             # Next.js 설정과 피드 리다이렉트
-└── vercel.json                # Vercel Cron 설정
+└── ecosystem.config.cjs      # 자체 호스팅 PM2 설정
 ```
 
 ## 데이터 모델
@@ -308,9 +308,9 @@ API는 본문 최상위 제목과 태그를 정규화합니다. 유사한 기존
 콘텐츠가 DB에는 있지만 프로덕션에서 오래된 페이지나 오류가 보이면 다음 순서로 확인합니다.
 
 1. `/api/revalidate` 호출
-2. 해당 URL의 HTTP 상태와 Vercel 로그 확인
+2. 해당 URL의 HTTP 상태와 `pm2 logs thivelab-web` 확인
 3. `npm run build`로 로컬 프로덕션 재현
-4. 오래된 배포 캐시가 의심되면 Vercel production 재배포
+4. 오래된 캐시가 의심되면 자체 서버에서 재검증 또는 재배포
 
 ## SEO와 품질 관리
 
@@ -341,14 +341,11 @@ node scripts/score-content-quality.mjs
 
 ## 배포
 
-`main` 브랜치에 반영된 커밋은 GitHub–Vercel 연동을 통해 프로덕션으로 배포됩니다.
+`main` 변경은 서버에서 빌드해 PM2의 단일 Next.js 인스턴스로 실행합니다. Cloudflare Tunnel이 공개 HTTPS 요청을 로컬 포트 `3103`으로 전달할 예정입니다. Tunnel 인증과 DNS 전환이 완료되기 전까지 공개 도메인은 이전 Vercel 응답을 받습니다. 운영 절차는 [자체 호스팅 안내](./docs/SELF_HOST_CLOUDFLARE.md)를 참고하세요.
 
 ```text
-GitHub main
-  → Vercel Build
-  → TypeScript / Next.js production build
-  → Production Deployment
-  → www.thivelab.com  (apex thivelab.com은 Cloudflare에서 301로 www로 리디렉션)
+GitHub main → 서버 빌드 → PM2 (127.0.0.1:3103)
+  → Cloudflare Tunnel → www.thivelab.com
 ```
 
 배포 후 권장 확인 항목:
@@ -356,7 +353,7 @@ GitHub main
 - 홈, 최신 글, 글 상세와 엔지니어 가이드가 `200`인지
 - `/sitemap.xml`, `/robots.txt`, `/rss`가 정상인지
 - canonical이 실제 요청 URL과 일치하는지
-- Vercel Functions에 새 오류가 없는지
+- PM2 로그와 Cloudflare Tunnel 연결에 오류가 없는지
 - 새 글 발행 후 ISR이 갱신되는지
 
 ## 보안
