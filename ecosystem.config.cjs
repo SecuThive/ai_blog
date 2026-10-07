@@ -16,6 +16,15 @@ const apps = [
     kill_timeout: 10000,
     watch: false,
   },
+  {
+    name: 'thivelab-indexnow-scheduler',
+    cwd: root,
+    script: path.join(root, 'scripts', 'selfhost', 'indexnow-scheduler.mjs'),
+    interpreter: process.execPath,
+    env: { NODE_ENV: 'production', TZ: 'Asia/Seoul' },
+    max_memory_restart: '128M',
+    watch: false,
+  },
 ];
 
 // The remotely managed tunnel gets its hostname and origin route from Cloudflare.

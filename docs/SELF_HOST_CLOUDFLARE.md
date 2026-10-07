@@ -9,8 +9,9 @@ Cloudflare Tunnel은 Next.js 서버를 대신 실행하지 않는다. 이 컴퓨
   `thivelab-tunnel`도 실행한다. 토큰은 PM2 명령 인수나 Git에 넣지 않는다.
 - `.env.local`: PostgREST, Resend, 검색 인증, IndexNow 예약 작업 등 서버 변수.
   파일 권한은 `600`으로 유지한다. `NEXT_PUBLIC_` 값은 빌드 시 번들에 포함된다.
-- `scripts/selfhost/run-indexnow.mjs`: 기존 Vercel Cron의 `0 9 * * *` UTC 작업을
-  서버의 한국 시간 `18:00`에 호출한다. `CRON_SECRET`을 헤더로 전송한다.
+- `thivelab-indexnow-scheduler` PM2 앱은 기존 Vercel Cron의 `0 9 * * *` UTC
+  작업을 서버의 한국 시간 `18:00`에 실행한다. `run-indexnow.mjs`가
+  `CRON_SECRET`을 헤더로 전송한다. macOS `crontab` 변경 권한이 없어 PM2로 관리한다.
 - GA4는 유지한다. Vercel Analytics는 자체 호스팅에서 제거했다. Cloudflare Web
   Analytics는 사이트 토큰과 실제 운영 설정을 확인한 후 별도로 연결할 수 있다.
 
@@ -35,7 +36,8 @@ Cloudflare Tunnel은 Next.js 서버를 대신 실행하지 않는다. 이 컴퓨
    경로로 바꾼다. apex `thivelab.com`은 HTTP와 HTTPS 모두
    `https://www.thivelab.com`으로 한 번에 301 이동하도록 Cloudflare 규칙을
    설정한다. 기존 `http://thivelab.com` 자기 리디렉션 규칙을 제거한다.
-7. `pm2 save`로 현재 프로세스를 저장한다. 이 컴퓨터의 `com.PM2` LaunchAgent가
+7. `pm2 start ecosystem.config.cjs --only thivelab-indexnow-scheduler`로 기존
+   예약 작업을 대체한다. `pm2 save`로 현재 프로세스를 저장한다. 이 컴퓨터의 `com.PM2` LaunchAgent가
    부팅 시 복원되는지 확인한다.
 
 ## 공개 검증

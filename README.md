@@ -11,7 +11,7 @@
 [![React](https://img.shields.io/badge/React-19.2-149ECA?style=flat-square&logo=react&logoColor=white)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Cloudflare Tunnel](https://img.shields.io/badge/Hosting_Migration-In_Progress-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/)
+[![Cloudflare Tunnel](https://img.shields.io/badge/Hosting-Cloudflare_Tunnel-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/)
 
 **공식 문서와 1차 자료를 추적하고, AI의 속도에 사람의 판단을 더합니다.**
 
@@ -341,7 +341,7 @@ node scripts/score-content-quality.mjs
 
 ## 배포
 
-`main` 변경은 서버에서 빌드해 PM2의 단일 Next.js 인스턴스로 실행합니다. Cloudflare Tunnel이 공개 HTTPS 요청을 로컬 포트 `3103`으로 전달할 예정입니다. Tunnel 인증과 DNS 전환이 완료되기 전까지 공개 도메인은 이전 Vercel 응답을 받습니다. 운영 절차는 [자체 호스팅 안내](./docs/SELF_HOST_CLOUDFLARE.md)를 참고하세요.
+현재 사이트는 이 서버에서 빌드한 Next.js를 PM2로 실행합니다. Cloudflare Tunnel이 공개 HTTPS 요청을 로컬 포트 `3103`으로 전달합니다. 서버의 변경 사항은 빌드와 PM2 재시작 후 반영됩니다. 운영 절차는 [자체 호스팅 안내](./docs/SELF_HOST_CLOUDFLARE.md)를 참고하세요.
 
 ```text
 GitHub main → 서버 빌드 → PM2 (127.0.0.1:3103)

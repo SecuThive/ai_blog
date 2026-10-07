@@ -43,8 +43,8 @@ export default function proxy(request: NextRequest) {
   // Default locale is unprefixed: /ko/... → /...
   if (first === defaultLocale) {
     const stripped = pathname.replace(/^\/ko/, '') || '/';
-    const url = request.nextUrl.clone();
-    url.pathname = stripped;
+    const url = new URL(stripped, process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com');
+    url.search = request.nextUrl.search;
     return NextResponse.redirect(url, 308);
   }
 
@@ -54,6 +54,9 @@ export default function proxy(request: NextRequest) {
   // No locale prefix → rewrite internally to /ko/...
   const url = request.nextUrl.clone();
   url.pathname = pathname === '/' ? `/${defaultLocale}` : `/${defaultLocale}${pathname}`;
+  // Cloudflare sets X-Forwarded-Proto: https, but next start listens on plain
+  // HTTP locally. Rewriting to https://localhost:<port> would return 500.
+  url.protocol = 'http:';
   const headers = new Headers(request.headers);
   headers.set('x-thivelab-internal-locale', defaultLocale);
   return NextResponse.rewrite(url, { request: { headers } });
