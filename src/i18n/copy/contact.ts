@@ -7,6 +7,7 @@ export interface ContactCopy {
   trust: { icon: string; label: string; value: string }[];
   successTitle: string;
   successBody: string;
+  notificationUnavailable: string;
   backHome: string;
   formTitle: string;
   name: string;
@@ -42,11 +43,12 @@ const CONTACT: Record<Locale, ContactCopy> = {
       { value: '일반 문의', label: '일반 문의', icon: '💬' },
     ],
     trust: [
-      { icon: '🔒', label: '개인정보', value: '제3자 미제공' },
+      { icon: '🔒', label: '개인정보', value: '판매하지 않음' },
       { icon: '📬', label: '직접 답변', value: '담당자 직접 회신' },
     ],
     successTitle: '문의가 접수되었습니다',
     successBody: '{email}으로 답변드리겠습니다.',
+    notificationUnavailable: '문의는 저장됐지만 담당자에게 메일 알림을 보내지 못했습니다. 답변이 늦어질 수 있습니다. 급한 문의는 아래 이메일로 직접 보내주세요.',
     backHome: '홈으로 돌아가기',
     formTitle: '메시지 보내기',
     name: '이름',
@@ -89,6 +91,7 @@ const CONTACT: Record<Locale, ContactCopy> = {
     ],
     successTitle: 'Message received',
     successBody: 'We will reply to {email}.',
+    notificationUnavailable: 'Your message was saved, but the email notification did not reach us. Our reply may be delayed. For urgent matters, email us directly using the address below.',
     backHome: 'Back to home',
     formTitle: 'Send a message',
     name: 'Name',

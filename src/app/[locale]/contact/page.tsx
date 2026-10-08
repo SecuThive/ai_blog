@@ -16,6 +16,7 @@ export default function ContactPage() {
   const [message, setMessage] = useState('');
   const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
+  const [notificationSent, setNotificationSent] = useState(true);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -28,6 +29,7 @@ export default function ContactPage() {
       });
       const data = await res.json();
       if (res.ok) {
+        setNotificationSent(data.notificationSent === true);
         setState('ok');
       } else {
         setState('error');
@@ -72,6 +74,11 @@ export default function ContactPage() {
                 <p style={{ color: 'var(--text-3)', margin: '0 0 28px', lineHeight: 1.6 }}>
                   {interpolate(copy.successBody, { email })}
                 </p>
+                {!notificationSent && (
+                  <p role="status" style={{ color: 'var(--text-2)', lineHeight: 1.6, margin: '0 0 28px' }}>
+                    {copy.notificationUnavailable}
+                  </p>
+                )}
                 <Link href="/" className="btn btn-ghost">{copy.backHome}</Link>
               </div>
             ) : (

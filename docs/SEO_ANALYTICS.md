@@ -1,7 +1,7 @@
 # SEO·도메인·분석 운영 가이드
 
 이 문서는 대표 도메인 설정, 필요한 환경변수, 검색엔진 등록 체크리스트, sitemap/RSS 제출 URL,
-분석 이벤트 목록과 개인정보 원칙을 한곳에 정리합니다. 코드 변경 없이 Vercel/Search Console/
+분석 이벤트 목록과 개인정보 원칙을 한곳에 정리합니다. 코드 변경 없이 Cloudflare/Search Console/
 네이버 서치어드바이저에서 사람이 직접 확인·설정해야 하는 항목도 함께 표시합니다.
 
 ## 1. 대표(canonical) 도메인
@@ -14,23 +14,17 @@ HTTP/2 301
 location: https://www.thivelab.com/
 ```
 
-apex(`thivelab.com`)는 Cloudflare에서 301로 `www.thivelab.com`으로 리디렉션되고 있습니다 —
-이 리디렉션은 의도된 것이며 코드/DNS 어느 쪽도 바꾸지 않았습니다. 코드의 `metadataBase`,
+apex(`thivelab.com`)는 Cloudflare에서 301로 `www.thivelab.com`으로 리디렉션되고 있습니다.
+웹 서버는 Cloudflare Tunnel을 통해 공개됩니다. 코드의 `metadataBase`,
 canonical, Open Graph URL, `sitemap.xml`, `robots.txt`, RSS, JSON-LD는 모두
 `NEXT_PUBLIC_SITE_URL`(기본값 `https://www.thivelab.com`) 하나를 기준으로 생성되므로
 이미 일관되게 www로 통일되어 있습니다.
 
-- **Vercel Domains에서 확인할 항목**: `www.thivelab.com`이 Primary(대표) 도메인으로 지정되어
-  있는지, `thivelab.com`(apex)과 `*.vercel.app` 기본 도메인이 각각 www로 리디렉션되도록
-  설정되어 있는지 확인하세요. apex→www 리디렉션이 Cloudflare(DNS 프록시)에서 이미 처리되고
-  있다면 Vercel에서 동일한 리디렉션을 중복 설정할 필요는 없지만, Vercel이 apex 도메인의
-  트래픽을 직접 받는 경로가 있다면(Cloudflare를 우회하는 경우) Vercel Domains의
-  "Redirect to" 기능으로 `www.thivelab.com`을 가리키게 설정해야 합니다.
-- **`*.vercel.app` 기본 도메인**: 검색엔진이 `ai-blog-mocha.vercel.app` 같은 Vercel 기본
-  도메인을 색인하지 않도록, Vercel Domains에서 프로덕션 도메인을 `www.thivelab.com`으로
-  고정하고 기본 `.vercel.app` 도메인에는 별도로 canonical을 지정하거나(코드가 이미
-  `NEXT_PUBLIC_SITE_URL` 기준으로 canonical을 절대경로로 생성하므로 자동으로 처리됨) 접근을
-  제한하는 것을 권장합니다.
+- **Cloudflare에서 확인할 항목**: `www.thivelab.com`이 Tunnel로 연결되는지,
+  HTTP 및 apex 요청이 HTTPS 대표 주소로 301 이동하는지 확인합니다.
+- **남은 Vercel 계정 작업**: 이전 프로젝트의 GitHub 자동 배포 연동은 계정에서
+  해제 여부를 확인해야 합니다. Vercel 기본 도메인이 남아 있더라도 공개 페이지의
+  canonical은 `NEXT_PUBLIC_SITE_URL`을 기준으로 생성됩니다.
 
 ## 2. 환경변수
 
@@ -72,10 +66,11 @@ canonical, Open Graph URL, `sitemap.xml`, `robots.txt`, RSS, JSON-LD는 모두
 
 ## 6. 분석 이벤트와 개인정보 원칙
 
-기존에 **Vercel Analytics**(페이지뷰 자동 수집)와 **GA4**(`gtag`, `layout.tsx`에 설치됨)가
-이미 설치되어 있습니다. 커스텀 이벤트는 Vercel Analytics Custom Events가 Pro 요금제 전용이라
-**이미 설치된 GA4로 전송**하는 방식을 택했습니다(`src/lib/analytics.ts`) — 새 분석 서비스는
-추가하지 않았습니다.
+현재 코드에는 **GA4**(`gtag`, `SiteAnalytics.tsx`)가 설치되어 있고, 클릭 이벤트도
+GA4로 전송합니다(`src/lib/analytics.ts`). 이전 Vercel Analytics 코드는 자체 호스팅
+전환 때 제거했습니다. Cloudflare Web Analytics의 브라우저 비콘 데이터가 현재
+`www.thivelab.com`에서 수집되고 있습니다. 두 분석 도구의 방문·조회 지표는 수집 방식이
+달라 같은 수치로 취급하지 않습니다.
 
 ### 이벤트 목록
 
@@ -103,16 +98,12 @@ canonical, Open Graph URL, `sitemap.xml`, `robots.txt`, RSS, JSON-LD는 모두
 GA4 속성 → 보고서 → 참여도 → 이벤트에서 위 5개 이벤트 이름이 수집되는지 확인하세요. 필요하면
 "주요 이벤트(전환)"로 표시해 관련 글 클릭률·코드 복사율을 목표로 추적할 수 있습니다.
 
-## 7. Vercel Analytics — Hostnames 탭에서 배포 후 확인할 사항
+## 7. Cloudflare Web Analytics에서 확인할 사항
 
-Vercel Analytics 화면에 `ai-blog-mocha.vercel.app +2`처럼 여러 호스트명이 섞여 표시되는 것은
-프로덕션 도메인(`www.thivelab.com`), apex(`thivelab.com`), Vercel 기본 도메인
-(`*.vercel.app`)이 모두 같은 프로젝트로 잡혀 트래픽이 합산되기 때문입니다. 배포 후
-Hostnames 탭에서:
+Web Analytics 화면에서 호스트를 `www.thivelab.com`으로 제한하고 날짜와 시간대를
+명시합니다. `thivelab.com`의 다른 서브도메인과 합산하지 않습니다. 방문(Visits)은
+고유한 사람 수가 아니고, HTTP 요청 수에는 이미지·정적 파일·크롤러 요청이 포함될 수
+있습니다. 사람 유입 추세는 Web Analytics의 브라우저 비콘 지표와 GA4를 함께 확인합니다.
 
-1. `www.thivelab.com` 트래픽이 실제 방문자 수의 대부분을 차지하는지 확인합니다.
-2. `*.vercel.app` 유입이 크롤러/헬스체크가 아닌 실사용자 트래픽으로 잡히는지 확인합니다 —
-   비중이 크다면 apex/www 리디렉션이 실제로 적용되기 전(예: 캐시된 링크, 오래된 북마크)의
-   유입일 수 있습니다.
-3. 특정 호스트명만 따로 보고 싶다면 Hostnames 필터로 `www.thivelab.com`만 선택해 조회수·
-   이탈률을 별도로 확인하세요(현재 보고된 지표는 모든 호스트명 합산치일 가능성이 있습니다).
+개인정보처리방침에는 현재 사용하는 GA4와 Cloudflare Web Analytics를 안내합니다.
+분석 설정이나 수집 범위가 바뀌면 실제 운영 상태를 확인한 뒤 이 문서와 방침을 갱신합니다.

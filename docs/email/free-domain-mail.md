@@ -29,6 +29,6 @@
 
 ## 사이트 공개 주소 전환 조건
 
-수신 시험과 발송 시험이 모두 통과하기 전에는 사이트의 `thive8564@gmail.com` 공개 표기를 `contact@thivelab.com`으로 바꾸지 않습니다. 시험이 통과하면 Contact, FAQ, 법적 문서, 작성자 정보의 주소를 함께 점검하고 변경합니다.
+`thive@thivelab.com`의 실제 수신 시험 전에는 사이트에 공개된 `thive8564@gmail.com` 주소를 바꾸지 않습니다. 시험이 통과한 뒤 공개 주소를 변경하려면 Contact, FAQ, 법적 문서, 작성자 정보를 함께 점검합니다. `thive@thivelab.com`에서 보내는 기능은 수신 전달과 별도로 설정·검증해야 합니다.
 
 참고: [Cloudflare Email Routing](https://developers.cloudflare.com/email-service/get-started/route-emails/), [Resend SMTP](https://resend.com/docs/send-with-smtp), [Gmail 변경 안내](https://support.google.com/mail/answer/17101213?hl=en).

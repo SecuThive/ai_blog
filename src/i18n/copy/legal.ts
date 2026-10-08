@@ -52,15 +52,15 @@ const PRIVACY: Record<Locale, LegalDoc> = {
     title: '개인정보처리방침',
     lead: 'Nodelog(thivelab.com)가 수집하는 정보의 범위, 사용 방식, 그리고 사용자의 권리를 명확하게 안내합니다.',
     eyebrow: 'PRIVACY POLICY',
-    updated: '최종 업데이트 · 2026.10.06 (제3자 광고·웹 비콘·IP 고지, Cloudflare·jsDelivr 추가, 구독 해지 방식 변경, 권리 요청·변경 안내 표현 정정) · 최초 적용일 2026.06.02',
+    updated: '최종 업데이트 · 2026.10.08 (Cloudflare 이전 후 실제 분석 서비스 반영) · 최초 적용일 2026.06.02',
     contact: '이 정책에 대해 궁금한 점이 있다면 {email} 로 문의해주세요.',
     sections: [
       { title: '1. 수집하는 정보', body: '① 뉴스레터: 구독 신청 시 이메일 주소를 수집합니다. ② 댓글: 작성 시 입력한 이름(별명 가능)과 댓글 내용, 도배 방지를 위한 IP 주소의 일방향 해시값을 수집합니다. ③ 문의 폼: 이름, 이메일, 소속(선택), 문의 내용을 수집합니다. ④ 이용 분석·광고: 페이지 방문, 이용 시간, 기기·브라우저 정보와 쿠키·광고 식별자가 처리될 수 있습니다.' },
       { title: '2. 정보의 사용 목적', body: '뉴스레터 이메일은 발송과 구독 상태 관리에 사용됩니다. 댓글 정보는 댓글 표시와 어뷰징 방지에, 문의 정보는 답변과 이력 관리에 사용됩니다. 분석 데이터는 사이트 이용 분석과 품질 개선에, 광고 데이터는 광고 게재 및 성과 측정에 사용될 수 있습니다.' },
-      { title: '3. 보관 기간', body: '뉴스레터 구독을 해지하면 해당 이메일은 발송 대상에서 즉시 제외(비활성 처리)됩니다. 이메일 주소 자체의 삭제를 원하면 아래 연락처로 요청해 주세요. 댓글은 삭제 요청을 확인한 뒤 처리하며, 문의 내역은 답변과 분쟁 대응에 필요한 기간 동안 보관 후 삭제합니다. 광고·분석 데이터와 쿠키의 보관 기간은 각 제공업체(Google·Vercel 등)의 정책과 운영 설정을 따릅니다.' },
-      { title: '4. 제3자 제공 및 처리 위탁', body: '당사는 사용자의 개인정보를 판매하지 않습니다. 서비스 운영 과정에서 광고: Google AdSense, 분석: Google Analytics·Vercel Analytics, 메일 발송: Resend, 보안·전송: Cloudflare, 웹 글꼴 전송: jsDelivr를 사용합니다. 게시물과 서비스 데이터는 운영자가 직접 관리하는 PostgreSQL 데이터베이스에 보관합니다. 외부 서비스의 쿠키·데이터 처리는 각 사업자의 정책을 따르며 일부 처리는 국외 서버에서 이루어질 수 있습니다.', links: [
+      { title: '3. 보관 기간', body: '뉴스레터 구독을 해지하면 해당 이메일은 발송 대상에서 즉시 제외(비활성 처리)됩니다. 이메일 주소 자체의 삭제를 원하면 아래 연락처로 요청해 주세요. 댓글은 삭제 요청을 확인한 뒤 처리하며, 문의 내역은 답변과 분쟁 대응에 필요한 기간 동안 보관 후 삭제합니다. 광고·분석 데이터와 쿠키의 보관 기간은 각 제공업체(Google·Cloudflare 등)의 정책과 운영 설정을 따릅니다.' },
+      { title: '4. 제3자 제공 및 처리 위탁', body: '당사는 사용자의 개인정보를 판매하지 않습니다. 서비스 운영 과정에서 광고: Google AdSense, 분석: Google Analytics·Cloudflare Web Analytics, 메일 발송: Resend, 보안·전송: Cloudflare, 웹 글꼴 전송: jsDelivr를 사용합니다. 게시물과 서비스 데이터는 운영자가 직접 관리하는 PostgreSQL 데이터베이스에 보관합니다. 외부 서비스의 쿠키·데이터 처리는 각 사업자의 정책을 따르며 일부 처리는 국외 서버에서 이루어질 수 있습니다.', links: [
         { label: 'Google 개인정보처리방침', url: 'https://policies.google.com/privacy' },
-        { label: 'Vercel Web Analytics 개인정보 안내', url: 'https://vercel.com/docs/analytics/privacy-policy' },
+        { label: 'Cloudflare 개인정보처리방침', url: 'https://www.cloudflare.com/privacypolicy/' },
         { label: 'Resend 개인정보처리방침', url: 'https://resend.com/legal/privacy-policy' },
       ] },
       { title: '5. 사용자의 권리', body: '사용자는 자신의 정보에 대한 열람, 정정, 삭제, 처리 정지를 thive8564@gmail.com 로 요청할 수 있습니다. 요청 내용을 확인하고 처리 결과를 회신합니다.' },
@@ -70,7 +70,7 @@ const PRIVACY: Record<Locale, LegalDoc> = {
         { label: 'Google 광고 기술', url: 'https://policies.google.com/technologies/ads' },
         { label: 'YourAdChoices(DAA) 맞춤 광고 해제', url: 'https://youradchoices.com/' },
       ] },
-      { title: '7. 보안·전송 서비스(Cloudflare, jsDelivr)', body: '사이트 트래픽은 Cloudflare를 거칩니다. Cloudflare는 악성 트래픽 차단을 위해 접속 IP 주소와 요청 정보를 처리하며, 봇 감지 스크립트가 보안 쿠키(cf_clearance)를 설정할 수 있습니다. Cloudflare Web Analytics가 켜져 있으면 Cloudflare가 방문 통계를 위한 스크립트(static.cloudflareinsights.com)를 페이지에 넣을 수 있습니다. 본문 글꼴(Pretendard)은 jsDelivr CDN에서 불러오므로 글꼴 요청 시 사용자의 IP 주소와 브라우저 정보가 jsDelivr에 전달됩니다.', links: [
+      { title: '7. 보안·전송 서비스(Cloudflare, jsDelivr)', body: '사이트 트래픽은 Cloudflare를 거칩니다. Cloudflare는 악성 트래픽 차단을 위해 접속 IP 주소와 요청 정보를 처리하며, 봇 감지 스크립트가 보안 쿠키(cf_clearance)를 설정할 수 있습니다. Cloudflare Web Analytics는 방문 통계와 페이지 성능 정보를 처리합니다. 본문 글꼴(Pretendard)은 jsDelivr CDN에서 불러오므로 글꼴 요청 시 사용자의 IP 주소와 브라우저 정보가 jsDelivr에 전달됩니다.', links: [
         { label: 'Cloudflare 개인정보처리방침', url: 'https://www.cloudflare.com/privacypolicy/' },
         { label: 'Cloudflare 쿠키 안내', url: 'https://developers.cloudflare.com/fundamentals/reference/policies-compliances/cloudflare-cookies/' },
         { label: 'Cloudflare Web Analytics 수집 범위', url: 'https://developers.cloudflare.com/web-analytics/data-metrics/data-origin-and-collection/' },
@@ -84,15 +84,15 @@ const PRIVACY: Record<Locale, LegalDoc> = {
     title: 'Privacy policy',
     lead: 'What Nodelog (thivelab.com) collects, how we use it, and your rights.',
     eyebrow: 'PRIVACY POLICY',
-    updated: 'Last updated · 6 Oct 2026 (third-party ads, web beacons and IP notice; Cloudflare and jsDelivr; new unsubscribe method; rights and change-notice wording) · First effective 2 Jun 2026',
+    updated: 'Last updated · 8 Oct 2026 (analytics services after Cloudflare migration) · First effective 2 Jun 2026',
     contact: 'Questions about this policy? Write to {email}.',
     sections: [
       { title: '1. Information we collect', body: '(1) Newsletter: email address when you subscribe. (2) Comments: the name you enter (a nickname is fine), the comment text, and a one-way hash of the IP address to limit spam. (3) Contact form: name, email, organization (optional), and the message. (4) Analytics and ads: page views, time on site, device and browser data, and cookies or advertising identifiers may be processed.' },
       { title: '2. Why we use it', body: 'Newsletter emails are used to send the newsletter and manage subscription status. Comment data is used to display comments and prevent abuse. Contact data is used to reply and keep a record of the request. Analytics data is used to understand site use and improve the site; ad data may be used to serve and measure ads.' },
-      { title: '3. How long we keep it', body: 'When you unsubscribe, your email is immediately excluded from sending (marked inactive). To have the address itself deleted, contact us below. Comments are handled after we confirm a deletion request. Contact records are kept as long as needed to reply and handle disputes, then deleted. Retention of ads, analytics, and cookies follows each provider (Google, Vercel, and others) and our settings.' },
-      { title: '4. Processors and third parties', body: 'We do not sell personal information. We may use Google AdSense for ads, Google Analytics and Vercel Analytics for analytics, Resend for email, Cloudflare for security and delivery, and jsDelivr for web fonts. Posts and service data are stored in a PostgreSQL database managed by the site operator. External services process cookies and data under their own policies, and some processing may take place outside Korea.', links: [
+      { title: '3. How long we keep it', body: 'When you unsubscribe, your email is immediately excluded from sending (marked inactive). To have the address itself deleted, contact us below. Comments are handled after we confirm a deletion request. Contact records are kept as long as needed to reply and handle disputes, then deleted. Retention of ads, analytics, and cookies follows each provider (Google, Cloudflare, and others) and our settings.' },
+      { title: '4. Processors and third parties', body: 'We do not sell personal information. We may use Google AdSense for ads, Google Analytics and Cloudflare Web Analytics for analytics, Resend for email, Cloudflare for security and delivery, and jsDelivr for web fonts. Posts and service data are stored in a PostgreSQL database managed by the site operator. External services process cookies and data under their own policies, and some processing may take place outside Korea.', links: [
         { label: 'Google privacy policy', url: 'https://policies.google.com/privacy' },
-        { label: 'Vercel Web Analytics privacy', url: 'https://vercel.com/docs/analytics/privacy-policy' },
+        { label: 'Cloudflare privacy policy', url: 'https://www.cloudflare.com/privacypolicy/' },
         { label: 'Resend privacy policy', url: 'https://resend.com/legal/privacy-policy' },
       ] },
       { title: '5. Your rights', body: 'You may request access, correction, deletion, or a pause in processing by emailing thive8564@gmail.com. We will review the request and reply with the result.' },
@@ -102,7 +102,7 @@ const PRIVACY: Record<Locale, LegalDoc> = {
         { label: 'How Google uses cookies in advertising', url: 'https://policies.google.com/technologies/ads' },
         { label: 'YourAdChoices (DAA) opt-out', url: 'https://youradchoices.com/' },
       ] },
-      { title: '7. Security and delivery services (Cloudflare, jsDelivr)', body: 'Traffic to the site passes through Cloudflare, which processes IP addresses and request data to block malicious traffic; its bot-detection script may set a security cookie (cf_clearance). If Cloudflare Web Analytics is enabled, Cloudflare may add a statistics script (static.cloudflareinsights.com) to pages. The body font (Pretendard) is loaded from the jsDelivr CDN, so your IP address and browser information are sent to jsDelivr when the font is requested.', links: [
+      { title: '7. Security and delivery services (Cloudflare, jsDelivr)', body: 'Traffic to the site passes through Cloudflare, which processes IP addresses and request data to block malicious traffic; its bot-detection script may set a security cookie (cf_clearance). Cloudflare Web Analytics processes visit statistics and page performance data. The body font (Pretendard) is loaded from the jsDelivr CDN, so your IP address and browser information are sent to jsDelivr when the font is requested.', links: [
         { label: 'Cloudflare privacy policy', url: 'https://www.cloudflare.com/privacypolicy/' },
         { label: 'Cloudflare cookies', url: 'https://developers.cloudflare.com/fundamentals/reference/policies-compliances/cloudflare-cookies/' },
         { label: 'What Cloudflare Web Analytics collects', url: 'https://developers.cloudflare.com/web-analytics/data-metrics/data-origin-and-collection/' },

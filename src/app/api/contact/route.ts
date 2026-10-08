@@ -29,10 +29,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '문의 저장 중 오류가 발생했습니다.' }, { status: 500 });
   }
 
-  // 이메일 발송
+  // The message is saved even if the email notification fails. Report that
+  // separately so the visitor is not told the operator was notified.
+  let notificationSent = false;
   if (process.env.RESEND_API_KEY) {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: 'Nodelog 문의 <onboarding@resend.dev>',
       to: TO_EMAIL,
       replyTo: email,
@@ -52,10 +54,15 @@ export async function POST(req: NextRequest) {
           <p style="font-size:12px;color:#aaa;margin-top:24px">— Nodelog Contact Form · thivelab.com</p>
         </div>
       `,
-    }).catch((err: unknown) => {
-      console.error('resend error:', err);
-    });
+    }).catch((err: unknown) => ({ error: err instanceof Error ? err : new Error('Unknown notification error') }));
+    if (error) {
+      console.error('contact notification failed:', error.message);
+    } else {
+      notificationSent = true;
+    }
+  } else {
+    console.error('contact notification unavailable: RESEND_API_KEY missing');
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, notificationSent });
 }
