@@ -2,7 +2,7 @@ import Link from '@/i18n/link';
 import type { LegalDoc } from '@/i18n/copy/legal';
 import { interpolate } from '@/i18n/messages';
 
-const EMAIL = 'thive8564@gmail.com';
+const EMAIL = 'thive@thivelab.com';
 
 export default function LegalDocPage({
   homeLabel,

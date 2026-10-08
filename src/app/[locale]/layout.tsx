@@ -174,7 +174,7 @@ export default async function RootLayout({
             logo: `${SITE_URL}/opengraph-image`,
             description: dict.meta.siteDesc,
             sameAs: ['https://github.com/SecuThive'],
-            contactPoint: { '@type': 'ContactPoint', contactType: 'editorial', email: 'thive8564@gmail.com' },
+            contactPoint: { '@type': 'ContactPoint', contactType: 'editorial', email: 'thive@thivelab.com' },
           },
         ]} />
         <LocaleProvider locale={locale} dict={dict}>

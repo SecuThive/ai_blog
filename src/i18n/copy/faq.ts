@@ -69,17 +69,17 @@ const FAQ: Record<Locale, FaqCopy> = {
       {
         category: 'newsletter',
         q: '뉴스레터 구독 해지는 어떻게 하나요?',
-        a: '수신한 뉴스레터 하단의 "구독 해지" 링크를 클릭하거나, thive8564@gmail.com으로 해지 요청을 보내주시면 확인 후 처리합니다.',
+        a: '수신한 뉴스레터 하단의 "구독 해지" 링크를 클릭하거나, thive@thivelab.com으로 해지 요청을 보내주시면 확인 후 처리합니다.',
       },
       {
         category: 'etc',
         q: '제휴 / 광고 / 콘텐츠 문의는 어디로 하나요?',
-        a: 'thive8564@gmail.com 로 메일을 보내주시거나, Contact 페이지의 폼을 이용해주세요.',
+        a: 'thive@thivelab.com으로 메일을 보내주시거나, Contact 페이지의 폼을 이용해주세요.',
       },
       {
         category: 'etc',
         q: 'AI가 생성한 내용에 오류가 있다면?',
-        a: 'thive8564@gmail.com 로 글 주소와 오류 내용을 알려주시면 확인하겠습니다. 내용에 영향을 주는 오류는 정정하고 필요한 경우 정정 사실과 수정일을 글에 표시합니다.',
+        a: 'thive@thivelab.com으로 글 주소와 오류 내용을 알려주시면 확인하겠습니다. 내용에 영향을 주는 오류는 정정하고 필요한 경우 정정 사실과 수정일을 글에 표시합니다.',
       },
     ],
   },
@@ -129,17 +129,17 @@ const FAQ: Record<Locale, FaqCopy> = {
       {
         category: 'newsletter',
         q: 'How do I unsubscribe?',
-        a: 'Use the unsubscribe link at the bottom of any newsletter, or email thive8564@gmail.com and we will process it.',
+        a: 'Use the unsubscribe link at the bottom of any newsletter, or email thive@thivelab.com and we will process it.',
       },
       {
         category: 'etc',
         q: 'Where do I send partnership, ads, or content questions?',
-        a: 'Email thive8564@gmail.com or use the form on the contact page.',
+        a: 'Email thive@thivelab.com or use the form on the contact page.',
       },
       {
         category: 'etc',
         q: 'What if AI-assisted copy is wrong?',
-        a: 'Email thive8564@gmail.com with the URL and what is wrong. Errors that change the meaning are corrected, and when needed we note the correction and the date on the page.',
+        a: 'Email thive@thivelab.com with the URL and what is wrong. Errors that change the meaning are corrected, and when needed we note the correction and the date on the page.',
       },
     ],
   },

@@ -9,7 +9,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
-export const UNSUBSCRIBE_CONTACT = 'thive8564@gmail.com';
+export const UNSUBSCRIBE_CONTACT = 'thive@thivelab.com';
 
 function secret(): string | null {
   const s = process.env.UNSUBSCRIBE_TOKEN_SECRET ?? '';

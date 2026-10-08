@@ -56,8 +56,8 @@ All pages include JSON-LD structured data:
 - Cybersecurity and AI security
 
 ## Contact
-- Editorial corrections: thive8564@gmail.com
-- Partnership inquiries: thive8564@gmail.com
+- Editorial corrections: thive@thivelab.com
+- Partnership inquiries: thive@thivelab.com
 
 ## Crawl Guidance
 - AI training and summarization: Allowed with attribution

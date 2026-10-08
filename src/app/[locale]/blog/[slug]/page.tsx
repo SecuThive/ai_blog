@@ -745,7 +745,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
                 {dict.blog.editorialBody}{' '}
                 <Link href="/policy">{dict.footer.policy}</Link>
                 {' · '}
-                <a href="mailto:thive8564@gmail.com">{dict.blog.reportEmail}</a>
+                <a href="mailto:thive@thivelab.com">{dict.blog.reportEmail}</a>
               </p>
               {!showRecord && <p className="editorial-note-body"><strong>{dict.blog.noRecord}</strong></p>}
               <div className="editorial-note-meta">

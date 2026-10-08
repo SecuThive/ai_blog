@@ -52,7 +52,7 @@ const PRIVACY: Record<Locale, LegalDoc> = {
     title: '개인정보처리방침',
     lead: 'Nodelog(thivelab.com)가 수집하는 정보의 범위, 사용 방식, 그리고 사용자의 권리를 명확하게 안내합니다.',
     eyebrow: 'PRIVACY POLICY',
-    updated: '최종 업데이트 · 2026.10.08 (Cloudflare 이전 후 실제 분석 서비스 반영) · 최초 적용일 2026.06.02',
+    updated: '최종 업데이트 · 2026.10.08 (분석 서비스·문의 주소 반영) · 최초 적용일 2026.06.02',
     contact: '이 정책에 대해 궁금한 점이 있다면 {email} 로 문의해주세요.',
     sections: [
       { title: '1. 수집하는 정보', body: '① 뉴스레터: 구독 신청 시 이메일 주소를 수집합니다. ② 댓글: 작성 시 입력한 이름(별명 가능)과 댓글 내용, 도배 방지를 위한 IP 주소의 일방향 해시값을 수집합니다. ③ 문의 폼: 이름, 이메일, 소속(선택), 문의 내용을 수집합니다. ④ 이용 분석·광고: 페이지 방문, 이용 시간, 기기·브라우저 정보와 쿠키·광고 식별자가 처리될 수 있습니다.' },
@@ -63,7 +63,7 @@ const PRIVACY: Record<Locale, LegalDoc> = {
         { label: 'Cloudflare 개인정보처리방침', url: 'https://www.cloudflare.com/privacypolicy/' },
         { label: 'Resend 개인정보처리방침', url: 'https://resend.com/legal/privacy-policy' },
       ] },
-      { title: '5. 사용자의 권리', body: '사용자는 자신의 정보에 대한 열람, 정정, 삭제, 처리 정지를 thive8564@gmail.com 로 요청할 수 있습니다. 요청 내용을 확인하고 처리 결과를 회신합니다.' },
+      { title: '5. 사용자의 권리', body: '사용자는 자신의 정보에 대한 열람, 정정, 삭제, 처리 정지를 thive@thivelab.com으로 요청할 수 있습니다. 요청 내용을 확인하고 처리 결과를 회신합니다.' },
       { title: '6. 쿠키·웹 비콘 및 광고', body: '본 사이트는 로그인 기능이 없어 자체 세션 쿠키를 쓰지 않습니다. 화면 테마, 북마크, 최근 검색어는 사용자의 브라우저 저장소(localStorage)에만 보관되며 서버로 전송되지 않습니다. 이용 분석(Google Analytics)과 광고(Google AdSense)를 위해 쿠키가 사용됩니다. Google을 포함한 제3자 광고 사업자는 광고 게재 과정에서 사용자의 브라우저에 쿠키를 저장하거나 읽을 수 있고, 웹 비콘이나 IP 주소를 이용해 정보를 수집할 수 있습니다. Google은 광고 쿠키를 사용해 사용자가 본 사이트와 다른 웹사이트를 방문한 기록을 기반으로 Google과 파트너가 광고를 게재하도록 할 수 있습니다. 맞춤형 광고는 아래 Google 광고 설정이나 YourAdChoices에서 해제할 수 있고, 브라우저 설정에서 쿠키를 차단할 수도 있습니다. 단, 쿠키를 차단하면 일부 기능이 제한될 수 있습니다.', links: [
         { label: 'Google 광고 설정(내 광고 센터, 맞춤 광고 해제)', url: 'https://myadcenter.google.com/' },
         { label: 'Google이 파트너 사이트·앱의 정보를 사용하는 방식', url: 'https://policies.google.com/technologies/partner-sites' },
@@ -84,7 +84,7 @@ const PRIVACY: Record<Locale, LegalDoc> = {
     title: 'Privacy policy',
     lead: 'What Nodelog (thivelab.com) collects, how we use it, and your rights.',
     eyebrow: 'PRIVACY POLICY',
-    updated: 'Last updated · 8 Oct 2026 (analytics services after Cloudflare migration) · First effective 2 Jun 2026',
+    updated: 'Last updated · 8 Oct 2026 (analytics services and contact address) · First effective 2 Jun 2026',
     contact: 'Questions about this policy? Write to {email}.',
     sections: [
       { title: '1. Information we collect', body: '(1) Newsletter: email address when you subscribe. (2) Comments: the name you enter (a nickname is fine), the comment text, and a one-way hash of the IP address to limit spam. (3) Contact form: name, email, organization (optional), and the message. (4) Analytics and ads: page views, time on site, device and browser data, and cookies or advertising identifiers may be processed.' },
@@ -95,7 +95,7 @@ const PRIVACY: Record<Locale, LegalDoc> = {
         { label: 'Cloudflare privacy policy', url: 'https://www.cloudflare.com/privacypolicy/' },
         { label: 'Resend privacy policy', url: 'https://resend.com/legal/privacy-policy' },
       ] },
-      { title: '5. Your rights', body: 'You may request access, correction, deletion, or a pause in processing by emailing thive8564@gmail.com. We will review the request and reply with the result.' },
+      { title: '5. Your rights', body: 'You may request access, correction, deletion, or a pause in processing by emailing thive@thivelab.com. We will review the request and reply with the result.' },
       { title: '6. Cookies, web beacons and ads', body: 'The site has no login, so it sets no session cookies of its own. Theme, bookmarks and recent searches stay in your browser storage (localStorage) and are not sent to our server. Cookies are used for analytics (Google Analytics) and ads (Google AdSense). Third parties, including Google, may place or read cookies on your browser, or use web beacons or IP addresses to collect information, as a result of ad serving on this site. Google’s use of advertising cookies enables it and its partners to serve ads based on your visits to this site and other sites. You can opt out of personalized ads in Google My Ad Center or at YourAdChoices below, and you can block cookies in your browser. Blocking cookies may limit some features.', links: [
         { label: 'Google My Ad Center (opt out of personalized ads)', url: 'https://myadcenter.google.com/' },
         { label: 'How Google uses information from sites or apps that use its services', url: 'https://policies.google.com/technologies/partner-sites' },

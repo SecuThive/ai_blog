@@ -52,7 +52,7 @@ const AUTHOR: Record<Locale, AuthorCopy> = {
     editorRows: [
       { k: '담당', v: 'Nodelog 운영자' },
       { k: '주요 역할', v: '자료 확인 · 편집 · 발행 판단' },
-      { k: '정정 문의', v: 'thive8564@gmail.com' },
+      { k: '정정 문의', v: 'thive@thivelab.com' },
     ],
     teamTitle: 'Nodelog 편집',
     teamLead: '특정 개인의 경력을 내세우지 않습니다. 대신 어떤 범위를 다루고, 검토할 때 무엇을 확인하며, 그 기록을 어떻게 공개하는지 밝힙니다.',
@@ -101,7 +101,7 @@ const AUTHOR: Record<Locale, AuthorCopy> = {
     editorRows: [
       { k: 'Who', v: 'Nodelog site operator' },
       { k: 'Role', v: 'Source check · edit · publish' },
-      { k: 'Corrections', v: 'thive8564@gmail.com' },
+      { k: 'Corrections', v: 'thive@thivelab.com' },
     ],
     teamTitle: 'Nodelog editorial',
     teamLead: 'We do not lean on personal credentials. Instead we state what we cover, what we check when we review, and how that record is published.',

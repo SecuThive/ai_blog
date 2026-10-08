@@ -319,7 +319,7 @@ function CommentBody({
             {t.replyVerb}
           </button>
         )}
-        <a className="comment-action-btn" href={`mailto:thive8564@gmail.com?subject=${encodeURIComponent(`Nodelog comment report #${c.id}`)}`}>{locale === 'ko' ? '신고' : 'Report'}</a>
+        <a className="comment-action-btn" href={`mailto:thive@thivelab.com?subject=${encodeURIComponent(`Nodelog comment report #${c.id}`)}`}>{locale === 'ko' ? '신고' : 'Report'}</a>
       </div>
     </>
   );
