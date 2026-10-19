@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { makeFreshClient } from '@/lib/supabase';
 import { NextResponse } from 'next/server';
 import { isLocale } from '@/i18n/config';
 import { I18N_TITLE_PREFIX, I18N_EXCERPT_PREFIX, tagValue } from '@/i18n/content';
@@ -17,9 +17,7 @@ export async function GET(request: Request) {
   const locale = isLocale(localeRaw) ? localeRaw : 'ko';
   if (raw.length < 1) return NextResponse.json([]);
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? '';
-  const client = createClient(url, key);
+  const client = makeFreshClient();
 
   // 키워드를 공백 기준으로 분리해 각각 OR 검색 → 단일 키워드보다 넓은 매칭
   const terms = raw.split(/\s+/).filter(Boolean).slice(0, 5);
