@@ -30,7 +30,7 @@ function makeAdminClient() {
 
 // Lazy singletons — created on first call, not at module load time
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let _sb: any = null;
+let _sb: SupabaseClient | null = null;
 export function getSupabase() {
   return (_sb ??= makeClient());
 }
