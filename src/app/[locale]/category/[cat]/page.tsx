@@ -10,7 +10,7 @@ import type { PostSummary } from '@/lib/types';
 import type { Metadata } from 'next';
 import { isLocale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/messages';
-import { localizePost, titleForLocale } from '@/i18n/content';
+import { hasEnglishPostContent, localizePost, titleForLocale } from '@/i18n/content';
 import { categoryLabel, categoryHref, toKoreanCategory, isKnownCategory, CAT_TO_SLUG } from '@/i18n/categories';
 import { languageAlternates, siteUrl } from '@/i18n/metadata';
 
@@ -157,11 +157,11 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
   const intro = CATEGORY_INTRO[cat]?.[locale];
 
   const client = makeFreshClient();
-  const [{ data }, { data: topData }] = await Promise.all([
+  const [postsResult, topResult] = await Promise.all([
     client
       .from('posts')
-      // 본문(content) 미조회(egress). 영문 제목/요약은 tags·content_evidence, 없으면 아래에서 예외 행만 보충.
-      .select('id,title,slug,excerpt,cover_image,category,tags,views,published_at,content_evidence')
+      // 본문 유무를 확인해 목록 구조화 데이터도 실제 번역 페이지의 canonical을 가리킨다.
+      .select('id,title,slug,excerpt,cover_image,category,tags,views,published_at,content_evidence,content')
       .eq('status', 'published')
       .eq('category', cat)
       .order('published_at', { ascending: false })
@@ -174,6 +174,12 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
       .order('views', { ascending: false })
       .limit(3),
   ]);
+
+  if (postsResult.error || topResult.error) {
+    throw new Error('Category data is temporarily unavailable');
+  }
+  const { data } = postsResult;
+  const { data: topData } = topResult;
 
   const listRows = await withEnFallbackContent(client, 'posts', (data ?? []) as (Record<string, unknown> & { id: number })[], locale);
   const posts: PostSummary[] = listRows.map((p) => {
@@ -197,6 +203,12 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
     title: titleForLocale(locale, p.title, { tags: p.tags, content_evidence: p.content_evidence }),
   }));
 
+  const englishSlugs = new Set(listRows.filter(p => hasEnglishPostContent({
+    title: String(p.title ?? ''),
+    content: typeof p.content === 'string' ? p.content : null,
+    content_evidence: p.content_evidence,
+  })).map(p => p.slug));
+
   const collectionSchema = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
@@ -209,12 +221,17 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
       name: 'Nodelog',
       url: SITE_URL,
     },
-    hasPart: posts.slice(0, 10).map(p => ({
-      '@type': 'Article',
-      headline: p.title,
-      url: `${SITE_URL}/blog/${p.slug}`,
-      description: p.excerpt,
-    })),
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: posts.length,
+      itemListElement: posts.map((p, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: p.title,
+        url: siteUrl(`/blog/${p.slug}`, locale === 'en' && englishSlugs.has(p.slug) ? 'en' : 'ko'),
+        description: p.excerpt,
+      })),
+    },
   };
 
   return (
@@ -286,22 +303,6 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
                 </p>
                 <div className="project-showcase-foot">
                   <span>{locale === 'en' ? 'Try MOA' : 'MOA 사용하기'}</span><span aria-hidden="true">↗</span>
-                </div>
-              </TrackedExternalLink>
-              <TrackedExternalLink className="project-showcase-card project-showcase-card--vault" href="https://game.thivelab.com/" path="/category/AI & 자동화" aria-label={locale === 'en' ? 'Open CIPHER / VAULT demo' : 'CIPHER / VAULT 체험판 열기'}>
-                <div className="project-showcase-top">
-                  <span className="project-showcase-mark" aria-hidden="true">V</span>
-                  <span className="project-showcase-status project-showcase-status--demo">{locale === 'en' ? 'Demo open' : '체험판 공개'}</span>
-                </div>
-                <div className="project-showcase-type">PUZZLE ADVENTURE</div>
-                <h3>CIPHER / VAULT <span>{locale === 'en' ? 'Puzzle adventure' : '단계별 문제 풀이'}</span></h3>
-                <p>
-                  {locale === 'en'
-                    ? 'Solve clues and progress through a seven-stage digital treasure hunt.'
-                    : '단서를 풀며 7단계 탐험을 진행하는 디지털 보물찾기입니다.'}
-                </p>
-                <div className="project-showcase-foot">
-                  <span>{locale === 'en' ? 'Try the demo' : '체험판 시작하기'}</span><span aria-hidden="true">↗</span>
                 </div>
               </TrackedExternalLink>
             </div>

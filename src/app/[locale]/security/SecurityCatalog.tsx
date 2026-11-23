@@ -4,6 +4,7 @@ import { useT } from '@/i18n/provider';
 
 import { useState, useMemo } from 'react';
 import { VENDORS, CATEGORIES, CATEGORY_TONE, categoryLabel, type SecurityCategory } from './data';
+import Link from '@/i18n/link';
 
 /** Hangul / hybrid product chip labels for /en security catalog */
 const PRODUCT_EN: Record<string, string> = {
@@ -61,7 +62,7 @@ export default function SecurityCatalog() {
         v.categories.some(c => c.toLowerCase().includes(q))
       );
     }
-    return list;
+    return [...list].sort((a, b) => Number(Boolean(b.sponsored)) - Number(Boolean(a.sponsored)));
   }, [active, query, locale]);
 
   const countAll = VENDORS.length;
@@ -151,11 +152,8 @@ export default function SecurityCatalog() {
       ) : (
         <div className="grid-3">
           {filtered.map(v => (
-            <a
+            <div
               key={v.id}
-              href={v.url}
-              target="_blank"
-              rel="noopener noreferrer"
               className="card card-link"
               style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 0 }}
             >
@@ -164,6 +162,7 @@ export default function SecurityCatalog() {
                 <div>
                   <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-1)', lineHeight: 1.2 }}>
                     {locale === 'en' ? v.nameEn : v.name}
+                    {v.sponsored && <span className="sponsor-badge">{locale === 'en' ? 'AD' : '광고'}</span>}
                   </div>
                   {locale !== 'en' && <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 10.5, color: 'var(--text-4)', marginTop: 3, letterSpacing: '0.06em' }}>{v.nameEn}</div>}
                 </div>
@@ -204,7 +203,12 @@ export default function SecurityCatalog() {
                   })}
                 </div>
               </div>
-            </a>
+              <div className="security-vendor-actions">
+                <a href={v.profileUrl ?? v.url} target="_blank" rel="noopener noreferrer">{locale === 'en' ? 'Vendor site ↗' : '업체 사이트 ↗'}</a>
+                {v.inquiryUrl ? <a href={v.inquiryUrl} target="_blank" rel="noopener noreferrer">{locale === 'en' ? 'Contact sales' : '도입 문의'}</a>
+                  : <Link href={`/contact?type=vendor&vendor=${encodeURIComponent(v.name)}`}>{locale === 'en' ? 'Contact sales' : '도입 문의'}</Link>}
+              </div>
+            </div>
           ))}
         </div>
       )}

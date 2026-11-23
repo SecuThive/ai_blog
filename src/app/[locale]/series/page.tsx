@@ -1,7 +1,7 @@
 import Link from '@/i18n/link';
 import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
-import { toneForSeries } from '@/lib/utils';
+import { toneForSeries, DEFAULT_ROBOTS } from '@/lib/utils';
 import JsonLd from '@/components/JsonLd';
 import { isLocale } from '@/i18n/config';
 import { getDictionary, interpolate } from '@/i18n/messages';
@@ -20,6 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     title: dict.pages.seriesTitle,
     description: desc,
     alternates: { canonical: url, languages: languageAlternates('/series') },
+    robots: DEFAULT_ROBOTS,
     openGraph: { title: dict.pages.seriesTitle, description: desc, url, type: 'website' },
   };
 }

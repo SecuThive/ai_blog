@@ -1,9 +1,9 @@
 import { unstable_cache } from 'next/cache';
 import { makeFreshClient } from '@/lib/supabase';
-import { NOINDEX_POST_SLUGS } from '@/lib/noindexPosts';
 import { POST_REDIRECTS } from '@/lib/postRedirects';
 import type { MetadataRoute } from 'next';
 import { withLocale } from '@/i18n/path';
+import { hasEnglishPostContent, hasEnglishGuideContent } from '@/i18n/content';
 import { readEditorialRecord, substantiveUpdate } from '@/lib/editorialRecord';
 import { fetchSitemapData, resolveSitemapData, SITEMAP_CACHE_TAG, type SitemapData } from '@/lib/sitemapData';
 
@@ -19,7 +19,7 @@ import { fetchSitemapData, resolveSitemapData, SITEMAP_CACHE_TAG, type SitemapDa
 //    revalidate 120초 + 'sitemap' 태그)를 거친다. 데이터 캐시는 stale-while-revalidate라
 //    백그라운드 재조회가 실패하면 이전 정상 결과를 계속 돌려준다 = 인스턴스 간 공유되는 last-good 사본.
 //    발행 웹훅(/api/revalidate)이 revalidateTag('sitemap', 'max')로 즉시 갱신을 요청한다.
-//  - DB 조회는 4초 타임아웃. 실패·타임아웃·부분 성공·0건은 모두 throw라 데이터 캐시에 저장되지 않는다.
+//  - DB 조회는 10초 타임아웃. 실패·타임아웃·부분 성공·0건은 모두 throw라 데이터 캐시에 저장되지 않는다.
 //  - 데이터 캐시도 비어 있고 조회도 실패하면: 인스턴스 메모리의 last-good → 그것도 없으면 핵심 정적 경로
 //    sitemap(목록·정책 페이지)을 낸다. 500은 내지 않으며, 폴백 사용은 [sitemap] 로그로 남긴다.
 export const dynamic = 'force-dynamic';
@@ -31,20 +31,31 @@ const getCachedSitemapData = unstable_cache(
     const client = makeFreshClient();
     return fetchSitemapData((table, columns, signal) =>
       client.from(table).select(columns).eq('status', 'published').abortSignal(signal),
-    ).catch((err: unknown) => {
+    ).then(data => ({
+      ...data,
+      // Cache only the translation decision: full article bodies exceed Next's 2 MB cache limit.
+      posts: data.posts.map(({ content, content_evidence, ...post }) => ({
+        ...post,
+        hasEnglish: hasEnglishPostContent({ ...post, title: '', content, content_evidence }),
+      })),
+      guides: data.guides.map(({ content, ...guide }) => ({
+        ...guide,
+        hasEnglish: hasEnglishGuideContent({ ...guide, title: '', content }),
+      })),
+    })).catch((err: unknown) => {
       // 백그라운드 재검증 실패도 여기서 로그가 남는다(그때는 이전 정상 결과가 계속 제공됨).
       console.error(`[sitemap] DB fetch failed: ${err instanceof Error ? err.message : String(err)}`);
       throw err;
     });
   },
-  ['sitemap-data-v1'],
+  ['sitemap-data-v2-translation-body'],
   { revalidate: SITEMAP_DATA_REVALIDATE_SECONDS, tags: [SITEMAP_CACHE_TAG] },
 );
 
 // 인스턴스 메모리의 마지막 정상 데이터(데이터 캐시 미스 + DB 장애가 겹칠 때의 2차 폴백).
 let lastGood: SitemapData | null = null;
 
-function entry(base: string, path: string, rest: Omit<MetadataRoute.Sitemap[number], 'url' | 'alternates'>): MetadataRoute.Sitemap[number] {
+function entry(base: string, path: string, rest: Omit<MetadataRoute.Sitemap[number], 'url' | 'alternates'>, hasEnglish = true): MetadataRoute.Sitemap[number] {
   const koPath = path === '/' ? '' : path;
   const enPath = withLocale(path, 'en');
   return {
@@ -52,7 +63,7 @@ function entry(base: string, path: string, rest: Omit<MetadataRoute.Sitemap[numb
     alternates: {
       languages: {
         ko: `${base}${koPath}`,
-        en: `${base}${enPath}`,
+        ...(hasEnglish ? { en: `${base}${enPath}` } : {}),
         'x-default': `${base}${koPath}`,
       },
     },
@@ -68,6 +79,7 @@ function corePages(base: string, latest: Date | null, latestGuide: Date | null):
   const pages = [
     { path: '', changeFrequency: 'daily' as const, priority: 1, ...dated(latest) },
     { path: '/engineer', changeFrequency: 'daily' as const, priority: 0.9, ...dated(latestGuide ?? latest) },
+    { path: '/security/advertise', changeFrequency: 'monthly' as const, priority: 0.4 },
     { path: '/series', changeFrequency: 'weekly' as const, priority: 0.8, ...dated(latest) },
     { path: '/trending', changeFrequency: 'daily' as const, priority: 0.7, ...dated(latest) },
     { path: '/tags', changeFrequency: 'weekly' as const, priority: 0.6, ...dated(latest) },
@@ -82,7 +94,18 @@ function corePages(base: string, latest: Date | null, latestGuide: Date | null):
     { path: '/policy', changeFrequency: 'monthly' as const, priority: 0.4, lastModified: new Date('2026-10-03') },
     { path: '/author', changeFrequency: 'monthly' as const, priority: 0.4, lastModified: new Date('2026-10-03') },
   ].map(({ path, ...p }) => entry(base, path || '/', p));
+  // 브랜드 홈은 한국어 단일 URL이다. 존재하지 않는 /en/thivelab을 hreflang에 넣지 않는다.
+  if (process.env.NODE_ENV === 'production') {
+    pages.push({ url: `${base}/thivelab`, changeFrequency: 'monthly', priority: 0.5 });
+  }
   return pages;
+}
+
+function localizedEntries(pages: MetadataRoute.Sitemap): MetadataRoute.Sitemap {
+  return pages.flatMap(page => {
+    const en = page.alternates?.languages?.en;
+    return typeof en === 'string' ? [page, { ...page, url: en }] : [page];
+  });
 }
 
 function staticSitemap(base: string): MetadataRoute.Sitemap {
@@ -90,19 +113,18 @@ function staticSitemap(base: string): MetadataRoute.Sitemap {
     changeFrequency: 'daily',
     priority: 0.8,
   }));
-  return [...corePages(base, null, null), ...categoryPages];
+  return localizedEntries([...corePages(base, null, null), ...categoryPages]);
 }
 
 function fullSitemap(base: string, data: SitemapData): MetadataRoute.Sitemap {
   // lastmod는 "실질적 본문 변경"만 반영한다. posts.updated_at은 번역 일괄 추가 등 배치 작업에도
   // 트리거로 갱신되어(2026-09-18·09-29에 수백 편이 한꺼번에 찍힘) 사실과 다른 신호가 되므로 쓰지 않는다.
   // 편집자가 명시한 content_evidence.contentUpdatedAt만 쓰고, 없으면 최초 발행일을 쓴다.
-  // (JSON 경로 선택이라 content_evidence 전체(영문 본문 포함)를 내려받지 않는다.)
+  // 번역 본문은 조회 직후 유효성만 판정하고 캐시에는 hasEnglish 값만 보관한다.
 
-  // noindex 처리된 보강 대상 글은 sitemap에서도 제외 (색인 신호 일관성)
   const posts = data.posts
     // 리다이렉트 맵에 있는 slug는 DB 상태와 무관하게 제출하지 않는다(코드 배포와 DB 변경 사이의 불일치 방지).
-    .filter(p => !NOINDEX_POST_SLUGS.has(p.slug) && !Object.hasOwn(POST_REDIRECTS, p.slug))
+    .filter(p => !Object.hasOwn(POST_REDIRECTS, p.slug))
     .map(p => entry(base, `/blog/${encodeURIComponent(p.slug)}`, {
       lastModified: new Date(
         substantiveUpdate(
@@ -112,7 +134,7 @@ function fullSitemap(base: string, data: SitemapData): MetadataRoute.Sitemap {
       ),
       changeFrequency: 'weekly',
       priority: 0.8,
-    }));
+    }, p.hasEnglish === true));
 
   const guideRows = data.guides;
   const latestGuide = guideRows.map(g => g.updated_at).filter(Boolean).sort().pop();
@@ -120,7 +142,7 @@ function fullSitemap(base: string, data: SitemapData): MetadataRoute.Sitemap {
     lastModified: new Date(g.updated_at),
     changeFrequency: 'monthly',
     priority: 0.7,
-  }));
+  }, g.hasEnglish === true));
 
   // lastmod는 "그 목록 페이지에 마지막으로 글이 추가된 시점"을 반영해야 한다.
   // (매 생성 시 new Date()를 넣으면 모든 페이지가 항상 방금 수정된 것처럼 보여
@@ -142,10 +164,8 @@ function fullSitemap(base: string, data: SitemapData): MetadataRoute.Sitemap {
   const latestPost = [...catLast.values()].sort().pop();
   const latestDate = latestPost ? new Date(latestPost) : new Date(data.fetchedAt);
 
-  // 에피소드 2편 미만인 얇은 시리즈는 sitemap에서 제외 — series/[id] 페이지의 noindex
-  // 임계값(isThin: episodeCount < 2)과 동일하게 유지해, "noindex인데 sitemap에 제출"되는
-  // GSC 색인 오류(Submitted URL marked 'noindex')를 방지한다.
-  const MIN_SERIES_EPISODES = 2;
+  // Match the source policy: every nonempty published series is indexable.
+  const MIN_SERIES_EPISODES = 1;
   const seriesPages = Array.from(seriesCount.entries())
     .filter(([, count]) => count >= MIN_SERIES_EPISODES)
     .map(([name]) => entry(base, `/series/${encodeURIComponent(name)}`, {
@@ -162,7 +182,8 @@ function fullSitemap(base: string, data: SitemapData): MetadataRoute.Sitemap {
   }));
 
   const staticPages = corePages(base, latestDate, latestGuide ? new Date(latestGuide) : null);
-  return [...staticPages, ...categoryPages, ...posts, ...guides, ...seriesPages];
+  const pages = [...staticPages, ...categoryPages, ...posts, ...guides, ...seriesPages];
+  return localizedEntries(pages);
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from '@/i18n/link';
+import RawLink from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { catTone } from '@/lib/utils';
@@ -128,6 +129,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
           </svg>
           <input
             ref={inputRef}
+            aria-label={dict.search.placeholder}
             value={q}
             onChange={e => setQ(e.target.value)}
             placeholder={dict.search.placeholder}
@@ -207,9 +209,6 @@ function SearchModal({ onClose }: { onClose: () => void }) {
 
 export default function Header() {
   const { dict, locale } = useT();
-  // LABS·ENTERPRISE는 아직 없는 서비스다. 링크 없이 "이용 불가"로 분명히 표시한다.
-  const pendingLabel = locale === 'en' ? 'Coming soon · not available yet' : '준비 중 · 아직 이용할 수 없음';
-  const pendingShort = locale === 'en' ? 'COMING SOON' : '준비 중';
   const NAV = useNav();
   const pathname = usePathname();
   const decoded = decode(stripLocale(pathname ?? '/'));
@@ -258,12 +257,10 @@ export default function Header() {
       <header className="site-header">
         <div className="global-nav-row">
           <nav className="container global-nav" aria-label="THIVELAB products">
-            <Link href="/" className="global-nav-parent">THIVELAB</Link>
+            <RawLink href="/thivelab" className="global-nav-parent">THIVELAB</RawLink>
             <Link href="/" className="global-nav-current" aria-current="page">NODELOG</Link>
-            <a href="https://game.thivelab.com/">CIPHER</a>
+            <TrackedExternalLink href="https://tools.thivelab.com/" path={decoded}>TOOLS</TrackedExternalLink>
             <TrackedExternalLink href="https://moa.thivelab.com/" path={decoded}>MOA</TrackedExternalLink>
-            <span className="global-nav-pending" title={pendingLabel} aria-disabled="true">LABS <small>{pendingShort}</small></span>
-            <span className="global-nav-pending" title={pendingLabel} aria-disabled="true">ENTERPRISE <small>{pendingShort}</small></span>
           </nav>
         </div>
         <div className="container">
@@ -346,10 +343,9 @@ export default function Header() {
           </div>
           <div className="mobile-nav-divider" />
           <div className="mobile-nav-heading">THIVELAB</div>
-          <a href="https://game.thivelab.com/" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>CIPHER</a>
+          <RawLink href="/thivelab" className="mobile-nav-item" onClick={() => setMobileOpen(false)}>{locale === 'en' ? 'THIVELAB home' : 'THIVELAB 홈'}</RawLink>
+          <TrackedExternalLink href="https://tools.thivelab.com/" path={decoded} className="mobile-nav-item" onClick={() => setMobileOpen(false)}>TOOLS</TrackedExternalLink>
           <TrackedExternalLink href="https://moa.thivelab.com/" path={decoded} className="mobile-nav-item" onClick={() => setMobileOpen(false)}>MOA</TrackedExternalLink>
-          <div className="mobile-nav-item mobile-nav-pending" aria-disabled="true">LABS <span>{pendingLabel}</span></div>
-          <div className="mobile-nav-item mobile-nav-pending" aria-disabled="true">ENTERPRISE <span>{pendingLabel}</span></div>
           <div className="mobile-nav-divider" />
           <div className="mobile-nav-heading">NODELOG</div>
           {NAV.map(n => (

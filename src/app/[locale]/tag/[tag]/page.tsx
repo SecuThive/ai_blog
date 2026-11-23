@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
 import { TAG_REDIRECTS } from '@/lib/tagRedirects';
 import TagLoadMore from '@/components/TagLoadMore';
-import { publicTags } from '@/lib/utils';
+import { publicTags, DEFAULT_ROBOTS } from '@/lib/utils';
 import { isLocale } from '@/i18n/config';
 import { getDictionary, interpolate } from '@/i18n/messages';
 import { pageMetadata, siteUrl } from '@/i18n/metadata';
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     path: `/tag/${encodeURIComponent(decoded)}`,
     title: `#${label} — Nodelog`,
     description,
-    robots: { index: false, follow: true },
+    robots: DEFAULT_ROBOTS,
   });
 }
 

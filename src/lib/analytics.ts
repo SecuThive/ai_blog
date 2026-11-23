@@ -9,6 +9,7 @@
  */
 
 export type AnalyticsEvent =
+  | { name: 'affiliate_click'; program: string; post_slug: string; link_url: string }
   | { name: 'related_post_click'; path: string; target_slug: string; position: number }
   | { name: 'toc_click'; path: string; heading_id: string }
   | { name: 'code_copy'; path: string; language: string }

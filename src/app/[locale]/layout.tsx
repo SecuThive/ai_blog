@@ -94,14 +94,16 @@ const PRETENDARD_CSS_URL =
   'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css';
 
 
-// 네이버 서치어드바이저 소유 확인 메타 태그 — 값 자체는 페이지 소스에 공개되는 정보지만,
-// 계정/사이트마다 달라지는 배포별 설정이므로 코드에 고정하지 않고 환경변수로 주입한다.
-// 콤마로 여러 개(예: PC·모바일 속성) 지정 가능. 미설정 시 태그를 출력하지 않는다.
+// 추가 네이버 서치어드바이저 소유 확인 코드는 환경변수로 주입한다.
+// 콤마로 여러 개(예: PC·모바일 속성) 지정 가능. 고정 코드와 중복되면 한 번만 출력한다.
 // .env.example 및 docs/SEO_ANALYTICS.md 참고.
-const NAVER_CODES = (process.env.NAVER_SITE_VERIFICATION ?? '')
-  .split(',')
-  .map(code => code.trim())
-  .filter(Boolean);
+const NAVER_CODES = [...new Set([
+  'd9baedc38a71fc60748057661762333474f9bb2c',
+  ...(process.env.NAVER_SITE_VERIFICATION ?? '')
+    .split(',')
+    .map(code => code.trim())
+    .filter(Boolean),
+])];
 
 export default async function RootLayout({
   children,
@@ -134,6 +136,7 @@ export default async function RootLayout({
           id="pretendard-font"
           rel="stylesheet"
           media="print"
+          suppressHydrationWarning
           href={PRETENDARD_CSS_URL}
         />
         <script

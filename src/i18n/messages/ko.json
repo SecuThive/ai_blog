@@ -1,7 +1,7 @@
 {
   "meta": {
     "siteName": "Nodelog — IT·개발·보안 테크 미디어",
-    "siteDesc": "공식 문서와 기술 자료를 확인하고, 검토·정정·업데이트를 이어가는 IT·개발·보안·인프라 실무 미디어.",
+    "siteDesc": "공식 문서와 기술 자료를 확인하고, 직접 실행한 결과를 바탕으로 검토·정정·업데이트를 이어가는 IT·개발·보안·인프라 트러블슈팅 실무 미디어.",
     "authors": "Nodelog 편집"
   },
   "lang": {
@@ -99,7 +99,7 @@
     "seriesTitle": "시리즈로 깊게 파보기",
     "seriesSub": "하나의 주제를 끝까지 따라가도록 단계별로 구성된 학습 경로형 콘텐츠.",
     "allSeries": "전체 시리즈",
-    "seriesEmpty": "시리즈를 준비 중입니다.",
+    "seriesEmpty": "현재 공개된 시리즈가 없습니다.",
     "postsCount": "{count}편",
     "seriesCardLead": "{count}편으로 구성된 연재. 1편부터 순서대로 읽으면 흐름을 따라가기 쉽습니다.",
     "newsletterEyebrow": "NEWSLETTER · 새 글 소식",
@@ -112,8 +112,8 @@
     "guidesSub": "Linux·Docker·Git·네트워킹·보안·DB — 복사해서 바로 쓰는 실전 가이드 {total}+ 편.",
     "allGuides": "전체 가이드",
     "viewGuide": "가이드 보기",
-    "emptyTitle": "첫 번째 글을 준비 중입니다.",
-    "emptyLead": "공식 문서와 기술 자료를 확인하며 첫 번째 글을 준비하고 있습니다.",
+    "emptyTitle": "현재 표시할 글이 없습니다.",
+    "emptyLead": "글 목록을 불러오지 못했습니다. 잠시 후 다시 방문해 주세요.",
     "topicActivity": "TOPIC ACTIVITY · 게시물 수",
     "signalTitle": "오늘의 신호 분석",
     "signalSub": "AI가 최근 추적한 주요 기술 소스 가운데 의미 있게 움직인 변화들. 단순한 빈도가 아닌 변화율 기준.",
@@ -127,7 +127,7 @@
     "topicsTitle": "지금 가장 많이 다루는 주제",
     "topicsSub": "크기는 지난 글 수 기준. 클릭하면 해당 태그 페이지로 이동.",
     "allTags": "모든 태그",
-    "tagsEmpty": "태그를 준비 중입니다."
+    "tagsEmpty": "현재 표시할 태그가 없습니다."
   },
   "common": {
     "justNow": "방금 전",
@@ -350,7 +350,7 @@
     "updated": "최근 업데이트",
     "viewsCount": "{count}회",
     "recommendLead": "조회수·최신성·카테고리 다양성 기반으로 실시간 선별한 추천 글입니다. 급상승 지수(조회수 ÷ 경과일)로 지금 주목받는 글을 먼저 보여줍니다.",
-    "recommendEmpty": "추천 글을 준비 중입니다.",
+    "recommendEmpty": "현재 표시할 추천 글이 없습니다.",
     "recommendRising": "급상승 중인 글",
     "recommendRisingSub": "조회수 ÷ 발행 경과일 기준 — 최근 주목받는 글",
     "recommendRisingBadge": "급상승",

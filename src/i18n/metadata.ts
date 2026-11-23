@@ -2,18 +2,25 @@ import type { Metadata } from 'next';
 import type { Locale } from './config';
 import { withLocale } from './path';
 import { getDictionary } from './messages';
+import { DEFAULT_ROBOTS } from '@/lib/utils';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thivelab.com';
 
 export function siteUrl(path: string, locale: Locale = 'ko'): string {
   const loc = withLocale(path, locale);
-  return `${SITE_URL}${loc === '/' ? '' : loc}`;
+  const url = new URL(loc, SITE_URL);
+  // Normalize each segment once so schema, metadata and sitemap use identical URLs.
+  url.pathname = url.pathname.split('/').map(segment => {
+    try { return encodeURIComponent(decodeURIComponent(segment)); }
+    catch { return encodeURIComponent(segment); }
+  }).join('/');
+  return `${url.origin}${url.pathname === '/' ? '' : url.pathname}${url.search}${url.hash}`;
 }
 
-export function languageAlternates(path: string): NonNullable<Metadata['alternates']>['languages'] {
+export function languageAlternates(path: string, hasEnglish = true): NonNullable<Metadata['alternates']>['languages'] {
   return {
     ko: siteUrl(path, 'ko'),
-    en: siteUrl(path, 'en'),
+    ...(hasEnglish ? { en: siteUrl(path, 'en') } : {}),
     'x-default': siteUrl(path, 'ko'),
   };
 }
@@ -51,6 +58,6 @@ export function pageMetadata({
       alternateLocale: locale === 'en' ? ['ko_KR'] : ['en_US'],
     },
     twitter: { card: 'summary_large_image', title: resolvedTitle, description: resolvedDesc },
-    ...(robots ? { robots } : {}),
+    robots: robots ?? DEFAULT_ROBOTS,
   };
 }

@@ -4,7 +4,7 @@ import Link from '@/i18n/link';
 import { useT } from '@/i18n/provider';
 
 export default function Footer() {
-  const { dict } = useT();
+  const { dict, locale } = useT();
   return (
     <footer className="site-footer">
       <div className="container">
@@ -45,7 +45,7 @@ export default function Footer() {
 
         {/* Topic column */}
         <div className="footer-col">
-          <h5>{dict.footer.topics}</h5>
+          <p className="footer-col-title">{dict.footer.topics}</p>
           <ul>
             <li><Link href="/category/AI & 자동화">{dict.nav.ai}</Link></li>
             <li><Link href="/category/IT 트렌드">{dict.nav.trends}</Link></li>
@@ -56,7 +56,7 @@ export default function Footer() {
 
         {/* Navigation column */}
         <div className="footer-col">
-          <h5>{dict.footer.navigation}</h5>
+          <p className="footer-col-title">{dict.footer.navigation}</p>
           <ul>
             <li><Link href="/trending">{dict.nav.trending}</Link></li>
             <li><Link href="/series">{dict.nav.series}</Link></li>
@@ -68,18 +68,19 @@ export default function Footer() {
 
         {/* About column */}
         <div className="footer-col">
-          <h5>{dict.footer.about}</h5>
+          <p className="footer-col-title">{dict.footer.about}</p>
           <ul>
             <li><Link href="/about">{dict.footer.intro}</Link></li>
             <li><Link href="/author">{dict.footer.editPolicy}</Link></li>
             <li><Link href="/faq">{dict.footer.faq}</Link></li>
             <li><Link href="/contact">{dict.footer.contact}</Link></li>
+            <li><Link href="/security/advertise">{locale === 'en' ? 'Listings & sponsorship' : '등재·스폰서 문의'}</Link></li>
           </ul>
         </div>
 
         {/* Legal column */}
         <div className="footer-col">
-          <h5>{dict.footer.legal}</h5>
+          <p className="footer-col-title">{dict.footer.legal}</p>
           <ul>
             <li><Link href="/terms">{dict.footer.terms}</Link></li>
             <li><Link href="/privacy">{dict.footer.privacy}</Link></li>

@@ -10,6 +10,8 @@
  * (2단 리다이렉트 금지 — tests/postRedirects.test.ts). 맵에 있는 slug는 sitemap에서도 제외된다.
  */
 export const POST_REDIRECTS: Record<string, string> = {
+  '개인정보-위탁-vs-제3자-제공-차이-동의-널-받아야-할까-2026-가이드':
+    '개인정보-위탁-vs-제3자-제공-차이-동의-또-받아야-할까-2026-가이드',
   // 최근 자동발행 중복 3쌍 (#756→#634, #757→#655, #759→#610)
   'git-refusing-to-merge-unrelated-histories-30초-진단복구-런북':
     'fatal-refusing-to-merge-unrelated-histories-해결법-복붙-명령어',
@@ -147,6 +149,39 @@ export const POST_REDIRECTS: Record<string, string> = {
   // No space left on device → #795
   'no-space-left-on-device-해결-df-inode-docker-5분-진단': // #601
     'no-space-left-on-device-30초-판정-런북-df에-용량-남았는데-안-될-때',
+  // 깨진(hex) slug → 한글 slug (2026-10-23). scripts/fix-garbled-slugs-2026-10-23.mjs 반영 후 구 URL 이전용
+  'ai-ec9790ec9db4eca084ed8ab8-ec8ba0eba2b0ec84b1-eab280eca69d-eab080ec9db4eb939c-3ed8eb8-ed9484eba19ceb8d95ec8598-ebaaa8eb8b88ed84b0eba781eab3bc-sla-eab480eba6ac': // #270
+    'ai-에이전트-신뢰성-검증-가이드-3편-프로덕션-모니터링과-sla-관리',
+  'ec82b0ec9785-ed9884ec9ea5-ai-ed86b5ed95a9-ec9584ed82a4ed858decb298-eab080ec9db4eb939c-2ed8eb8-ec8ba4ec8b9ceab084-ec9db4ec8381-eab090eca780ec9980-ec9888ecb8a1-ec9ca0eca780ebb3b4ec8898': // #271
+    '산업-현장-ai-통합-아키텍처-가이드-2편-실시간-이상-감지와-예측-유지보수',
+  'ai-ec9790ec9db4eca084ed8ab8-ec8ba0eba2b0ec84b1-eab280eca69d-eab080ec9db4eb939c-2ed8eb8-ec8ba4ed8ca8-eab090eca780ec9980-ec9e90eb8f99-ebb3b5eab5ac-eca084eb9eb5': // #269
+    'ai-에이전트-신뢰성-검증-가이드-2편-실패-감지와-자동-복구-전략',
+  'ec97a3eca780-ai-ebb0b0ed8fac-eba788ec8aa4ed84b0-eab080ec9db4eb939c-1ed8eb8-ebaaa8eb8db8-eab2bdeb9f89ed9994ec9980-ec98a8eb9494ebb094ec9db4ec8aa4-ecb694eba1a0': // #268
+    '엣지-ai-배포-마스터-가이드-1편-모델-경량화와-온디바이스-추론',
+  'vector-db-eba788ec8aa4ed84b0-ed81b4eb9e98ec8aa4-2ed8eb8-hnsw-ec9db8eb8db1ec8aa4ec9980-ed9598ec9db4ebb88ceba6aceb939c-eab280ec8389-ecb59ceca081ed9994': // #279
+    'vector-db-마스터-클래스-2편-hnsw-인덱스와-하이브리드-검색-최적화',
+  'ec82b0ec9785-ed9884ec9ea5-ai-ed86b5ed95a9-ec9584ed82a4ed858decb298-eab080ec9db4eb939c-3ed8eb8-ec97a3eca780-ed81b4eb9dbcec9ab0eb939c-ed9598ec9db4ebb88ceba6aceb939c-ebb0b0ed8fac': // #272
+    '산업-현장-ai-통합-아키텍처-가이드-3편-엣지-클라우드-하이브리드-배포',
+  'ai-eb8db0ec9db4ed84b0-ec9584ed82a4ed858decb298-eba788ec8aa4ed84b0-eab080ec9db4eb939c-3ed8eb8-eb8db0ec9db4ed84b0-ed9288eca788-ec9e90eb8f99ed9994ec9980-eab1b0ebb284eb848cec8aa4': // #283
+    'ai-데이터-아키텍처-마스터-가이드-3편-데이터-품질-자동화와-거버넌스',
+  'llm-ed9484eba1aced9484ed8ab8-ec9794eca780eb8b88ec96b4eba781-eba788ec8aa4ed84b0-2ed8eb8-cot-tot-react-eab3a0eab889-ed8ca8ed84b4': // #273
+    'llm-프롬프트-엔지니어링-마스터-2편-cot-tot-react-고급-패턴',
+  'llm-ec9790ec9db4eca084ed8ab8-ec8baced9994-eba788ec8aa4ed84b0-eab080ec9db4eb939c-3ed8eb8-ed8f89eab080-ed9484eba088ec9e84ec9b8ced81acec9980-eba980ed8bb0-ec9790ec9db4eca084ed8ab8-ec9ab4ec9881': // #282
+    'llm-에이전트-심화-마스터-가이드-3편-평가-프레임워크와-멀티-에이전트-운영',
+  'llm-ec84b1eb8aa5-ed96a5ec8381-ec8b9ceba6aceca688-2ed8eb8-lora-qlora-ed8c8cec9db8ed8a9ceb8b9d-ec8ba4eca084-eab080ec9db4eb939c': // #275
+    'llm-성능-향상-시리즈-2편-lora-qlora-파인튜닝-실전-가이드',
+  'enterprise-ai-architecture-blueprint-2ed8eb8-ebb3b4ec9588-ec9584ed82a4ed858decb298ec9980-eb8db0ec9db4ed84b0-ebb684eba598': // #277
+    'enterprise-ai-architecture-blueprint-2편-보안-아키텍처와-데이터-분류',
+  'ai-eab1b0ebb284eb848cec8aa4-mlsecops-eba788ec8aa4ed84b0-eab080ec9db4eb939c-3ed8eb8-ci-cd-ebb3b4ec9588-ec9e90eb8f99ed9994ec9980-ed8eb8ed96a5-ed8390eca780': // #281
+    'ai-거버넌스-mlsecops-마스터-가이드-3편-ci-cd-보안-자동화와-편향-탐지',
+  'enterprise-ai-architecture-blueprint-3ed8eb8-ai-eab1b0ebb284eb848cec8aa4ec9980-eab79ceca09c-eca480ec8898-ec9e90eb8f99ed9994': // #278
+    'enterprise-ai-architecture-blueprint-3편-ai-거버넌스와-규제-준수-자동화',
+  'vector-db-eba788ec8aa4ed84b0-ed81b4eb9e98ec8aa4-3ed8eb8-eba980ed8bb0ed858ceb848ced8ab8-ec9ab4ec9881eab3bc-eb939ceba6aced9484ed8ab8-ebaaa8eb8b88ed84b0eba781': // #280
+    'vector-db-마스터-클래스-3편-멀티테넌트-운영과-드리프트-모니터링',
+  'llm-ed9484eba1aced9484ed8ab8-ec9794eca780eb8b88ec96b4eba781-eba788ec8aa4ed84b0-3ed8eb8-ebb284eca084-eab480eba6acec9980-a-b-ed858cec8aa4ed8ab8-ec9ab4ec9881': // #274
+    'llm-프롬프트-엔지니어링-마스터-3편-버전-관리와-a-b-테스트-운영',
+  'llm-ec84b1eb8aa5-ed96a5ec8381-ec8b9ceba6aceca688-3ed8eb8-eb9dbcec9ab0ed8c85-ec9599ec8381ebb894eba19c-ebb984ec9aa9-70-eca088eab090': // #276
+    'llm-성능-향상-시리즈-3편-라우팅-앙상블로-비용-70-절감',
 };
 
 /** 맵 값 → 사이트 내부 경로(로케일 접두사 없음). */

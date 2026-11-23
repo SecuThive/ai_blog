@@ -77,7 +77,7 @@ export const SERIES_DISPLAY: Record<string, string> = {
 export const DEFAULT_ROBOTS: Metadata['robots'] = {
   index: true,
   follow: true,
-  googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
+  googleBot: { index: true, follow: true, 'max-video-preview': -1, 'max-image-preview': 'large', 'max-snippet': -1 },
 };
 
 // 조회수가 이 값 미만이면 UI에 노출하지 않는다 — '1 조회'처럼 빈약해 보이는

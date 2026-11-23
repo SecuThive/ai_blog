@@ -4,6 +4,7 @@ import { pageMetadata } from '@/i18n/metadata';
 import type { Metadata } from 'next';
 import { VENDORS, CATEGORIES, categoryLabel, type SecurityCategory } from './data';
 import SecurityCatalog from './SecurityCatalog';
+import SponsorStrip from '@/components/SponsorStrip';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale: raw } = await params;
@@ -68,6 +69,7 @@ export default async function SecurityPage({ params }: { params: Promise<{ local
 
       <section className="section">
         <div className="container">
+          <SponsorStrip locale={locale} />
           <SecurityCatalog />
         </div>
       </section>

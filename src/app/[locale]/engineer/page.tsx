@@ -1,4 +1,5 @@
 import Link from '@/i18n/link';
+import SponsorStrip from '@/components/SponsorStrip';
 import { unstable_cache } from 'next/cache';
 import type { Metadata } from 'next';
 import type { EngineerGuide } from '@/lib/types';
@@ -8,6 +9,7 @@ import { engCatTone } from '@/lib/utils';
 import EngineerSearch from './EngineerSearch';
 import JsonLd from '@/components/JsonLd';
 import { localizeGuide } from '@/i18n/content';
+import { siteUrl } from '@/i18n/metadata';
 import { engineerCatLabel } from '@/i18n/categories';
 import { getDictionary } from '@/i18n/messages';
 
@@ -232,7 +234,7 @@ export default async function EngineerPage({
         ? CATEGORIES.find(c => c.name === activeCat)?.descEn
         : CATEGORIES.find(c => c.name === activeCat)?.descKo)
       : 'Linux, Docker, Git, 네트워킹, 보안 설정 등 실무에서 바로 써먹는 기술 가이드 모음.',
-    url: `${SITE_URL}/engineer${activeCat ? `?cat=${encodeURIComponent(activeCat)}` : ''}`,
+    url: siteUrl(`/engineer${activeCat ? `?cat=${encodeURIComponent(activeCat)}` : ''}`, locale),
     numberOfItems: guides.length,
     itemListElement: guides.slice(0, 20).map((g, i) => ({
       '@type': 'ListItem',
@@ -274,6 +276,7 @@ export default async function EngineerPage({
       {/* Category hub */}
       <section className="section" style={{ paddingBottom: 0 }}>
         <div className="container">
+          <SponsorStrip locale={locale} />
           <div style={{ marginBottom: 20 }}>
             <div className="section-eyebrow">CATEGORIES</div>
             <h2 style={{ margin: '4px 0 0', fontSize: 20, letterSpacing: '-0.02em' }}>{locale === 'en' ? 'Browse by topic' : '분야별 탐색'}</h2>

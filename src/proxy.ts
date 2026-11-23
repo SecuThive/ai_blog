@@ -3,6 +3,8 @@ import type { NextRequest } from 'next/server';
 import { defaultLocale, isLocale } from '@/i18n/config';
 
 const PASSTHROUGH_PREFIXES = [
+  '/admin',
+  '/_next',
   '/api',
   '/rss',
   '/ads.txt',
@@ -12,10 +14,18 @@ const PASSTHROUGH_PREFIXES = [
   '/favicon.ico',
   '/apple-icon',
   '/icon',
+  '/thivelab',
 ];
 
 // 경로 값에 '.'이 들어갈 수 있는 콘텐츠 라우트. 정적 파일로 오인해 로캘 rewrite를 건너뛰면 404가 된다.
 const CONTENT_PREFIXES = ['/blog/', '/engineer/', '/tag/', '/series/', '/category/'];
+
+const LEGACY_BLOG_SLUGS: Record<string, string> = {
+  '개인정보-위탁-vs-제3자-제공-차이-동의-널-받아야-할까-2026-가이드':
+    '개인정보-위탁-vs-제3자-제공-차이-동의-또-받아야-할까-2026-가이드',
+  '2026-isms-p-인증-준비-체크리스트-102개-항목빈출-결함-실무-가이드':
+    '2026-isms-p-인증-준비-체크리스트-의무대상절차비용-총정리',
+};
 
 function shouldPassthrough(pathname: string): boolean {
   if (PASSTHROUGH_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
@@ -30,6 +40,36 @@ function shouldPassthrough(pathname: string): boolean {
 
 export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    const response = NextResponse.next();
+    response.headers.set('Cache-Control', 'private, no-store');
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    response.headers.set('X-Frame-Options', 'DENY');
+    response.headers.set('Referrer-Policy', 'no-referrer');
+    return response;
+  }
+  // Next's permanentRedirect and next.config permanent: true use 308. These
+  // historically indexed URLs need an actual HTTP 301 on their first hop.
+  const legacyMatch = pathname.match(/^\/(en\/|ko\/)?blog\/([^/]+)$/);
+  if (legacyMatch) {
+    let slug: string;
+    try {
+      slug = decodeURIComponent(legacyMatch[2]);
+    } catch {
+      slug = '';
+    }
+    const target = LEGACY_BLOG_SLUGS[slug]
+      ?? (slug.includes('동의-널-받아야-할까')
+        ? LEGACY_BLOG_SLUGS['개인정보-위탁-vs-제3자-제공-차이-동의-널-받아야-할까-2026-가이드']
+        : slug.includes('102개-항목빈출-결함-실무-가이드')
+          ? LEGACY_BLOG_SLUGS['2026-isms-p-인증-준비-체크리스트-102개-항목빈출-결함-실무-가이드']
+          : undefined);
+    if (target) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${legacyMatch[1] === 'en/' ? 'en/' : ''}blog/${encodeURIComponent(target)}`;
+      return NextResponse.redirect(url, 301);
+    }
+  }
   if (shouldPassthrough(pathname)) return undefined;
 
   const first = pathname.split('/').filter(Boolean)[0];

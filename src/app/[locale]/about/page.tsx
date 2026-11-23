@@ -3,6 +3,7 @@ import { isLocale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/messages';
 import { pageMetadata } from '@/i18n/metadata';
 import { getAbout } from '@/i18n/copy/about';
+import Link from '@/i18n/link';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale: raw } = await params;
@@ -56,6 +57,18 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
               <p style={{ fontSize: 15.5, lineHeight: 1.7, color: 'var(--text-3)', margin: 0 }}>
                 {copy.missionBody}
               </p>
+            </div>
+          </div>
+
+          <div className="about-row" style={{ marginBottom: 64 }}>
+            <div>
+              <div className="section-eyebrow" style={{ marginBottom: 8 }}>PUBLISHER</div>
+              <h2 style={{ margin: 0, fontSize: 24 }}>{locale === 'en' ? 'Publisher and contact' : '발행자와 연락처'}</h2>
+            </div>
+            <div style={{ color: 'var(--text-2)', lineHeight: 1.75 }}>
+              <p>{locale === 'en' ? 'Nodelog by THIVELAB publishes practical technology articles and engineer guides. The site operator makes publication and correction decisions under the editorial principles above.' : 'Nodelog by THIVELAB은 실무 기술 아티클과 엔지니어 가이드를 발행합니다. 운영자가 위 편집 원칙에 따라 발행과 정정을 결정합니다.'}</p>
+              <p>{locale === 'en' ? 'For article corrections, privacy requests, and general inquiries, email ' : '기사 정정, 개인정보 요청 및 일반 문의: '}<a href="mailto:thive@thivelab.com">thive@thivelab.com</a></p>
+              <p><Link href="/contact">{locale === 'en' ? 'Contact page' : '문의 페이지'}</Link> · <Link href="/policy">{locale === 'en' ? 'Editorial policy' : '편집 정책'}</Link></p>
             </div>
           </div>
 

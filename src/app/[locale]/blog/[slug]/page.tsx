@@ -1,5 +1,7 @@
 import { unstable_cache } from 'next/cache';
 import AdSenseLoader from '@/components/AdSenseLoader';
+import AdSlot from '@/components/ads/AdSlot';
+import AffiliateBox from '@/components/affiliate/AffiliateBox';
 import { isAdEligiblePost } from '@/lib/adsense';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { catTone, publicTags, DEFAULT_ROBOTS, MIN_DISPLAY_VIEWS } from '@/lib/utils';
@@ -8,10 +10,9 @@ import { withEnFallbackContent } from '@/lib/enFallback';
 import { postCacheTag } from '@/lib/cacheTags';
 import type { Post } from '@/lib/types';
 import type { Metadata } from 'next';
-import { notFound, permanentRedirect } from 'next/navigation';
+import { redirect, notFound, permanentRedirect } from 'next/navigation';
 import { POST_REDIRECTS, postRedirectPath } from '@/lib/postRedirects';
 import { findOfficialDocs } from '@/lib/officialDocs';
-import { NOINDEX_POST_SLUGS } from '@/lib/noindexPosts';
 import { readEditorialRecord, hasVerificationRecord, substantiveUpdate } from '@/lib/editorialRecord';
 import { historicalNote } from '@/lib/historicalPosts';
 import Link from '@/i18n/link';
@@ -28,7 +29,7 @@ import Comments, { type CommentRow } from '@/components/Comments';
 import InlineSubscribeCTA from '@/components/InlineSubscribeCTA';
 import { isLocale } from '@/i18n/config';
 import { getDictionary, interpolate } from '@/i18n/messages';
-import { localizePost, localizeGuide, titleForLocale, excerptForLocale } from '@/i18n/content';
+import { hasEnglishPostContent, localizePost, localizeGuide, titleForLocale, excerptForLocale } from '@/i18n/content';
 import { languageAlternates, siteUrl } from '@/i18n/metadata';
 import { withLocale } from '@/i18n/path';
 import { categoryLabel, engineerCatLabel } from '@/i18n/categories';
@@ -212,6 +213,7 @@ async function getPost(slug: string): Promise<Post | null> {
       { tags: [postCacheTag(decoded)], revalidate: 3600 },
     )();
   } catch (e) {
+    if (e instanceof URIError) return null;
     // 조회 실패를 null(=notFound)로 바꾸면 ISR이 404를 캐시해 버린다. 반드시 throw.
     console.error("post/guide fetch failed:", e);
     throw e;
@@ -240,10 +242,10 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     keywords: cleanTags.join(', '),
     authors: [{ name: dict.meta.authors, url: siteUrl('/author', locale) }],
     alternates: {
-      canonical: url,
-      languages: languageAlternates(`/blog/${post.slug}`),
+      canonical: locale === 'en' && !hasEnglishPostContent(post) ? siteUrl(`/blog/${post.slug}`, 'ko') : url,
+      languages: languageAlternates(`/blog/${post.slug}`, hasEnglishPostContent(post)),
     },
-    robots: NOINDEX_POST_SLUGS.has(post.slug) ? { index: false, follow: true } : DEFAULT_ROBOTS,
+    robots: locale === 'en' && !hasEnglishPostContent(post) ? { index: false, follow: true } : DEFAULT_ROBOTS,
     openGraph: {
       title: localized.title,
       description: localized.excerpt,
@@ -275,8 +277,9 @@ function extractHeadings(markdown: string) {
   return headings;
 }
 
-function makeMdComponents(locale: Locale) {
+function makeMdComponents(locale: Locale, adClient = '', midSlot?: string, mid2Slot?: string) {
   let paragraphCount = 0;
+  let h2Count = 0;
   return {
     p: ({ children }: { children?: React.ReactNode }) => {
       const isFirst = paragraphCount === 0;
@@ -291,9 +294,14 @@ function makeMdComponents(locale: Locale) {
       return <h2 id={id}>{children}</h2>;
     },
     h2: ({ children }: { children?: React.ReactNode }) => {
+      h2Count++;
       const text = String(children);
       const id = text.toLowerCase().replace(/[^a-z0-9가-힣]+/g, '-').replace(/^-|-$/g, '');
-      return <h2 id={id}>{children}</h2>;
+      return <>
+        {h2Count === 3 && <AdSlot client={adClient} slot={midSlot} />}
+        {h2Count === 5 && <AdSlot client={adClient} slot={mid2Slot} className="ad-slot--mobile-only" />}
+        <h2 id={id}>{children}</h2>
+      </>;
     },
     h3: ({ children }: { children?: React.ReactNode }) => {
       const text = String(children);
@@ -352,7 +360,12 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
   if (!isLocale(raw)) notFound();
   const locale = raw;
   const dict = getDictionary(locale);
-  const decodedSlug = decodeURIComponent(slug);
+  let decodedSlug: string;
+  try {
+    decodedSlug = decodeURIComponent(slug);
+  } catch {
+    notFound();
+  }
   const redirectTarget = POST_REDIRECTS[decodedSlug];
   if (redirectTarget) {
     permanentRedirect(withLocale(postRedirectPath(redirectTarget), locale));
@@ -360,6 +373,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
 
   const fetched = await getPost(slug);
   if (!fetched) notFound();
+  if (locale === 'en' && !hasEnglishPostContent(fetched)) redirect(siteUrl(`/blog/${fetched.slug}`, 'ko'));
   const localized = localizePost(fetched, locale);
   const post = { ...fetched, title: localized.title, excerpt: localized.excerpt, content: localized.content };
 
@@ -400,10 +414,13 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
     getRelatedGuides(post.category, locale),
     getComments(post.slug),
   ]);
-  const mdComponents = makeMdComponents(locale);
+  const showBody = locale !== 'en' || !localized.isContentFallback;
+  const adClient = isAdEligiblePost(post.slug, showBody) ? (process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? '') : '';
+  const mdComponents = makeMdComponents(locale, adClient,
+    process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTICLE_MID,
+    process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTICLE_MID2);
   const officialDocs = findOfficialDocs(post.title, post.tags ?? [], post.category ?? '', locale);
   const displayTags = visiblePublicTags(post.tags, locale);
-  const showBody = locale !== 'en' || !localized.isContentFallback;
   const ogImageUrl = post.cover_image || siteUrl(`/blog/${post.slug}/opengraph-image`, locale);
 
   const postUrl = siteUrl(`/blog/${post.slug}`, locale);
@@ -421,7 +438,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
     // author를 가공의 Person으로 표기하지 않는다 — 실제 작성 주체는
     // 가공의 Person이 아닌 실제 운영 주체인 기술 편집 조직을 표시한다.
     author: { '@type': 'Organization', name: dict.meta.authors, url: siteUrl('/author', locale) },
-    editor: { '@type': 'Organization', name: dict.meta.authors, url: siteUrl('/author', locale) },
+    // schema.org/editor only accepts Person; the editorial organization is the author.
     publisher: {
       '@type': 'Organization',
       name: 'Nodelog',
@@ -463,7 +480,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
 
   return (
     <div>
-      {/* 실재하는 색인 글이고 본문이 렌더링될 때만 광고 로더. noindex 글·영어 대체 화면·404 제외. */}
+      {/* 실재하고 본문이 렌더링된 글에만 광고 로더. 품질 목록·영어 대체 화면·404 제외. */}
       {isAdEligiblePost(post.slug, showBody) && <AdSenseLoader />}
       <JsonLd data={[articleSchema, breadcrumbSchema]} />
       <ViewTracker postId={post.id} table="posts" />
@@ -723,6 +740,8 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
               </section>
             )}
 
+            <AdSlot client={adClient} slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTICLE_END} />
+
             {displayTags.length > 0 && (
               <div className="end-tags">
                 {displayTags.map(tag => (
@@ -814,8 +833,12 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
               <ShareBtn />
               <BookmarkBtn slug={post.slug} title={post.title} />
             </div>
+            <AdSlot client={adClient} slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_RAIL}
+              format="rectangle" minHeight={250} className="ad-slot--desktop-only" />
           </aside>
         </div>
+
+        <AffiliateBox category={post.category} tags={post.tags ?? []} slug={post.slug} locale={locale} />
 
         {/* Related engineer guides */}
         <RelatedContent

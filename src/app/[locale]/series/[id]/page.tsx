@@ -3,12 +3,12 @@ import { notFound } from 'next/navigation';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Metadata } from 'next';
 import { makeFreshClient } from '@/lib/supabase';
-import { toneForSeries } from '@/lib/utils';
+import { toneForSeries, DEFAULT_ROBOTS } from '@/lib/utils';
 import JsonLd from '@/components/JsonLd';
 import { isLocale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/messages';
 import { seriesDescription, seriesLabel } from '@/i18n/display';
-import { titleForLocale, excerptForLocale } from '@/i18n/content';
+import { hasEnglishPostContent, titleForLocale, excerptForLocale } from '@/i18n/content';
 import { languageAlternates, siteUrl } from '@/i18n/metadata';
 import { categoryLabel } from '@/i18n/categories';
 import { formatDate } from '@/i18n/format';
@@ -27,6 +27,7 @@ interface PostRow {
   tags: string[];
   episode: number;   // ep:N 태그에서 파싱한 에피소드 번호 (없으면 발행순 기준)
   content_evidence?: unknown;
+  content?: string | null;
 }
 
 function parseEpisode(tags: string[]): number | null {
@@ -36,13 +37,14 @@ function parseEpisode(tags: string[]): number | null {
 
 async function getSeriesPosts(seriesName: string): Promise<PostRow[]> {
   noStore();
-  const { data } = await makeFreshClient()
+  const { data, error } = await makeFreshClient()
     .from('posts')
-    .select('id,title,slug,category,excerpt,published_at,tags,content_evidence')
+    .select('id,title,slug,category,excerpt,published_at,tags,content_evidence,content')
     .eq('status', 'published')
     .contains('tags', [`series:${seriesName}`])
     .order('published_at', { ascending: true });
 
+  if (error) throw new Error('Series data is temporarily unavailable');
   const rows = (data ?? []) as Omit<PostRow, 'episode'>[];
   // ep:N 태그 기준 정렬 (엔진이 부여한 번호 존중). 태그 없으면 발행순 fallback.
   const withEp = rows.map((r, i) => ({
@@ -55,11 +57,12 @@ async function getSeriesPosts(seriesName: string): Promise<PostRow[]> {
 
 async function getAllSeriesNames(): Promise<string[]> {
   noStore();
-  const { data } = await makeFreshClient()
+  const { data, error } = await makeFreshClient()
     .from('posts')
     .select('tags')
     .eq('status', 'published');
 
+  if (error) throw new Error('Series names are temporarily unavailable');
   const names = new Set<string>();
   for (const p of (data ?? [])) {
     const tags: string[] = p.tags ?? [];
@@ -95,7 +98,7 @@ export async function generateMetadata({
     title: `${label} — ${dict.pages.seriesTitle}`,
     description: desc,
     alternates: { canonical: url, languages: languageAlternates(`/series/${encodeURIComponent(seriesName)}`) },
-    robots: isThin ? { index: false, follow: true } : undefined,
+    robots: isThin && episodeCount === 0 ? { index: false, follow: true } : DEFAULT_ROBOTS,
     openGraph: {
       title: `${label} — ${dict.pages.seriesTitle}`,
       description: desc,
@@ -149,7 +152,7 @@ export default async function SeriesDetailPage({
       '@type': 'ListItem',
       position: i + 1,
       name: titleForLocale(locale, p.title, { tags: p.tags, content_evidence: p.content_evidence }),
-      url: siteUrl(`/blog/${p.slug}`, locale),
+      url: siteUrl(`/blog/${p.slug}`, locale === 'en' && hasEnglishPostContent(p) ? 'en' : 'ko'),
     })),
   };
 

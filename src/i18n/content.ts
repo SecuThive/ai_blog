@@ -192,3 +192,14 @@ export function excerptForLocale(
     || src
   );
 }
+
+/** A translated title alone is not a translated article. */
+export function hasEnglishPostContent(post: LocalizablePost): boolean {
+  const localized = localizePost(post, 'en');
+  return !localized.isContentFallback && Boolean(localized.content?.trim());
+}
+
+export function hasEnglishGuideContent(guide: LocalizableGuide): boolean {
+  const localized = localizeGuide(guide, 'en');
+  return !localized.isContentFallback && Boolean(localized.content?.trim());
+}

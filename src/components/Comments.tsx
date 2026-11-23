@@ -259,7 +259,6 @@ export default function Comments({
           disabled={submitting || !content.trim() || !privacyConsent}
           className="btn btn-primary btn-sm comment-submit"
           aria-label={t.submit}
-          aria-disabled={submitting || !content.trim() || !privacyConsent}
         >
           {submitting ? t.submitting : t.submit}
         </button>

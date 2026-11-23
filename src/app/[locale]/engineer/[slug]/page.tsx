@@ -1,6 +1,6 @@
 import Link from '@/i18n/link';
 import AdSenseLoader from '@/components/AdSenseLoader';
-import { notFound } from 'next/navigation';
+import { redirect, notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { EngineerGuide } from '@/lib/types';
 import { unstable_cache } from 'next/cache';
@@ -20,7 +20,7 @@ import Comments, { type CommentRow } from '@/components/Comments';
 import InlineSubscribeCTA from '@/components/InlineSubscribeCTA';
 import RelatedContent, { type RelatedItem } from '@/components/RelatedContent';
 import TrackedExternalLink from '@/components/TrackedExternalLink';
-import {  localizeGuide , titleForLocale, excerptForLocale } from '@/i18n/content';
+import { hasEnglishGuideContent,  localizeGuide , titleForLocale, excerptForLocale } from '@/i18n/content';
 import { isLocale, type Locale } from '@/i18n/config';
 import { getDictionary, interpolate } from '@/i18n/messages';
 import { languageAlternates, siteUrl } from '@/i18n/metadata';
@@ -201,8 +201,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     description: guide.summary,
     keywords: visiblePublicTags(guide.tags, locale).map(t => t.label).join(', '),
     authors: [{ name: dict.meta.authors }],
-    alternates: { canonical: url, languages: languageAlternates(`/engineer/${guide.slug}`) },
-    robots: DEFAULT_ROBOTS,
+    alternates: { canonical: locale === 'en' && !hasEnglishGuideContent(fetched) ? siteUrl(`/engineer/${guide.slug}`, 'ko') : url, languages: languageAlternates(`/engineer/${guide.slug}`, hasEnglishGuideContent(fetched)) },
+    robots: locale === 'en' && !hasEnglishGuideContent(fetched) ? { index: false, follow: true } : DEFAULT_ROBOTS,
     openGraph: {
       title: `${guide.title} — Nodelog Engineer`,
       description: guide.summary,
@@ -290,6 +290,7 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
     // soft 404(200) 대신 진짜 404 반환 — GSC Soft 404 / AdSense low-value 방지
     notFound();
   }
+  if (locale === 'en' && !hasEnglishGuideContent(fetched)) redirect(siteUrl(`/engineer/${fetched.slug}`, 'ko'));
   const localized = localizeGuide(fetched, locale);
   const guide = { ...fetched, title: localized.title, summary: localized.summary, content: localized.content };
 

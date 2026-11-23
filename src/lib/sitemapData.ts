@@ -8,7 +8,7 @@
 //   일부만 성공한 결과나 빈 결과를 완전한 sitemap처럼 내보내거나 캐시하지 않는다.
 // - 실패 시 순서: 마지막 정상 데이터(last-good) → 핵심 정적 경로 sitemap. 500은 내지 않는다.
 
-export const SITEMAP_FETCH_TIMEOUT_MS = 4000;
+export const SITEMAP_FETCH_TIMEOUT_MS = 10000;
 /** sitemap 데이터 캐시 태그 — /api/revalidate가 revalidateTag(SITEMAP_CACHE_TAG, 'max')로 갱신. */
 export const SITEMAP_CACHE_TAG = 'sitemap';
 
@@ -17,11 +17,16 @@ export interface SitemapPostRow {
   published_at: string;
   tags: string[] | null;
   category?: string | null;
+  hasEnglish?: boolean;
+  content?: string | null;
+  content_evidence?: unknown;
   content_updated_at?: string | null;
   change_summary?: string | null;
 }
 
 export interface SitemapGuideRow {
+  hasEnglish?: boolean;
+  content?: string | null;
   slug: string;
   updated_at: string;
 }
@@ -37,8 +42,8 @@ export type QueryResult = { data: unknown; error: { code?: string; message: stri
 export type PublishedQuery = (table: 'posts' | 'engineer_guides', columns: string, signal: AbortSignal) => PromiseLike<QueryResult>;
 
 export const POST_COLUMNS =
-  'slug,published_at,tags,category,content_updated_at:content_evidence->>contentUpdatedAt,change_summary:content_evidence->>changeSummary';
-export const GUIDE_COLUMNS = 'slug,updated_at';
+  'slug,published_at,tags,category,content,content_evidence,content_updated_at:content_evidence->>contentUpdatedAt,change_summary:content_evidence->>changeSummary';
+export const GUIDE_COLUMNS = 'slug,updated_at,content';
 
 export class SitemapFetchError extends Error {
   constructor(message: string) {

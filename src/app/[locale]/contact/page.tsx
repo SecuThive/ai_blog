@@ -1,7 +1,7 @@
 'use client';
 
 import Link from '@/i18n/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useT } from '@/i18n/provider';
 import { interpolate } from '@/i18n/messages';
 import { getContact } from '@/i18n/copy/contact';
@@ -14,6 +14,12 @@ export default function ContactPage() {
   const [type, setType] = useState('');
   const [company, setCompany] = useState('');
   const [message, setMessage] = useState('');
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('type') === 'catalog' || params.get('type') === 'vendor') setType('catalog');
+    const vendor = params.get('vendor');
+    if (vendor) setMessage(`벤더: ${vendor}\n`);
+  }, []);
   const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [notificationSent, setNotificationSent] = useState(true);

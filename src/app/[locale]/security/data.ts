@@ -13,6 +13,10 @@ export type SecurityCategory =
 
 export interface SecurityVendor {
   id: string;
+  sponsored?: boolean;
+  inquiryUrl?: string;
+  profileUrl?: string;
+  bannerUrl?: string;
   name: string;
   nameEn: string;
   categories: SecurityCategory[];

@@ -7,21 +7,17 @@ import { withEnFallbackContent } from '@/lib/enFallback';
 import { getHomePostIds } from '@/lib/homePosts';
 import { catTone, toneForSeries, engCatTone } from '@/lib/utils';
 import type { PostSummary, EngineerGuide } from '@/lib/types';
-import {
-  MagLatestSection,
-  HomeScrollReveal,
-  type MagPost,
-} from '@/components/HomeClient';
+import { HomeScrollReveal } from '@/components/HomeClient';
 import SubscribeForm from '@/components/SubscribeForm';
-import PostThumb from '@/components/PostThumb';
 import TrackedLink from '@/components/TrackedLink';
 import TrackedExternalLink from '@/components/TrackedExternalLink';
+import HeroDepthScene from '@/components/HeroDepthScene';
 import { isLocale, type Locale } from '@/i18n/config';
 import { getDictionary, interpolate, type Messages } from '@/i18n/messages';
 import { pageMetadata } from '@/i18n/metadata';
 import { localizePost, localizeGuide } from '@/i18n/content';
 import { categoryLabel, engineerCatLabel } from '@/i18n/categories';
-import { formatTimeAgo } from '@/i18n/format';
+import { formatDate } from '@/i18n/format';
 import { seriesLabel } from '@/i18n/display';
 
 // 홈은 DB 쿼리 6개를 병렬로 조합하므로 매분 콜드 재생성하면 최초 응답이 길어진다.
@@ -128,12 +124,11 @@ function ArrowIcon({ size = 14 }: { size?: number }) {
 }
 
 /* ===== Hero v2 ===== */
-function HeroV2({ posts, seriesCount, guideCount, subscriberCount, dict, locale }: {
+function HeroV2({ posts, seriesCount, guideCount, subscriberCount, locale }: {
   posts: PostSummary[];
   seriesCount: number;
   guideCount: number;
   subscriberCount: number;
-  dict: Messages;
   locale: Locale;
 }) {
   // 허영 지표(누적 발행 수·조회수·미달 구독자)는 노출하지 않는다 — 자동생성 인상 완화(#8).
@@ -149,34 +144,29 @@ function HeroV2({ posts, seriesCount, guideCount, subscriberCount, dict, locale 
   return (
     <section className="heroX heroX--brand">
       <div className="container">
-        <div className="heroX-grid heroX-grid--solo">
-          <div>
+        <div className="heroX-grid heroX-grid--depth">
+          <div className="heroX-copy">
             <span className="hero-status">
               <span className="live-dot" />
               <span>THIVELAB · NODELOG</span>
             </span>
             <h1>
-              <span className="grad">THIVELAB</span>
+              <span className="grad">NODELOG</span>
               <br />
-              Learn. Practice. Compete. Build.
+              <span className="heroX-statement">{locale === 'en' ? 'Read. Trace. Resolve.' : '읽고, 추적하고, 해결하다.'}</span>
             </h1>
             <p className="heroX-lead">
               {locale === 'en'
-                ? 'Read practical engineering guides in NODELOG, then explore hands-on challenges in CIPHER. One technology lab for learning and trying ideas.'
-                : 'NODELOG에서 실무 기술을 읽고, CIPHER에서 직접 문제를 풀어보세요. 배우고 실습하며 아이디어를 검증하는 Technology Lab입니다.'}
+                ? 'Practical engineering articles and guides for understanding a problem and finding the next step. Start with a topic, then follow the trail.'
+                : '문제를 이해하고 다음 확인 지점을 찾기 위한 기술 글과 엔지니어 가이드. 관심 있는 주제에서 시작해 관련 글로 이어 읽어보세요.'}
             </p>
             <div className="heroX-actions">
               <TrackedLink href="/#nodelog-latest" event={{ name: 'home_nodelog_click', path: '/' }} className="btn btn-primary btn-lg">
-                Explore NODELOG <ArrowIcon />
+                {locale === 'en' ? 'Explore articles' : '글 둘러보기'} <ArrowIcon />
               </TrackedLink>
-              <TrackedExternalLink href="https://game.thivelab.com/" path="/" event={{ name: 'home_cipher_click', path: '/' }} className="btn btn-lg">
-                Explore CIPHER <span aria-hidden="true">↗</span>
-              </TrackedExternalLink>
-              {posts[0] && (
-                <Link href={`/blog/${posts[0].slug}`} className="btn btn-lg btn-ghost">
-                  {dict.home.latestPost} <ArrowIcon />
-                </Link>
-              )}
+              <Link href="/engineer" className="btn btn-lg btn-ghost">
+                {locale === 'en' ? 'Engineer guides' : '엔지니어 가이드'} <ArrowIcon />
+              </Link>
             </div>
             <div className="heroX-meta">
               {stats.map((s, i) => (
@@ -187,6 +177,7 @@ function HeroV2({ posts, seriesCount, guideCount, subscriberCount, dict, locale 
               ))}
             </div>
           </div>
+          <HeroDepthScene locale={locale} posts={posts.slice(0, 3).map(post => ({ slug: post.slug, title: post.title, category: categoryLabel(post.category, locale) }))} />
         </div>
       </div>
     </section>
@@ -201,8 +192,8 @@ function ServiceLaunchBanner({ locale }: { locale: Locale }) {
           <div className="service-launch-heading">
             <div>
               <span className="service-launch-eyebrow">THIVELAB PRODUCTS</span>
-              <h2 id="service-launch-title">{locale === 'en' ? 'Learn, compete, and create.' : '배우고, 도전하고, 만들어보세요.'}</h2>
-              <p>{locale === 'en' ? 'Explore our live products and what is coming next.' : '지금 사용할 수 있는 서비스와 준비 중인 프로젝트를 소개합니다.'}</p>
+              <h2 id="service-launch-title">{locale === 'en' ? 'Learn, make, compete, and create.' : '배우고, 만들고, 도전해 보세요.'}</h2>
+              <p>{locale === 'en' ? 'Explore the services you can use today.' : '지금 이용할 수 있는 THIVELAB 서비스를 소개합니다.'}</p>
             </div>
             <Link href="/about" className="section-link">{locale === 'en' ? 'About THIVELAB' : 'THIVELAB 소개'} <ArrowIcon /></Link>
           </div>
@@ -213,30 +204,18 @@ function ServiceLaunchBanner({ locale }: { locale: Locale }) {
               <span className="service-launch-item-desc">{locale === 'en' ? 'Practical IT knowledge and engineer guides.' : '실무 IT 지식과 엔지니어 가이드.'}</span>
               <span className="service-launch-item-action">{locale === 'en' ? 'Read NODELOG' : '콘텐츠 보기'} <ArrowIcon /></span>
             </TrackedLink>
-            <TrackedExternalLink className="service-launch-item service-launch-item--vault" href="https://game.thivelab.com/" path="/" event={{ name: 'product_card_click', path: '/', product: 'cipher' }}>
-              <span className="service-launch-item-label">COMPETE · CIPHER / VAULT</span>
-              <strong>CIPHER</strong>
-              <span className="service-launch-item-desc">{locale === 'en' ? 'A seven-stage digital puzzle demo.' : '단서를 따라 풀어가는 7단계 디지털 문제 체험판.'}</span>
-              <span className="service-launch-item-action">{locale === 'en' ? 'Try the demo' : '체험판 시작'} <span aria-hidden="true">↗</span></span>
+            <TrackedExternalLink className="service-launch-item service-launch-item--tools" href="https://tools.thivelab.com/" path="/" event={{ name: 'product_card_click', path: '/', product: 'tools' }} aria-label={locale === 'en' ? 'Open THIVELAB TOOLS' : 'THIVELAB TOOLS 열기'}>
+              <span className="service-launch-item-label">MAKE · TOOLS</span>
+              <strong>TOOLS</strong>
+              <span className="service-launch-item-desc">{locale === 'en' ? 'Resize images, work with PDFs, and count text in your browser.' : '이미지·PDF·글자 수 작업을 브라우저에서 바로 처리하세요.'}</span>
+              <span className="service-launch-item-action">{locale === 'en' ? 'Open free tools' : '무료 도구 사용하기'} <span aria-hidden="true">↗</span></span>
             </TrackedExternalLink>
-            <div className="service-launch-item service-launch-item--pending" aria-label="LABS coming soon" aria-disabled="true">
-              <span className="service-launch-item-label">PRACTICE · LABS</span>
-              <strong>LABS</strong>
-              <span className="service-launch-item-desc">{locale === 'en' ? 'Hands-on technology labs are in preparation.' : '직접 다뤄보는 기술 실습 환경을 준비 중입니다.'}</span>
-              <span className="service-launch-item-action">{locale === 'en' ? 'COMING SOON · not available yet' : 'COMING SOON · 아직 이용할 수 없음'}</span>
-            </div>
             <TrackedExternalLink className="service-launch-item service-launch-item--moa" href="https://moa.thivelab.com/" path="/" event={{ name: 'product_card_click', path: '/', product: 'moa' }} aria-label={locale === 'en' ? 'Open MOA' : 'MOA 열기'}>
               <span className="service-launch-item-label">CREATIVE WORKSPACE · MOA</span>
               <strong>MOA</strong>
               <span className="service-launch-item-desc">{locale === 'en' ? 'Posters, menus, coupons, and review replies in one place.' : '홍보물·메뉴판·쿠폰·리뷰 답변을 한곳에서 만드세요.'}</span>
               <span className="service-launch-item-action">{locale === 'en' ? 'Try MOA' : 'MOA 바로가기'} <span aria-hidden="true">↗</span></span>
             </TrackedExternalLink>
-            <div className="service-launch-item service-launch-item--pending" aria-label="ENTERPRISE coming soon" aria-disabled="true">
-              <span className="service-launch-item-label">BUSINESS · ENTERPRISE</span>
-              <strong>ENTERPRISE</strong>
-              <span className="service-launch-item-desc">{locale === 'en' ? 'Security, AI and private challenge solutions are in preparation.' : '기업용 보안·AI·Private CTF 서비스를 준비 중입니다.'}</span>
-              <span className="service-launch-item-action">{locale === 'en' ? 'COMING SOON · not available yet' : 'COMING SOON · 아직 이용할 수 없음'}</span>
-            </div>
           </div>
         </div>
       </div>
@@ -244,72 +223,31 @@ function ServiceLaunchBanner({ locale }: { locale: Locale }) {
   );
 }
 
-/* ===== Daily Briefing ===== */
-function DailyBriefing({ posts, locale, dict }: { posts: PostSummary[]; locale: Locale; dict: Messages }) {
-  const lead = posts[0];
-  const sub = posts.slice(1, 3);
-  const quick = posts.slice(3, 7);
-
-  if (!lead) return null;
-
-  const leadTone = catTone(lead.category);
-
+function RecentArticles({ posts, locale, dict }: { posts: PostSummary[]; locale: Locale; dict: Messages }) {
   return (
-    <section className="section" id="nodelog-latest">
+    <section className="section" id="nodelog-latest" aria-labelledby="recent-articles-title">
       <div className="container">
         <div className="sec-head2">
           <div className="left">
-            <span className="num">01 / BRIEFING</span>
+            <span className="num">01 / NODELOG</span>
             <div>
-              <h2>{dict.home.briefingTitle}</h2>
-              <p className="sub">{dict.home.briefingSub}</p>
+              <h2 id="recent-articles-title">{dict.home.latestTitle}</h2>
+              <p className="sub">{dict.home.latestSub}</p>
             </div>
           </div>
-          <Link href="/" className="section-link">
-            {dict.home.allPosts} <ArrowIcon size={14} />
-          </Link>
+          <Link href="/archive" className="section-link">{dict.home.archive} <ArrowIcon /></Link>
         </div>
-
-        <div className="brief-wrap">
-          <Link className="brief-main" href={`/blog/${lead.slug}`}>
-            <PostThumb slug={lead.slug} title={lead.title} coverImage={lead.cover_image} category={lead.category} className="ph card-thumb" priority />
-            <div className="brief-main-body">
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 0 }}>
-                <span className={`badge badge-${leadTone}`}>{categoryLabel(lead.category, locale)}</span>
-                <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 11, color: 'var(--text-4)', letterSpacing: '0.04em' }}>
-                  {formatTimeAgo(lead.published_at, locale, dict)}{lead.reading_time ? <> · {interpolate(dict.home.minRead, { min: lead.reading_time })}</> : null}
-                </span>
+        <div className="recent-article-grid">
+          {posts.slice(0, 15).map(post => (
+            <article key={post.id} className="card recent-article-card">
+              <div className="card-meta">
+                <span className={`badge badge-${catTone(post.category)}`}>{categoryLabel(post.category, locale)}</span>
+                <time dateTime={post.published_at}>{formatDate(post.published_at, locale)}</time>
               </div>
-              <h3>{lead.title}</h3>
-              <p>{lead.excerpt}</p>
-            </div>
-          </Link>
-
-          <div className="brief-side">
-            {sub.map((p, i) => (
-              <Link key={p.id} className="brief-card" href={`/blog/${p.slug}`}>
-                <div className="num">02.{i + 1} · {categoryLabel(p.category, locale).toUpperCase()}</div>
-                <h4>{p.title}</h4>
-                <p>{p.excerpt}</p>
-              </Link>
-            ))}
-            {quick.length > 0 && (
-              <div className="brief-quick">
-                <h6>{dict.home.quickReads}</h6>
-                <ul>
-                  {quick.map((p, i) => (
-                    <li key={p.id}>
-                      <span className="t">{String(i + 1).padStart(2, '0')}</span>
-                      <Link className="l" href={`/blog/${p.slug}`} style={{ color: 'var(--text-2)' }}>
-                        {p.title.length > 36 ? p.title.slice(0, 36) + '…' : p.title}
-                      </Link>
-                      {p.reading_time ? <span className="r">{interpolate(dict.home.minShort, { min: p.reading_time })}</span> : null}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
+              <h3><Link href={`/blog/${post.slug}`}>{post.title}</Link></h3>
+              <p>{post.excerpt}</p>
+            </article>
+          ))}
         </div>
       </div>
     </section>
@@ -353,7 +291,9 @@ const LANE_DEFS = [
   },
 ];
 
-function ReadingLanes({ lanePosts, locale, dict }: { lanePosts: Record<string, PostSummary[]>; locale: Locale; dict: Messages }) {
+function ReadingLanes({ lanePosts, dict }: { lanePosts: Record<string, PostSummary[]>; dict: Messages }) {
+  const populatedLanes = LANE_DEFS.filter(lane => (lanePosts[lane.category]?.length ?? 0) > 0);
+  if (populatedLanes.length === 0) return null;
   return (
     <section className="section">
       <div className="container">
@@ -373,7 +313,7 @@ function ReadingLanes({ lanePosts, locale, dict }: { lanePosts: Record<string, P
         </div>
 
         <div className="lanes">
-          {LANE_DEFS.map((lane, i) => {
+          {populatedLanes.map((lane, i) => {
             const items = lanePosts[lane.category] ?? [];
             return (
               <div key={i} className="lane">
@@ -382,13 +322,13 @@ function ReadingLanes({ lanePosts, locale, dict }: { lanePosts: Record<string, P
                     <div style={{ fontFamily: 'var(--ff-mono)', fontSize: 10.5, color: 'var(--text-4)', letterSpacing: '0.10em', marginBottom: 6 }}>
                       LANE · {lane.tag}
                     </div>
-                    <h4>{dict.home[lane.titleKey]}</h4>
+                    <h3>{dict.home[lane.titleKey]}</h3>
                   </div>
                   <span className="ic">{lane.icon}</span>
                 </div>
                 <p className="lane-sub">{dict.home[lane.subKey]}</p>
                 <div className="lane-steps">
-                  {items.length > 0 ? items.map((p, j) => (
+                  {items.map((p, j) => (
                     <Link key={p.id} className="lane-step" href={`/blog/${p.slug}`}>
                       <span className="num">{String(j + 1).padStart(2, '0')}</span>
                       <div>
@@ -396,19 +336,7 @@ function ReadingLanes({ lanePosts, locale, dict }: { lanePosts: Record<string, P
                         {p.reading_time ? <p className="m">{interpolate(dict.home.minRead, { min: p.reading_time })}</p> : null}
                       </div>
                     </Link>
-                  )) : (
-                    <TrackedLink
-                      className="lane-step"
-                      href={`/category/${lane.category}`}
-                      event={{ name: 'category_click', path: '/', category: lane.category, position: `lane-empty-${lane.tag}` }}
-                    >
-                      <span className="num">→</span>
-                      <div>
-                        <p className="t">{interpolate(dict.home.viewCategory, { cat: categoryLabel(lane.category, locale) })}</p>
-                        <p className="m">{dict.home.categoryAll}</p>
-                      </div>
-                    </TrackedLink>
-                  )}
+                  ))}
                 </div>
                 <div className="lane-foot">
                   <span>{items.length} STEPS</span>
@@ -615,6 +543,7 @@ function EngineerGuidesSection({ guides, total, locale, dict }: { guides: Engine
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <span className={`badge badge-${tone}`} style={{ fontSize: 10.5 }}>{engineerCatLabel(g.category, locale)}</span>
                   <span style={{ fontFamily: 'var(--ff-mono)', fontSize: 10.5, color: 'var(--text-4)', letterSpacing: '0.04em' }}>{diff}</span>
+                  <time dateTime={g.created_at} style={{ marginLeft: 'auto', fontFamily: 'var(--ff-mono)', fontSize: 10.5, color: 'var(--text-4)' }}>{formatDate(g.created_at, locale)}</time>
                 </div>
                 <h3 style={{ margin: 0, fontSize: 15, lineHeight: 1.38, letterSpacing: '-0.012em' }}>{g.title}</h3>
                 <p style={{ margin: 0, color: 'var(--text-3)', fontSize: 12.5, lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{g.summary}</p>
@@ -627,7 +556,7 @@ function EngineerGuidesSection({ guides, total, locale, dict }: { guides: Engine
           })}
         </div>
         <div style={{ marginTop: 20, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          {['Linux / Shell', 'Docker / 컨테이너', 'Git / CI·CD', '네트워킹 / 서버', '보안 설정', '데이터베이스'].map(cat => (
+          {Array.from(new Set(guides.map(guide => guide.category))).map(cat => (
             <TrackedLink
               key={cat}
               href={`/engineer?cat=${encodeURIComponent(cat)}`}
@@ -659,7 +588,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   ]);
 
   // "ACTIVE SERIES"는 실제로 탐색 가능한 시리즈만 센다 — 1편짜리 얇은 시리즈는
-  // series/[id]가 noindex이고 sitemap에서도 제외되므로(2편 이상) 동일 기준(>=2)을 적용.
+  // 홈의 시리즈 추천은 2편 이상인 모음으로 제한한다.
   const activeSeriesCount = series.filter(s => s.count >= 2).length;
 
   if (posts.length === 0) {
@@ -682,27 +611,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     <HomeScrollReveal>
       {/* 홈은 실제 글 목록이 있을 때만 광고 로더를 둔다(빈 홈 화면 제외). */}
       <AdSenseLoader />
-      <HeroV2 posts={posts} seriesCount={activeSeriesCount} guideCount={guideCount} subscriberCount={subscriberCount} dict={dict} locale={locale} />
-      <ServiceLaunchBanner locale={locale} />
-      <DailyBriefing posts={posts} locale={locale} dict={dict} />
+      <HeroV2 posts={posts} seriesCount={activeSeriesCount} guideCount={guideCount} subscriberCount={subscriberCount} locale={locale} />
+      <RecentArticles posts={posts} locale={locale} dict={dict} />
       <EngineerGuidesSection guides={recentGuides} total={guideCount} locale={locale} dict={dict} />
-      <ReadingLanes lanePosts={lanePosts} locale={locale} dict={dict} />
-      {/* DailyBriefing이 이미 posts[0..6](리드+서브+퀵리즈)을 노출했으므로, "최신 글" 섹션은
-          그 뒤를 이어 posts[7..]부터 보여준다 — 같은 글이 두 섹션에 중복 노출되는 것을 방지. */}
-      <MagLatestSection posts={posts.slice(7) as MagPost[]} />
+      <ReadingLanes lanePosts={lanePosts} dict={dict} />
+      <ServiceLaunchBanner locale={locale} />
       <SeriesShowcase series={series} dict={dict} locale={locale} />
-      <section className="cipher-feature" aria-labelledby="cipher-feature-title">
-        <div className="container cipher-feature-inner">
-          <div>
-            <span className="service-launch-eyebrow">CIPHER / VAULT · NOW OPEN</span>
-            <h2 id="cipher-feature-title">{locale === 'en' ? 'Put your reasoning to the test.' : '읽은 다음, 직접 풀어보세요.'}</h2>
-            <p>{locale === 'en' ? 'A seven-stage digital puzzle demo. Follow clues and try the current challenge experience.' : '단서를 따라 진행하는 7단계 디지털 문제 체험판에서 직접 도전해 보세요.'}</p>
-          </div>
-          <TrackedExternalLink href="https://game.thivelab.com/" path="/" event={{ name: 'home_cipher_click', path: '/' }} className="btn btn-primary btn-lg">
-            {locale === 'en' ? 'Start the demo' : '체험판 시작하기'} <span aria-hidden="true">↗</span>
-          </TrackedExternalLink>
-        </div>
-      </section>
       <EditorQuote dict={dict} />
       <NewsletterBand subscriberCount={subscriberCount} dict={dict} />
     </HomeScrollReveal>
