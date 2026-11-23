@@ -1,0 +1,16 @@
+diff --git a/src/app/globals.css b/src/app/globals.css
+index 6ebc17d..b31e345 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -1144,6 +1144,11 @@ mark { background: color-mix(in oklch, var(--acc-blue) 18%, transparent); color:
+ .heroX-grid--solo { grid-template-columns: 1fr; }
+ .heroX-grid--solo > div { min-width: 0; }
+ .heroX-grid--solo .heroX-lead { max-width: 640px; }
++.heroX--brand .heroX-grid--solo > div { width: 100%; max-width: 1050px; margin-inline: auto; text-align: center; }
++.heroX--brand .heroX-grid--solo .heroX-lead { max-width: 720px; margin-inline: auto; }
++.heroX--brand .heroX-grid--solo .heroX-actions { justify-content: center; }
++.heroX--brand .heroX-grid--solo .heroX-meta { max-width: 600px; margin-inline: auto; }
++.heroX--brand .heroX-grid--solo .heroX-meta > div { padding-inline: 12px; text-align: center; }
+ .heroX h1 {
+   font-size: 68px;
+   line-height: 1.02;
