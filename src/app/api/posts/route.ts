@@ -1,3 +1,4 @@
+import { apiKeyValid } from '@/lib/apiKey';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, toSlug } from '@/lib/supabase';
 import { withEnFallbackContent } from '@/lib/enFallback';
@@ -5,8 +6,7 @@ import { localizePost } from '@/i18n/content';
 import type { Locale } from '@/i18n/config';
 
 function auth(req: NextRequest): boolean {
-  const key = req.headers.get('x-api-key');
-  return key === process.env.BLOG_API_KEY;
+  return apiKeyValid(req.headers);
 }
 
 // ── 중복(카니벌라이제이션) 가드 ────────────────────────────────────────────

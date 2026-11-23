@@ -1,3 +1,4 @@
+import { apiKeyValid } from '@/lib/apiKey';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
@@ -10,8 +11,7 @@ import { supabaseAdmin } from '@/lib/supabase';
  * 쿼리: ?category=개발 (선택), ?days=90 (선택, 최근 N일만)
  */
 export async function GET(req: NextRequest) {
-  const key = req.headers.get('x-api-key');
-  if (key !== process.env.BLOG_API_KEY) {
+  if (!apiKeyValid(req.headers)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

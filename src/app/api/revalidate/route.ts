@@ -1,3 +1,4 @@
+import { apiKeyValid } from '@/lib/apiKey';
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { postCacheTag, guideCacheTag } from '@/lib/cacheTags';
@@ -22,7 +23,7 @@ function safeDecode(slug: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  if (req.headers.get('x-api-key') !== process.env.BLOG_API_KEY) {
+  if (!apiKeyValid(req.headers)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { slug, type = 'post' } = await req.json().catch(() => ({}));

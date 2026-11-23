@@ -1,21 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { Resend } from 'resend';
+import { MAX_BODY_BYTES, clientIp, createRateLimiter, parseContact, sameSiteOrigin } from '@/lib/contactPolicy';
 
-const TO_EMAIL = 'thive8564@gmail.com';
+// 수신처·발신자는 환경변수로 바꿀 수 있다. 발신 도메인은 Resend에서 인증된 주소만 쓸 수 있다.
+const TO_EMAIL = process.env.CONTACT_TO_EMAIL || 'thive8564@gmail.com';
+const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || 'Nodelog 문의 <onboarding@resend.dev>';
+// IP당 10분에 3건, 같은 이메일로는 1시간에 5건.
+const allowIp = createRateLimiter(3, 10 * 60 * 1000);
+const allowEmail = createRateLimiter(5, 60 * 60 * 1000);
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
+  if (!sameSiteOrigin(req.headers)) {
+    return NextResponse.json({ error: '허용되지 않은 요청입니다.' }, { status: 403 });
+  }
+  if (!(req.headers.get('content-type') || '').includes('application/json')) {
+    return NextResponse.json({ error: '요청 형식이 올바르지 않습니다.' }, { status: 415 });
+  }
+  const raw = await req.text().catch(() => '');
+  if (Buffer.byteLength(raw) > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: '요청이 너무 큽니다.' }, { status: 413 });
+  }
+  let body: unknown = {};
+  try { body = JSON.parse(raw); } catch { /* parseContact가 필수 항목 오류로 처리한다 */ }
 
-  const name    = typeof body?.name    === 'string' ? body.name.trim()                : '';
-  const email   = typeof body?.email   === 'string' ? body.email.trim().toLowerCase() : '';
-  const type    = typeof body?.type    === 'string' ? body.type.trim()                : '';
-  const company = typeof body?.company === 'string' ? body.company.trim()             : '';
-  const message = typeof body?.message === 'string' ? body.message.trim()             : '';
+  const parsed = parseContact(body);
+  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
+  const { name, email, type, company, message } = parsed.value;
 
-  if (!name || !email || !email.includes('@') || !message || body?.privacy_consent !== true) {
-    return NextResponse.json({ error: '필수 항목을 모두 입력해주세요.' }, { status: 400 });
+  if (!allowIp(clientIp(req.headers)) || !allowEmail(email)) {
+    return NextResponse.json({ error: '잠시 후 다시 시도해주세요.' }, { status: 429, headers: { 'Retry-After': '600' } });
   }
 
   // Supabase 저장
@@ -35,10 +50,10 @@ export async function POST(req: NextRequest) {
   if (process.env.RESEND_API_KEY) {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { error } = await resend.emails.send({
-      from: 'Nodelog 문의 <onboarding@resend.dev>',
+      from: FROM_EMAIL,
       to: TO_EMAIL,
       replyTo: email,
-      subject: `[Nodelog 문의] ${(type || '일반 문의').replace(/[\r\n]/g, ' ')} — ${name.replace(/[\r\n]/g, ' ')}`,
+      subject: `${type === 'catalog' ? '[카탈로그]' : '[Nodelog 문의]'} ${(type || '일반 문의').replace(/[\r\n]/g, ' ')} — ${name.replace(/[\r\n]/g, ' ')}`,
       html: `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#1a1a2e">
           <h2 style="font-size:18px;margin:0 0 24px;border-bottom:1px solid #eee;padding-bottom:12px">

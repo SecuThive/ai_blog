@@ -29,23 +29,26 @@ const ADSENSE_CONNECT = [
   "https://www.google.com",
 ];
 const GA = ["https://www.google-analytics.com", "https://*.google-analytics.com", "https://*.analytics.google.com"];
+const IS_DEV = process.env.NODE_ENV !== "production";
 
 const CSP = [
   "default-src 'self'",
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",
-  ["script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com", ...ADSENSE_SCRIPT, "https://static.cloudflareinsights.com"].join(' '),
+  ["script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com", ...ADSENSE_SCRIPT, "https://static.cloudflareinsights.com", ...(IS_DEV ? ["'unsafe-eval'"] : [])].join(' '),
   "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
   "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https:",
-  ["connect-src 'self'", ...GA, ...ADSENSE_CONNECT, "https://cloudflareinsights.com", "https://*.supabase.co"].join(' '),
+  ["connect-src 'self'", ...GA, ...ADSENSE_CONNECT, "https://cloudflareinsights.com", "https://*.supabase.co", ...(IS_DEV ? ["ws:"] : [])].join(' '),
   ["frame-src 'self'", ...ADSENSE_FRAME].join(' '),
   "worker-src 'self' blob:",
   "manifest-src 'self'",
+  "frame-ancestors 'self'",
 ].join('; ');
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["127.0.0.1", "192.168.0.38", "100.121.61.93"],
   // 응답에서 프레임워크 버전을 공개하지 않는다.
   poweredByHeader: false,
   images: {
@@ -58,6 +61,11 @@ const nextConfig: NextConfig = {
   // 별칭이 없으면 그런 제출처에서 "피드 없음"으로 판정돼 등재가 막힌다.
   async redirects() {
     return [
+      // Legacy indexed article URLs. Next.js permanent redirects return HTTP 308.
+      { source: "/blog/개인정보-위탁-vs-제3자-제공-차이-동의-널-받아야-할까-2026-가이드", destination: "/blog/개인정보-위탁-vs-제3자-제공-차이-동의-또-받아야-할까-2026-가이드", permanent: true },
+      { source: "/en/blog/개인정보-위탁-vs-제3자-제공-차이-동의-널-받아야-할까-2026-가이드", destination: "/en/blog/개인정보-위탁-vs-제3자-제공-차이-동의-또-받아야-할까-2026-가이드", permanent: true },
+      { source: "/blog/2026-isms-p-인증-준비-체크리스트-102개-항목빈출-결함-실무-가이드", destination: "/blog/2026-isms-p-인증-준비-체크리스트-의무대상절차비용-총정리", permanent: true },
+      { source: "/en/blog/2026-isms-p-인증-준비-체크리스트-102개-항목빈출-결함-실무-가이드", destination: "/en/blog/2026-isms-p-인증-준비-체크리스트-의무대상절차비용-총정리", permanent: true },
       { source: "/rss.xml", destination: "/rss", permanent: true },
       { source: "/feed", destination: "/rss", permanent: true },
       { source: "/feed.xml", destination: "/rss", permanent: true },
@@ -71,6 +79,8 @@ const nextConfig: NextConfig = {
       {
         source: "/(.*)",
         headers: [
+          { key: "Strict-Transport-Security", value: "max-age=31536000" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), browsing-topics=()" },

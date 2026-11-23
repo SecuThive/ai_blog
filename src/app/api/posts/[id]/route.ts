@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { apiKeyValid } from '@/lib/apiKey';
+import { parsePostUpdate } from '@/lib/postUpdate';
 
 function auth(req: NextRequest): boolean {
-  return req.headers.get('x-api-key') === process.env.BLOG_API_KEY;
+  return apiKeyValid(req.headers);
 }
 
 // PUT /api/posts/[id] — update post
@@ -10,15 +12,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!auth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await params;
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
+  const parsed = parsePostUpdate(body);
+  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
   const sb = supabaseAdmin();
 
-  const update: Record<string, unknown> = { ...body };
-  // 날짜·검토·지표 컬럼은 API로 직접 쓰지 못하게 한다. 발행일/검토 기록을 임의로 찍거나
-  // 과거 글의 updated_at을 일괄 갱신하는 경로를 막기 위함이다(검토 기록은 아래 발행 승인 흐름에서만 생성).
-  for (const key of ['id', 'created_at', 'published_at', 'updated_at', 'reviewed_at', 'reviewed_by', 'views', 'helpful_count', 'unhelpful_count']) {
-    delete update[key];
-  }
+  // 허용 목록에 있는 컬럼만 저장한다. 날짜·검토·지표 컬럼과 slug는 API로 직접 쓰지 못한다
+  // (발행일/검토 기록을 임의로 찍거나 과거 글의 updated_at을 일괄 갱신하는 경로를 막기 위함.
+  // 검토 기록은 아래 발행 승인 흐름에서만 생성된다).
+  const update = parsed.update;
   const { data: existing, error: existingError } = await sb
     .from('posts')
     .select('status,published_at')
@@ -44,6 +46,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   }
   delete update.approval_confirmed;
 
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json({ error: '수정할 항목이 없습니다.' }, { status: 400 });
+  }
   const { data, error } = await sb.from('posts').update(update).eq('id', id).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -55,6 +60,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   if (!auth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await params;
+  if (!/^\d+$/.test(id)) return NextResponse.json({ error: 'id는 숫자여야 합니다.' }, { status: 400 });
   const sb = supabaseAdmin();
   const { error } = await sb.from('posts').delete().eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -71,7 +77,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const sb = supabaseAdmin();
   const isNum = /^\d+$/.test(id);
 
-  const q = sb.from('posts').select('*');
+  const q = sb.from('posts').select('*').eq('status', 'published');
   const { data, error } = await (isNum ? q.eq('id', id) : q.eq('slug', id)).single();
 
   if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
