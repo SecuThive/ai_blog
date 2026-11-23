@@ -34,7 +34,9 @@ if (existsSync(tokenFile)) {
     name: 'thivelab-tunnel',
     cwd: root,
     script: '/opt/homebrew/bin/cloudflared',
-    args: `tunnel --no-autoupdate run --token-file ${tokenFile}`,
+    // QUIC connections repeatedly dropped on this host in October 2026.
+    // Use Cloudflare's supported TCP transport for a stable tunnel connection.
+    args: `tunnel --no-autoupdate --protocol http2 run --token-file ${tokenFile}`,
     interpreter: 'none',
     watch: false,
   });
