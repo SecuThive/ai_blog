@@ -31,7 +31,7 @@ canonical, Open Graph URL, `sitemap.xml`, `robots.txt`, RSS, JSON-LD는 모두
 | 변수 | 설명 | 비고 |
 | --- | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | canonical/OG/sitemap/robots/RSS/JSON-LD의 기준 URL | 프로덕션은 `https://www.thivelab.com`, Preview/개발은 비워두면 코드 기본값(같은 값)으로 폴백 |
-| `NAVER_SITE_VERIFICATION` | 네이버 서치어드바이저 "HTML 태그" 소유 확인 코드 | 콤마로 여러 개 지정 가능(`code1,code2`). 값 자체는 페이지 소스에 공개되지만 계정별로 달라지므로 코드에 고정하지 않음. 미설정 시 메타 태그 미출력 |
+| `NAVER_SITE_VERIFICATION` | 추가 네이버 서치어드바이저 "HTML 태그" 소유 확인 코드 | 콤마로 여러 개 지정 가능(`code1,code2`). 레이아웃에 등록된 기본 확인 코드 외의 코드를 추가할 때 사용 |
 | `GOOGLE_SITE_VERIFICATION` | Google Search Console "HTML 태그" 소유 확인 코드 | 미설정 시 메타 태그 미출력 |
 
 나머지 필수/기능별 환경변수는 README의 "환경 변수" 절을 참고하세요.

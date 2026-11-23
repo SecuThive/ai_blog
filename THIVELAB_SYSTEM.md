@@ -4,8 +4,8 @@
 
 ## 1. 라이브 사이트 = `project/ai-blog`
 
-- **프론트**: Next.js @ Vercel (repo: `SecuThive/ai_blog`, 배포: ai-blog-mocha.vercel.app → thivelab.com)
-- **데이터**: Supabase `isfzeksbzxtuqymfocqv` — 테이블 `posts`(/blog/), `engineer_guides`(/engineer/)
+- **프론트**: Next.js 자체 호스팅 (이 맥의 pm2 `thivelab-web`, 127.0.0.1:3103) + Cloudflare Tunnel (pm2 `thivelab-tunnel`) → www.thivelab.com (apex는 www로 301). repo: `SecuThive/ai_blog`. 근거: docs/SELF_HOST_CLOUDFLARE.md
+- **데이터**: 로컬 Postgres + PostgREST (환경변수 이름만 `SUPABASE_*`로 남아 있음) — 테이블 `posts`(/blog/), `engineer_guides`(/engineer/)
 - **GSC 속성**: `sc-domain:thivelab.com` (도메인 유형)
 
 ## 2. 두뇌 = 신규글 생성 엔진 (SAFESUARE 백엔드 안)
