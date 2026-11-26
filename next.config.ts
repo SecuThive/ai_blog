@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 // AdSense(광고 코드·프레임·트래픽 품질·동의 메시지), GA4, Cloudflare Web Analytics, Vercel Analytics.
@@ -48,6 +49,8 @@ const CSP = [
 ].join('; ');
 
 const nextConfig: NextConfig = {
+  // 긴 한글 slug의 ISR 캐시 파일명이 255바이트를 넘는 문제(ENAMETOOLONG) 방지 — cache-handler.cjs 참고.
+  cacheHandler: path.join(process.cwd(), 'cache-handler.cjs'),
   allowedDevOrigins: ["127.0.0.1", "192.168.0.38", "100.121.61.93"],
   // 응답에서 프레임워크 버전을 공개하지 않는다.
   poweredByHeader: false,
