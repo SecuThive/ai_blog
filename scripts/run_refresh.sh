@@ -2,6 +2,8 @@
 # 리프레시 반자동 루프 (pm2 cron 으로 매주 실행) — 측정→분석→초안 생성.
 # 발행은 하지 않는다. refresh_proposals/<날짜>/ 에 제안이 쌓이면 사람이 검토·발행.
 set -uo pipefail
+# 비활성 플래그(2026-11-26, 오너·SNS_BOT 승인): 파일이 있으면 아무것도 하지 않고 종료. 되돌리려면 플래그 파일 삭제.
+[ -f "$HOME/.config/thivelab/blog-refresh.DISABLED" ] && { echo "[$(date)] blog-refresh disabled by flag"; exit 0; }
 cd "$(dirname "$0")/.." || exit 1
 
 LOG="refresh_proposals/run.log"
