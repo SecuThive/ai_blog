@@ -6,6 +6,7 @@ import type { EngineerGuide } from '@/lib/types';
 import { unstable_cache } from 'next/cache';
 import { makeFreshClient } from '@/lib/supabase';
 import { engCatTone, diffLabel, publicTags, DEFAULT_ROBOTS } from '@/lib/utils';
+import { EDITORIAL_NOINDEX_GUIDES, EDITORIAL_NOINDEX_ROBOTS } from '@/lib/editorialNoindex';
 import { rankRelated } from '@/lib/related';
 import { withEnFallbackContent } from '@/lib/enFallback';
 import { guideCacheTag } from '@/lib/cacheTags';
@@ -202,7 +203,9 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     keywords: visiblePublicTags(guide.tags, locale).map(t => t.label).join(', '),
     authors: [{ name: dict.meta.authors }],
     alternates: { canonical: locale === 'en' && !hasEnglishGuideContent(fetched) ? siteUrl(`/engineer/${guide.slug}`, 'ko') : url, languages: languageAlternates(`/engineer/${guide.slug}`, hasEnglishGuideContent(fetched)) },
-    robots: locale === 'en' && !hasEnglishGuideContent(fetched) ? { index: false, follow: true } : DEFAULT_ROBOTS,
+    robots: EDITORIAL_NOINDEX_GUIDES.has(fetched.slug)
+      ? EDITORIAL_NOINDEX_ROBOTS
+      : locale === 'en' && !hasEnglishGuideContent(fetched) ? { index: false, follow: true } : DEFAULT_ROBOTS,
     openGraph: {
       title: `${guide.title} — Nodelog Engineer`,
       description: guide.summary,

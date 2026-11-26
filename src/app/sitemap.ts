@@ -1,6 +1,7 @@
 import { unstable_cache } from 'next/cache';
 import { makeFreshClient } from '@/lib/supabase';
 import { POST_REDIRECTS } from '@/lib/postRedirects';
+import { EDITORIAL_NOINDEX_POSTS, EDITORIAL_NOINDEX_GUIDES } from '@/lib/editorialNoindex';
 import type { MetadataRoute } from 'next';
 import { withLocale } from '@/i18n/path';
 import { hasEnglishPostContent, hasEnglishGuideContent } from '@/i18n/content';
@@ -125,6 +126,8 @@ function fullSitemap(base: string, data: SitemapData): MetadataRoute.Sitemap {
   const posts = data.posts
     // 리다이렉트 맵에 있는 slug는 DB 상태와 무관하게 제출하지 않는다(코드 배포와 DB 변경 사이의 불일치 방지).
     .filter(p => !Object.hasOwn(POST_REDIRECTS, p.slug))
+    // 편집 noindex 글은 사이트맵에 제출하지 않는다(robots noindex와 일치).
+    .filter(p => !EDITORIAL_NOINDEX_POSTS.has(p.slug))
     .map(p => entry(base, `/blog/${encodeURIComponent(p.slug)}`, {
       lastModified: new Date(
         substantiveUpdate(
@@ -136,7 +139,7 @@ function fullSitemap(base: string, data: SitemapData): MetadataRoute.Sitemap {
       priority: 0.8,
     }, p.hasEnglish === true));
 
-  const guideRows = data.guides;
+  const guideRows = data.guides.filter(g => !EDITORIAL_NOINDEX_GUIDES.has(g.slug));
   const latestGuide = guideRows.map(g => g.updated_at).filter(Boolean).sort().pop();
   const guides = guideRows.map(g => entry(base, `/engineer/${encodeURIComponent(g.slug)}`, {
     lastModified: new Date(g.updated_at),

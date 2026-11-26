@@ -5,6 +5,7 @@ import AffiliateBox from '@/components/affiliate/AffiliateBox';
 import { isAdEligiblePost } from '@/lib/adsense';
 import { readingTime, makeFreshClient } from '@/lib/supabase';
 import { catTone, publicTags, DEFAULT_ROBOTS, MIN_DISPLAY_VIEWS } from '@/lib/utils';
+import { EDITORIAL_NOINDEX_POSTS, EDITORIAL_NOINDEX_ROBOTS } from '@/lib/editorialNoindex';
 import { rankRelated, isStronglyRelated } from '@/lib/related';
 import { withEnFallbackContent } from '@/lib/enFallback';
 import { postCacheTag } from '@/lib/cacheTags';
@@ -245,7 +246,9 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       canonical: locale === 'en' && !hasEnglishPostContent(post) ? siteUrl(`/blog/${post.slug}`, 'ko') : url,
       languages: languageAlternates(`/blog/${post.slug}`, hasEnglishPostContent(post)),
     },
-    robots: locale === 'en' && !hasEnglishPostContent(post) ? { index: false, follow: true } : DEFAULT_ROBOTS,
+    robots: EDITORIAL_NOINDEX_POSTS.has(post.slug)
+      ? EDITORIAL_NOINDEX_ROBOTS
+      : locale === 'en' && !hasEnglishPostContent(post) ? { index: false, follow: true } : DEFAULT_ROBOTS,
     openGraph: {
       title: localized.title,
       description: localized.excerpt,
