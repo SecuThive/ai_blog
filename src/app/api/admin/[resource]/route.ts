@@ -98,7 +98,8 @@ async function mutate(request: Request, { params }: Context) {
       if (value.status === 'published') {
         if (resource === 'posts') value.published_at = existing?.published_at || new Date().toISOString();
         value.reviewed_at = new Date().toISOString();
-        value.reviewed_by = user.email || user.id;
+        // 공개 '편집 책임' 표시는 로그인 계정과 무관하게 운영자 공개 이메일로 고정(에이전트 계정 비노출).
+        value.reviewed_by = process.env.ADMIN_PUBLIC_EDITOR?.trim() || 'thive@thivelab.com';
       }
     } else {
       if (body.status !== 'approved' && body.status !== 'pending') throw new Error('댓글 상태를 확인해 주세요.');
