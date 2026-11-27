@@ -43,3 +43,9 @@ test('historical list contains the 2024 LLM post and links to current sources', 
   assert.equal(note?.asOf, '2024');
   assert.ok(note && note.currentSources.length > 0 && note.currentSources.every(s => s.url.startsWith('https://')));
 });
+
+test("reviewer defaults to human and accepts ai (own-site 2026-11-27)", () => {
+  assert.equal(readEditorialRecord({}).reviewer, "human");
+  assert.equal(readEditorialRecord({ reviewer: "ai" }).reviewer, "ai");
+  assert.equal(readEditorialRecord({ reviewer: "robot" }).reviewer, "human");
+});

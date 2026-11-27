@@ -215,9 +215,9 @@
     "minutesShort": "{min} min",
     "viewAuthorTitle": "How we write and review",
     "reportEmail": "email us",
-    "noRecord": "This article has no recorded human check (date and scope) yet.",
-    "recordTitle": "Verification record",
-    "recordVerifiedAt": "Checked on",
+    "noRecord": "This article has no editorial check record (date, scope, sources) yet.",
+    "recordTitle": "Editorial check record",
+    "recordVerifiedAt": "Checked against sources on",
     "recordScope": "Scope",
     "recordEnv": "Environment",
     "recordChange": "What changed",
@@ -225,7 +225,13 @@
     "historicalTitle": "Reference as of {asOf}",
     "historicalBody": "This article is based on material published in {asOf} (first published on this site {published}). It is not a current recommendation or an up-to-date comparison. Check current models, features and prices in the official docs below.",
     "historicalCurrent": "See the current selection method →",
-    "historicalSources": "Current official sources"
+    "historicalSources": "Current official sources",
+    "aiNoteVerified": "AI was used to help draft this article; the content was checked against official sources.",
+    "aiNoteUnverified": "AI was used to help draft this article.",
+    "recordReviewer": "Checked by",
+    "reviewerHuman": "Operator",
+    "reviewerAi": "AI agent (no human review)",
+    "aiNoteAiChecked": "AI was used to draft this article and check it against official sources."
   },
   "engineer": {
     "crumb": "Engineer",
@@ -245,7 +251,7 @@
     "modified": "Updated",
     "views": "{count} views",
     "noteHead": "Editorial note",
-    "noteBody": "AI tools may assist drafting. Check the evidence in each guide for whether commands were run and which environment was used. Confirm the current docs for your version before applying instructions, and email us about errors.",
+    "noteBody": "Check the evidence in each guide for whether commands were run and which environment was used. Confirm the current docs for your version before applying instructions, and email us about errors.",
     "seeAuthor": "How we write and review →",
     "seePolicy": "Editorial policy →",
     "searchPlaceholder": "Search titles, tags, categories…",
@@ -253,7 +259,8 @@
     "searchResults": "Results for \"{q}\"",
     "catGuides": "{cat} guides",
     "recentGuides": "Recent guides",
-    "noGuides": "No guides match \"{q}\"."
+    "noGuides": "No guides match \"{q}\".",
+    "aiNote": "AI was used to help draft this article."
   },
   "subscribe": {
     "placeholder": "Your email address",

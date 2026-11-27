@@ -481,7 +481,7 @@ export default async function EngineerGuidePage({ params }: { params: Promise<{ 
                 {dict.engineer.noteHead}
               </div>
               <p className="editorial-note-body">
-                {dict.engineer.noteBody}{' '}
+                {dict.engineer.aiNote}{' '}{dict.engineer.noteBody}{' '}
                 <a href="mailto:thive@thivelab.com">{dict.blog.reportEmail}</a>
               </p>
               {officialDocs.length > 0 && (

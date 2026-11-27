@@ -215,9 +215,9 @@
     "minutesShort": "{min}분",
     "viewAuthorTitle": "작성·검토 방식 보기",
     "reportEmail": "이메일로 제보",
-    "noRecord": "이 글에는 사람이 확인한 날짜·범위 기록이 아직 없습니다.",
-    "recordTitle": "검증 기록",
-    "recordVerifiedAt": "확인일",
+    "noRecord": "이 글에는 편집 확인 기록(확인일·범위·출처)이 아직 없습니다.",
+    "recordTitle": "편집 확인 기록",
+    "recordVerifiedAt": "대조일",
     "recordScope": "확인 범위",
     "recordEnv": "실행 환경",
     "recordChange": "변경 요약",
@@ -225,7 +225,13 @@
     "historicalTitle": "{asOf}년 기준 자료",
     "historicalBody": "이 글은 {asOf}년에 공개된 자료를 기준으로 합니다(사이트 최초 발행 {published}). 현재 추천이나 최신 비교가 아닙니다. 모델 목록·기능·가격은 아래 공식 문서에서 다시 확인하세요.",
     "historicalCurrent": "현재 기준 선택 절차 보기 →",
-    "historicalSources": "현재 공식 자료"
+    "historicalSources": "현재 공식 자료",
+    "aiNoteVerified": "초안 작성에 AI를 활용했고, 내용은 공식 자료로 확인했습니다.",
+    "aiNoteUnverified": "초안 작성에 AI를 활용했습니다.",
+    "recordReviewer": "확인 주체",
+    "reviewerHuman": "운영자 확인",
+    "reviewerAi": "AI 에이전트 대조(사람 검토 없음)",
+    "aiNoteAiChecked": "초안 작성과 공식 자료 대조에 AI를 활용했습니다."
   },
   "engineer": {
     "crumb": "엔지니어",
@@ -245,7 +251,7 @@
     "modified": "수정",
     "views": "{count} 조회",
     "noteHead": "편집 안내 · Editorial Note",
-    "noteBody": "AI 도구가 초안 작성에 사용될 수 있습니다. 명령어의 실행 여부와 검증 환경은 각 가이드에 기재된 근거를 확인하세요. 적용 전 사용 중인 버전의 공식 문서를 확인하고, 오류는 이메일로 알려주세요.",
+    "noteBody": "명령어의 실행 여부와 검증 환경은 각 가이드에 기재된 근거를 확인하세요. 적용 전 사용 중인 버전의 공식 문서를 확인하고, 오류는 이메일로 알려주세요.",
     "seeAuthor": "운영·검토 방식 →",
     "seePolicy": "편집 정책 →",
     "searchPlaceholder": "제목, 태그, 카테고리 검색…",
@@ -253,7 +259,8 @@
     "searchResults": "\"{q}\" 검색 결과",
     "catGuides": "{cat} 가이드",
     "recentGuides": "최근 가이드",
-    "noGuides": "\"{q}\" 에 해당하는 가이드가 없습니다."
+    "noGuides": "\"{q}\" 에 해당하는 가이드가 없습니다.",
+    "aiNote": "초안 작성에 AI를 활용했습니다."
   },
   "subscribe": {
     "placeholder": "이메일 주소를 입력하세요",
