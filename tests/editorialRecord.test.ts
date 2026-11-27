@@ -50,3 +50,8 @@ test("reviewer is explicit: human | ai | null when missing or invalid (own-site 
   assert.equal(readEditorialRecord({ reviewer: "human" }).reviewer, "human");
   assert.equal(readEditorialRecord({ reviewer: "robot" }).reviewer, null);
 });
+
+test("date-only stamps (no reviewScope) are not shown as a record (own-site 2026-11-27)", () => {
+  const r = readEditorialRecord({ verifiedAt: "2026-10-04", officialSources: [{ label: "x", url: "https://example.com" }] });
+  assert.equal(hasVerificationRecord(r), false);
+});
