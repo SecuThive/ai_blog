@@ -688,7 +688,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
                 <div className="editorial-note-head" id="verification-evidence-title">{showRecord ? dict.blog.recordTitle : dict.blog.verification}</div>
                 {showRecord && (
                   <dl className="editorial-record">
-                    <div><dt>{dict.blog.recordReviewer}</dt><dd>{record.reviewer === 'ai' ? dict.blog.reviewerAi : dict.blog.reviewerHuman}</dd></div>
+                    <div><dt>{dict.blog.recordReviewer}</dt><dd>{record.reviewer === 'ai' ? dict.blog.reviewerAi : record.reviewer === 'human' ? dict.blog.reviewerHuman : dict.blog.reviewerUnknown}</dd></div>
                     <div><dt>{dict.blog.recordVerifiedAt}</dt><dd><time dateTime={record.verifiedAt ?? undefined}>{record.verifiedAt}</time></dd></div>
                     {!(locale === 'en' && containsHangul(record.reviewScope)) && (
                       <div><dt>{dict.blog.recordScope}</dt><dd>{record.reviewScope}</dd></div>
@@ -771,7 +771,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
                 <a href="mailto:thive@thivelab.com">{dict.blog.reportEmail}</a>
               </p>
               {/* AI 사용 고지: 검증 기록(확인일·범위·출처)이 있을 때만 '공식 자료로 확인' 문장을 쓴다(channel-roles 4절). */}
-              <p className="editorial-note-body">{!showRecord ? dict.blog.aiNoteUnverified : record.reviewer === 'ai' ? dict.blog.aiNoteAiChecked : dict.blog.aiNoteVerified}</p>
+              <p className="editorial-note-body">{!showRecord ? dict.blog.aiNoteUnverified : record.reviewer === 'human' ? dict.blog.aiNoteVerified : record.reviewer === 'ai' ? dict.blog.aiNoteAiChecked : dict.blog.aiNoteUnverified}</p>
               {!showRecord && <p className="editorial-note-body"><strong>{dict.blog.noRecord}</strong></p>}
               <div className="editorial-note-meta">
                 {post.reviewed_at && post.reviewed_by && <><span>{dict.blog.editorialOwner} · {post.reviewed_by}</span><span className="sep">·</span></>}

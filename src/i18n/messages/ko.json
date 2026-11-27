@@ -231,7 +231,8 @@
     "recordReviewer": "확인 주체",
     "reviewerHuman": "운영자 확인",
     "reviewerAi": "AI 에이전트 대조(사람 검토 없음)",
-    "aiNoteAiChecked": "초안 작성과 공식 자료 대조에 AI를 활용했습니다."
+    "aiNoteAiChecked": "초안 작성과 공식 자료 대조에 AI를 활용했습니다.",
+    "reviewerUnknown": "확인 주체 미상"
   },
   "engineer": {
     "crumb": "엔지니어",

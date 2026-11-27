@@ -231,7 +231,8 @@
     "recordReviewer": "Checked by",
     "reviewerHuman": "Operator",
     "reviewerAi": "AI agent (no human review)",
-    "aiNoteAiChecked": "AI was used to draft this article and check it against official sources."
+    "aiNoteAiChecked": "AI was used to draft this article and check it against official sources.",
+    "reviewerUnknown": "Not recorded"
   },
   "engineer": {
     "crumb": "Engineer",

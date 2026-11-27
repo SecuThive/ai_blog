@@ -8,7 +8,7 @@
 //     "changeSummary": "회고 자료로 재구성, 근거 없는 순위 삭제",     // 실질적 본문 변경 요약
 //     "contentUpdatedAt": "2026-10-02",      // 실질적 본문 변경일(편집자가 명시할 때만)
 //     "officialSources": [{ "label": "...", "url": "https://..." }],
-//     "reviewer": "human" | "ai"         // 누가 대조·확인했는지. 없으면 human(기존 기록 호환). AI가 대조한 글은 반드시 "ai"
+//     "reviewer": "human" | "ai"         // 누가 대조·확인했는지(필수). 없으면 미상으로 표시하고 사람 확인 문장을 쓰지 않는다
 //   }
 //
 // 원칙
@@ -27,8 +27,8 @@ export interface EditorialRecord {
   changeSummary: string | null;
   contentUpdatedAt: string | null;
   sources: SourceRef[];
-  /** human: 운영자가 직접 확인, ai: AI 에이전트가 공식 문서와 대조(사람 검토 없음). */
-  reviewer: 'human' | 'ai';
+  /** human: 운영자가 직접 확인, ai: AI 에이전트가 공식 문서와 대조(사람 검토 없음), null: 기록에 주체가 없음(미상). */
+  reviewer: 'human' | 'ai' | null;
 }
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}(?:[T ][0-9:.+\-Z]*)?$/;
@@ -63,7 +63,7 @@ export function readEditorialRecord(evidence: unknown): EditorialRecord {
     changeSummary: str(e.changeSummary),
     contentUpdatedAt: date(e.contentUpdatedAt),
     sources: sources(e.officialSources),
-    reviewer: e.reviewer === 'ai' ? 'ai' : 'human',
+    reviewer: e.reviewer === 'ai' || e.reviewer === 'human' ? e.reviewer : null,
   };
 }
 
